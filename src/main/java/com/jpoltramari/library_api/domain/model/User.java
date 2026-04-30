@@ -33,7 +33,7 @@ public class User {
     private String telephone;
 
     @CreationTimestamp
-    @Column(nullable = false, columnDefinition = "datetime")
+    @Column(nullable = false, updatable = false)
     private LocalDateTime dateRegister;
 
     //@ManyToOne
