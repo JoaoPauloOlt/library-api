@@ -1,15 +1,15 @@
-From ubuntu:latest AS build
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 
-run apt-get update
-run apt-get install openjdk-17-jdk -y
-copy . .
+WORKDIR /app
 
-run apt-get install maven -y
-run mvn clean install
+COPY . .
 
-from openjdk:17-jdk-slim
-EXPOSE 3306
+RUN mvn clean package -DskipTests
 
-COPY --from=build /target/library-api-0.0.1-SNAPSHOT.jar app.jar
+FROM eclipse-temurin:17-jre
 
-ENTRYPOINT [ "java", "-jar", "app.jar"]
+WORKDIR /app
+
+COPY --from=build /app/target/library-api-0.0.1-SNAPSHOT.jar app.jar
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
