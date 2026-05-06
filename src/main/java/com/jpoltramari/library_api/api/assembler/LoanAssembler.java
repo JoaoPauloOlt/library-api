@@ -19,7 +19,7 @@ public class LoanAssembler {
         model.setRequestDate(loan.getRequestDate());
         model.setApprovalDate(loan.getApprovalDate());
         model.setWithdrawDate(loan.getWithdrawableDate());
-        model.setDueData(loan.getDueData());
+        model.setDueDate(loan.getDueDate());
         model.setReturnDate(loan.getReturnDate());
 
         return model;

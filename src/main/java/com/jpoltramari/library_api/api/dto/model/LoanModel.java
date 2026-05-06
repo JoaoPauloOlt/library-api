@@ -17,7 +17,7 @@ public class LoanModel {
     private LocalDateTime requestDate;
     private LocalDateTime approvalDate;
     private LocalDateTime withdrawDate;
-    private LocalDateTime dueData;
+    private LocalDateTime dueDate;
     private LocalDateTime returnDate;
 
 }

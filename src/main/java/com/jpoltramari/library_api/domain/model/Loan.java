@@ -28,7 +28,7 @@ public class Loan {
 
     private LocalDateTime withdrawableDate;
 
-    private LocalDateTime dueData;
+    private LocalDateTime dueDate;
 
     private LocalDateTime returnDate;
 

@@ -80,7 +80,7 @@ public class LoanService {
 
         loan.setStatus("RETIRADO");
         loan.setWithdrawableDate(LocalDateTime.now());
-        loan.setDueData(LocalDateTime.now().plusDays(7));
+        loan.setDueDate(LocalDateTime.now().plusDays(7));
 
         book.setAvailableQuantity((short) (book.getAvailableQuantity() - 1));
 
