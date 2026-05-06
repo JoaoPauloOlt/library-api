@@ -2,7 +2,9 @@ package com.jpoltramari.library_api.domain.service;
 
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
+import com.jpoltramari.library_api.domain.model.Group;
 import com.jpoltramari.library_api.domain.model.User;
+import com.jpoltramari.library_api.domain.repository.GroupRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -20,6 +22,9 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private GroupRepository groupRepository;
+
     public Page<User> findAll(Pageable pageable){
         return repository.findAll(pageable);
     }
@@ -34,7 +39,14 @@ public class UserService {
             if (repository.existsByEmail(user.getEmail())){
                 throw new BusinessException("Email already registered");
             }
+
+            Group defaultGroup = groupRepository.findByName("ALUNO")
+                            .orElseThrow(() -> new EntityNotFoundException("Default group not found"));
+
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+            user.setStatus("ACTIVE");
+            user.getGroups().add(defaultGroup);
+
             return repository.save(user);
         }catch (DataIntegrityViolationException e){
             throw new BusinessException("Email already registered");

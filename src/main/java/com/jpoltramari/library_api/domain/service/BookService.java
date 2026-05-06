@@ -11,7 +11,6 @@ import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.repository.AuthorRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.spec.BookSpecs;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.*;
@@ -61,7 +60,8 @@ public class BookService {
         book.setIsbn(input.getIsbn());
         book.setGenre(input.getGenre());
         book.setAuthor(author);
-        book.setAvailable(true);
+        book.setTotalQuantity(input.getTotalQuantity());
+        book.setAvailableQuantity(input.getTotalQuantity());
 
         return repository.save(book);
     }
