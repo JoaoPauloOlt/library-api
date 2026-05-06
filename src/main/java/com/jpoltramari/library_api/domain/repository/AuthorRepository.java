@@ -10,5 +10,5 @@ import java.util.Optional;
 public interface AuthorRepository extends CustomJpaRepository<Author, Long>{
 
     List<Author> findAllByNameContaining(String name);
-    Optional<Author> findAllByName(String name);
+    Optional<Author> findByName(String name);
 }

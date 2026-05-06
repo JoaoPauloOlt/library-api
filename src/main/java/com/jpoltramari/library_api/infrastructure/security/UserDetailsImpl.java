@@ -1,9 +1,12 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
 import com.jpoltramari.library_api.domain.model.User;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collections;
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 public class UserDetailsImpl implements UserDetails {
 
@@ -16,6 +19,20 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public String getUsername() {
         return user.getEmail();
+    }
+
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities(){
+        return user.getGroups()
+                .stream()
+                .flatMap(group -> group.getPermissions().stream())
+                .map(permissions -> new SimpleGrantedAuthority(permissions.getName()))
+                .collect(Collectors.toSet());
     }
 
     @Override
@@ -35,16 +52,6 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
-    }
-
-    @Override
-    public String getPassword() {
-        return user.getPassword();
-    }
-
-    @Override
-    public java.util.Collection getAuthorities() {
-        return Collections.emptyList();
+        return "ACTIVE".equals(user.getStatus());
     }
 }

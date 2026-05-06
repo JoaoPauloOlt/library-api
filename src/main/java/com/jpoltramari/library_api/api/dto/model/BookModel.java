@@ -9,7 +9,9 @@ public class BookModel {
     private String isbn;
     private String title;
     private String genre;
-    private Boolean available;
+
+    private Short totalQuantity;
+    private Short availableQuantity;
 
     private AuthorModel author;
 

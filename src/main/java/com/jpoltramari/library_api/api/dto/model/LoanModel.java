@@ -8,9 +8,16 @@ import java.time.LocalDateTime;
 public class LoanModel {
 
     private Long id;
+
+    private String status;
+
     private String bookTitle;
     private String userName;
-    private LocalDateTime loanDate;
+
+    private LocalDateTime requestDate;
+    private LocalDateTime approvalDate;
+    private LocalDateTime withdrawDate;
+    private LocalDateTime dueDate;
     private LocalDateTime returnDate;
 
 }

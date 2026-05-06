@@ -29,10 +29,7 @@ public class AuthorService {
                         new EntityNotFoundException("Author not found with id " + id));
     }
 
-    public Author save(Author input){
-        Author author = new Author();
-        BeanUtils.copyProperties(input, author);
-
+    public Author save(Author author){
         return repository.save(author);
     }
 

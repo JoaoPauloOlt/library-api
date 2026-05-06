@@ -4,12 +4,13 @@ import com.jpoltramari.library_api.api.assembler.LoanAssembler;
 import com.jpoltramari.library_api.api.dto.input.LoanInput;
 import com.jpoltramari.library_api.api.dto.model.LoanModel;
 import com.jpoltramari.library_api.domain.model.Loan;
+import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.service.LoanService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -35,8 +36,10 @@ public class LoanController {
     }
 
     @PostMapping
-    public ResponseEntity<LoanModel> create(@RequestBody @Valid LoanInput input){
-        Loan loan = service.create(input);
+    public ResponseEntity<LoanModel> create(@RequestBody @Valid LoanInput input,
+                                            @AuthenticationPrincipal User user){
+
+        Loan loan = service.create(input, user);
         LoanModel model = assembler.toModel(loan);
 
         URI uri = ServletUriComponentsBuilder
@@ -46,6 +49,16 @@ public class LoanController {
                 .toUri();
 
         return ResponseEntity.created(uri).body(model);
+    }
+
+    @PutMapping("/{id}/approve")
+    public LoanModel approve(@PathVariable Long id) {
+        return assembler.toModel(service.approve(id));
+    }
+
+    @PutMapping("/{id}/withdraw")
+    public LoanModel withdraw(@PathVariable Long id) {
+        return assembler.toModel(service.withdraw(id));
     }
 
     @PutMapping("/{id}/return")

@@ -8,8 +8,4 @@ public class LoanInput {
 
     @NotNull
     private Long bookId;
-
-    @NotNull
-    private Long userId;
-
 }

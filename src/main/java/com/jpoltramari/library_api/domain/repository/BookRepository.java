@@ -11,7 +11,10 @@ import java.util.Optional;
 public interface BookRepository extends CustomJpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
 
     List<Book> findAllByTitleContaining(String title);
-    Optional<Book> findAllByTitle(String title);
+
+    Optional<Book> findByTitle(String title);
+
     Optional<Book> findByIsbn(String isbn);
+
     boolean existsByIsbn(String isbn);
 }
