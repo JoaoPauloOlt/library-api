@@ -18,18 +18,22 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false, unique = true, length = 13)
     private String isbn;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 150)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     private String genre;
 
     @Column(nullable = false)
-    private Boolean available = true;
+    private Short totalQuantity;
 
-    @ManyToOne
+    @Column(nullable = false)
+    private Short availableQuantity;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(nullable = false)
     private Author author;
 }
