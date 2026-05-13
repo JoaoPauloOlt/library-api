@@ -1,8 +1,10 @@
 package com.jpoltramari.library_api.api.dto.model;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class AuthorModel {
 
     private Long id;

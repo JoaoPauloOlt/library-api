@@ -15,6 +15,7 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@Table(name = "authors")
 public class Author {
 
     @EqualsAndHashCode.Include
@@ -28,7 +29,7 @@ public class Author {
     @Column(nullable = false)
     private String nationality;
 
+    @ManyToMany(mappedBy = "authors")
     @JsonIgnore
-    @OneToMany(mappedBy = "author")
     private List<Book> books = new ArrayList<>();
 }

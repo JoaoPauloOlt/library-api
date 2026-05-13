@@ -2,7 +2,6 @@ package com.jpoltramari.library_api.infrastructure.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jpoltramari.library_api.api.exception.ErrorResponse;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpStatus;
@@ -16,49 +15,48 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 
 @Component
-public class ApiSecurityExceptionHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
+public class ApiSecurityExceptionHandler
+        implements AuthenticationEntryPoint, AccessDeniedHandler {
 
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper mapper;
 
-    public ApiSecurityExceptionHandler(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public ApiSecurityExceptionHandler(ObjectMapper mapper) {
+        this.mapper = mapper;
     }
 
     @Override
-    public void commence(HttpServletRequest request,
-                         HttpServletResponse response,
-                         AuthenticationException ex) throws IOException {
+    public void commence(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException ex
+    ) throws IOException {
 
-        writeErrorResponse(
-                response,
-                HttpStatus.UNAUTHORIZED,
+        write(response, HttpStatus.UNAUTHORIZED,
                 "Unauthorized",
-                "Authentication is required to access this resource.",
-                request.getRequestURI()
-        );
+                "Authentication required",
+                request.getRequestURI());
     }
 
     @Override
-    public void handle(HttpServletRequest request,
-                       HttpServletResponse response,
-                       AccessDeniedException ex) throws IOException, ServletException {
+    public void handle(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AccessDeniedException ex
+    ) throws IOException {
 
-        writeErrorResponse(
-                response,
-                HttpStatus.FORBIDDEN,
+        write(response, HttpStatus.FORBIDDEN,
                 "Forbidden",
-                "You do not have permission to access this resource.",
-                request.getRequestURI()
-        );
+                "Insufficient permissions",
+                request.getRequestURI());
     }
 
-    private void writeErrorResponse(HttpServletResponse response,
-                                    HttpStatus status,
-                                    String title,
-                                    String detail,
-                                    String path) throws IOException {
+    private void write(HttpServletResponse response,
+                       HttpStatus status,
+                       String title,
+                       String detail,
+                       String path) throws IOException {
 
-        ErrorResponse error = ErrorResponse.builder()
+        var body = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(status.value())
                 .title(title)
@@ -68,6 +66,6 @@ public class ApiSecurityExceptionHandler implements AuthenticationEntryPoint, Ac
 
         response.setStatus(status.value());
         response.setContentType("application/json");
-        response.getWriter().write(objectMapper.writeValueAsString(error));
+        mapper.writeValue(response.getOutputStream(), body);
     }
 }

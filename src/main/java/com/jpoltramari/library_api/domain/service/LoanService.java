@@ -1,14 +1,21 @@
 package com.jpoltramari.library_api.domain.service;
 
 import com.jpoltramari.library_api.api.dto.input.LoanInput;
+import com.jpoltramari.library_api.domain.enums.CopyStatus;
+import com.jpoltramari.library_api.domain.enums.LoanStatus;
+import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
-import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
+import com.jpoltramari.library_api.domain.exception.LoanNotFoundException;
+import com.jpoltramari.library_api.domain.exception.UserNotFoundException;
 import com.jpoltramari.library_api.domain.model.Book;
+import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
+import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.jpoltramari.library_api.domain.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,95 +23,90 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 
 @Service
-public class LoanService {
+public class LoanService{
 
-    @Autowired
-    private LoanRepository repository;
+    private static final int DEFAULT_LOAN_DAYS = 7;
 
-    @Autowired
-    private BookRepository bookRepository;
+    private final LoanRepository loanRepository;
+    private final BookRepository bookRepository;
+    private final BookCopyRepository bookCopyRepository;
+    private final UserRepository userRepository;
 
-    public Page<Loan> findAll(Pageable pageable){
-        return repository.findAll(pageable);
+    public LoanService(LoanRepository loanRepository,
+                       BookRepository bookRepository,
+                       BookCopyRepository bookCopyRepository,
+                       UserRepository userRepository) {
+        this.loanRepository = loanRepository;
+        this.bookRepository = bookRepository;
+        this.bookCopyRepository = bookCopyRepository;
+        this.userRepository = userRepository;
     }
 
-    public Loan create(LoanInput input, User authenticatedUser) {
+    public Page<Loan> findAll(Pageable pageable) {
+        return loanRepository.findAll(pageable);
+    }
+
+    @Transactional
+    public Loan create(LoanInput input, User user) {
+
+        User managedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new UserNotFoundException(user.getId()));
 
         Book book = bookRepository.findById(input.getBookId())
-                .orElseThrow(() -> new EntityNotFoundException("Book not found"));
+                .orElseThrow(() ->
+                        new BookNotFoundException(input.getBookId()));
 
-        if (book.getAvailableQuantity() <= 0) {
-            throw new BusinessException("Book unavailable");
-        }
-
-        long activeLoans = repository.countActiveLoansByUser(authenticatedUser.getId());
-
-        if (activeLoans >= 3) {
-            throw new BusinessException("User has reached active loan limit");
-        }
+        BookCopy copy = bookCopyRepository
+                .findFirstAvailableCopy(book.getId())
+                .orElseThrow(() ->
+                        new BusinessException("No available copies"));
 
         Loan loan = new Loan();
-        loan.setBook(book);
-        loan.setUser(authenticatedUser);
-        loan.setStatus("SOLICITADO");
+        loan.setUser(managedUser);
+        loan.setBookCopy(copy);
+        loan.setStatus(LoanStatus.REQUESTED);
         loan.setRequestDate(LocalDateTime.now());
 
-        return repository.save(loan);
+        return loanRepository.save(loan);
     }
 
+    @Transactional
     public Loan approve(Long id) {
         Loan loan = findOrFail(id);
-
-        if (!loan.getStatus().equals("SOLICITADO")) {
-            throw new BusinessException("Loan cannot be approved");
-        }
-
-        loan.setStatus("APROVADO");
+        loan.setStatus(LoanStatus.APPROVED);
         loan.setApprovalDate(LocalDateTime.now());
-
-        return repository.save(loan);
+        return loanRepository.save(loan);
     }
 
+    @Transactional
     public Loan withdraw(Long id) {
         Loan loan = findOrFail(id);
 
-        if (!loan.getStatus().equals("APROVADO")) {
-            throw new BusinessException("Loan not approved");
-        }
+        BookCopy copy = loan.getBookCopy();
+        copy.setStatus(CopyStatus.LOANED);
 
-        Book book = loan.getBook();
-
-        if (book.getAvailableQuantity() <= 0) {
-            throw new BusinessException("Book unavailable");
-        }
-
-        loan.setStatus("RETIRADO");
+        loan.setStatus(LoanStatus.ACTIVE);
         loan.setWithdrawableDate(LocalDateTime.now());
-        loan.setDueDate(LocalDateTime.now().plusDays(7));
+        loan.setDueDate(LocalDateTime.now().plusDays(DEFAULT_LOAN_DAYS));
 
-        book.setAvailableQuantity((short) (book.getAvailableQuantity() - 1));
-
-        return repository.save(loan);
+        return loanRepository.save(loan);
     }
 
+    @Transactional
     public Loan returnBook(Long id) {
         Loan loan = findOrFail(id);
 
-        if (!loan.getStatus().equals("RETIRADO") && !loan.getStatus().equals("ATRASADO")) {
-            throw new BusinessException("Loan cannot be returned");
-        }
+        BookCopy copy = loan.getBookCopy();
+        copy.setStatus(CopyStatus.AVAILABLE);
 
+        loan.setStatus(LoanStatus.RETURNED);
         loan.setReturnDate(LocalDateTime.now());
-        loan.setStatus("DEVOLVIDO");
 
-        Book book = loan.getBook();
-        book.setAvailableQuantity((short) (book.getAvailableQuantity() + 1));
-
-        return repository.save(loan);
+        return loanRepository.save(loan);
     }
 
-    private Loan findOrFail(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Loan not found with id " + id));
+    private Loan findOrFail(Long id){
+        return loanRepository.findById(id)
+                .orElseThrow(()-> new LoanNotFoundException(id));
     }
 }

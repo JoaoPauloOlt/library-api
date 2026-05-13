@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.domain.model;
 
+import com.jpoltramari.library_api.domain.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -7,8 +8,8 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Getter
@@ -34,8 +35,9 @@ public class User {
     @Column(nullable = false, length = 20)
     private String telephone;
 
-    @Column(nullable = false, length = 20)
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserStatus status;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -47,5 +49,5 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "group_id")
     )
-    private List<Group> groups = new ArrayList<>();
+    private Set<Group> groups = new HashSet<>();
 }

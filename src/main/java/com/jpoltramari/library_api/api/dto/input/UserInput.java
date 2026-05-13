@@ -2,9 +2,12 @@ package com.jpoltramari.library_api.api.dto.input;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class UserInput {
 
     @NotBlank
@@ -18,5 +21,6 @@ public class UserInput {
     private String telephone;
 
     @NotBlank
+    @Size(min = 8, max = 100)
     private String password;
 }

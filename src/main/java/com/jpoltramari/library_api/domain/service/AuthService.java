@@ -1,34 +1,45 @@
 package com.jpoltramari.library_api.domain.service;
 
-import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.api.dto.model.LoginResponse;
 import com.jpoltramari.library_api.domain.model.User;
-import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.infrastructure.security.JwtService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.jpoltramari.library_api.infrastructure.security.UserDetailsImpl;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
 
-    @Autowired
-    private UserRepository repository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public AuthService(AuthenticationManager authenticationManager,
+                       JwtService jwtService) {
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+    }
 
-    @Autowired
-    private JwtService jwtService;
+    public LoginResponse login(String email, String password) {
 
-    public String login(String email, String password){
+        Authentication authentication =
+                authenticationManager.authenticate(
+                        new UsernamePasswordAuthenticationToken(
+                                email,
+                                password
+                        )
+                );
 
-        User user = repository.findByEmail(email)
-                .orElseThrow(() -> new BusinessException("Invalid email or password"));
+        User user = ((UserDetailsImpl) authentication.getPrincipal())
+                .getUser();
 
-        if (!passwordEncoder.matches(password, user.getPassword())){
-            throw new BusinessException("Invalid email or password");
-        }
+        String token = jwtService.generateToken(user);
 
-        return jwtService.generateToken(user);
+        return new LoginResponse(
+                token,
+                user.getName(),
+                user.getEmail()
+        );
     }
 }
