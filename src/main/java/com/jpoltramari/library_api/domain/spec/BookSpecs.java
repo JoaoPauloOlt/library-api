@@ -10,16 +10,21 @@ import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Join;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class BookSpecs {
+
+    private BookSpecs(){
+
+    }
 
     public static Specification<Book> usingFilter(BookFilter filter){
 
         return (root, query, builder) -> {
 
-            var predicates = new ArrayList<>();
+            List<Predicate> predicates = new ArrayList<>();
 
-            if (filter.getTitle() != null){
+            if (filter.getTitle() != null && !filter.getTitle().isBlank()){
                 predicates.add(
                         builder.like(
                                 builder.lower(root.get("title")),
@@ -28,20 +33,14 @@ public class BookSpecs {
                 );
             }
 
-            if (filter.getGenre() != null){
+            if (filter.getGenre() != null && !filter.getGenre().isBlank()){
                 predicates.add(
                         builder.equal(root.get("genre"), filter.getGenre())
                 );
             }
 
-            if (filter.getAvailable() != null){
-                predicates.add(
-                        builder.equal(root.get("available"), filter.getAvailable())
-                );
-            }
-
-            if (filter.getAuthorName() != null){
-                Join<Book, Author> authorJoin = root.join("author", JoinType.LEFT);
+            if (filter.getAuthorName() != null && !filter.getAuthorName().isBlank()){
+                Join<Book, Author> authorJoin = root.join("authors", JoinType.LEFT);
 
                 predicates.add(
                         builder.like(
@@ -49,6 +48,7 @@ public class BookSpecs {
                                 "%" + filter.getAuthorName().toLowerCase() + "%"
                         )
                 );
+                query.distinct(true);
             }
 
             return builder.and(predicates.toArray(new Predicate[0]));
