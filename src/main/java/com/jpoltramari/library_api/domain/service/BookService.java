@@ -1,101 +1,101 @@
 package com.jpoltramari.library_api.domain.service;
 
 import com.jpoltramari.library_api.api.dto.input.BookInput;
-import com.jpoltramari.library_api.domain.exception.BookNotFound;
-import com.jpoltramari.library_api.domain.exception.BusinessException;
-import com.jpoltramari.library_api.domain.exception.EntityInUseException;
-import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
+import com.jpoltramari.library_api.api.mapper.BookMapper;
+import com.jpoltramari.library_api.domain.enums.CopyStatus;
+import com.jpoltramari.library_api.domain.exception.*;
 import com.jpoltramari.library_api.domain.filter.BookFilter;
 import com.jpoltramari.library_api.domain.model.Author;
 import com.jpoltramari.library_api.domain.model.Book;
+import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.repository.AuthorRepository;
+import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.spec.BookSpecs;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class BookService {
 
-    @Autowired
-    private BookRepository repository;
+    private static final String DEFAULT_LOCATION = "Shelf A";
 
-    @Autowired
-    private AuthorRepository authorRepository;
+    private final BookRepository repository;
+    private final AuthorRepository authorRepository;
+    private final BookCopyRepository bookCopyRepository;
+    private final BookMapper mapper;
 
-    public Page<Book> findAll(BookFilter filter, Pageable pageable){
+    public BookService(BookRepository repository,
+                       AuthorRepository authorRepository,
+                       BookCopyRepository bookCopyRepository,
+                       BookMapper mapper) {
+        this.repository = repository;
+        this.authorRepository = authorRepository;
+        this.bookCopyRepository = bookCopyRepository;
+        this.mapper = mapper;
+    }
 
-        if (filter == null){
-            filter = new BookFilter();
-        }
+    public Page<Book> findAll(BookFilter filter, Pageable pageable) {
         return repository.findAll(BookSpecs.usingFilter(filter), pageable);
     }
 
-    public Book findByIsbnOrFail(String isbn){
-        return repository.findByIsbn(isbn)
-                .orElseThrow(()->
-                        new BookNotFound("Book not found with ISBN " + isbn));
-    }
-
-    public Book findOrFail(Long id){
+    public Book findOrFail(Long id) {
         return repository.findById(id)
-                .orElseThrow(() ->
-                        new BookNotFound("Book not found with id " + id));
+                .orElseThrow(() -> new BookNotFoundException(id));
     }
 
-    public Book save(BookInput input){
+    @Transactional
+    public Book save(BookInput input) {
 
-        if (repository.existsByIsbn(input.getIsbn())){
+        if (repository.existsByIsbn(input.getIsbn())) {
             throw new BusinessException("ISBN already registered");
         }
 
-        Author author = authorRepository.findById(input.getAuthorId())
-                .orElseThrow(() ->
-                        new EntityNotFoundException("Author not found with id " + input.getAuthorId()));
+        List<Author> authors =
+                authorRepository.findAllById(input.getAuthorIds());
 
-        Book book = new Book();
-        book.setTitle(input.getTitle());
-        book.setIsbn(input.getIsbn());
-        book.setGenre(input.getGenre());
-        book.setAuthor(author);
-        book.setTotalQuantity(input.getTotalQuantity());
-        book.setAvailableQuantity(input.getTotalQuantity());
-
-        return repository.save(book);
-    }
-
-    public Book update(Long id, BookInput input){
-
-        Book book = findOrFail(id);
-
-        Author author = authorRepository.findById(input.getAuthorId())
-                .orElseThrow(() ->
-                        new EntityNotFoundException("Author not found with id " + input.getAuthorId()));
-
-        repository.findByIsbn(input.getIsbn())
-                .filter(existing -> !existing.getId().equals(id))
-                .ifPresent(b -> {
-                    throw new BusinessException("ISBN already registered");
-                });
-
-        book.setTitle(input.getTitle());
-        book.setIsbn(input.getIsbn());
-        book.setGenre(input.getGenre());
-        book.setAuthor(author);
-
-        return repository.save(book);
-    }
-
-    public void delete(Long id){
-        Book book = findOrFail(id);
-        try {
-            repository.delete(book);
-
-        } catch (DataIntegrityViolationException e){
-            throw new EntityInUseException("Book with id " + id + "is in use");
-
+        if (authors.size() != input.getAuthorIds().size()) {
+            throw new EntityNotFoundException(
+                    "One or more authors were not found"
+            );
         }
+
+        Book book = mapper.toEntity(input);
+        book.setAuthors(authors);
+
+        repository.save(book);
+
+        for (int i = 1; i <= input.getTotalQuantity(); i++) {
+            BookCopy copy = new BookCopy();
+            copy.setBook(book);
+            copy.setBarcode(generateBarcode(book.getId(), i));
+            copy.setStatus(CopyStatus.AVAILABLE);
+            copy.setLocation(DEFAULT_LOCATION);
+
+            bookCopyRepository.save(copy);
+        }
+
+        return book;
+    }
+
+    @Transactional
+    public Book update(Long id, BookInput input) {
+        Book book = findOrFail(id);
+        mapper.update(input, book);
+        return repository.save(book);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        Book book = findOrFail(id);
+        repository.delete(book);
+    }
+
+    private String generateBarcode(Long bookId, int sequence) {
+        return String.format("BOOK-%d-COPY-%03d", bookId, sequence);
     }
 }
