@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleJsonError(
             HttpMessageNotReadableException ex, HttpServletRequest request){
         return buildResponse(
