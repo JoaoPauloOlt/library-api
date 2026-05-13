@@ -1,69 +1,51 @@
 package com.jpoltramari.library_api.api.controller;
 
-import com.jpoltramari.library_api.api.assembler.BookAssembler;
 import com.jpoltramari.library_api.api.dto.input.BookInput;
 import com.jpoltramari.library_api.api.dto.model.BookModel;
+import com.jpoltramari.library_api.api.mapper.BookMapper;
 import com.jpoltramari.library_api.domain.filter.BookFilter;
-import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.service.BookService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
 @RequestMapping("/books")
 public class BookController {
 
-    @Autowired
-    private BookService service;
+    private final BookService service;
+    private final BookMapper mapper;
 
-    @Autowired
-    private BookAssembler assembler;
+    public BookController(BookService service, BookMapper mapper) {
+        this.service = service;
+        this.mapper = mapper;
+    }
 
     @GetMapping
-    public List<BookModel> list(@ModelAttribute BookFilter filter){
-        return service.findAll(filter, Pageable.unpaged())
-                .stream()
-                .map(assembler::toModel)
-                .toList();
+    public Page<BookModel> list(BookFilter filter, Pageable pageable) {
+        return service.findAll(filter, pageable).map(mapper::toModel);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<BookModel> find(@PathVariable Long id){
-        Book book = service.findOrFail(id);
-        return ResponseEntity.ok(assembler.toModel(book));
-    }
-
-    @GetMapping("/isbn/{isbn}")
-    public ResponseEntity<BookModel> findByIsbn(@PathVariable String isbn){
-        Book book = service.findByIsbnOrFail(isbn);
-        return ResponseEntity.ok(assembler.toModel(book));
+    public BookModel get(@PathVariable Long id) {
+        return mapper.toModel(service.findOrFail(id));
     }
 
     @PostMapping
-    public ResponseEntity<BookModel> create(@RequestBody @Valid BookInput input){
-        Book book = service.save(input);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(assembler.toModel(book));
+    public BookModel create(@RequestBody @Valid BookInput input) {
+        return mapper.toModel(service.save(input));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<BookModel> update(@PathVariable Long id,
-                                            @RequestBody @Valid BookInput input){
-
-        Book book = service.update(id, input);
-        return ResponseEntity.ok(assembler.toModel(book));
+    public BookModel update(@PathVariable Long id,
+                            @RequestBody @Valid BookInput input) {
+        return mapper.toModel(service.update(id, input));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
+    public void delete(@PathVariable Long id) {
         service.delete(id);
-        return ResponseEntity.noContent().build();
     }
 }

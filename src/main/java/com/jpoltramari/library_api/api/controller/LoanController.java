@@ -1,68 +1,51 @@
 package com.jpoltramari.library_api.api.controller;
 
-import com.jpoltramari.library_api.api.assembler.LoanAssembler;
 import com.jpoltramari.library_api.api.dto.input.LoanInput;
 import com.jpoltramari.library_api.api.dto.model.LoanModel;
-import com.jpoltramari.library_api.domain.model.Loan;
+import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.service.LoanService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/loans")
 public class LoanController {
 
-    @Autowired
-    private LoanService service;
+    private final LoanService service;
+    private final LoanMapper mapper;
 
-    @Autowired
-    private LoanAssembler assembler;
+    public LoanController(LoanService service, LoanMapper mapper) {
+        this.service = service;
+        this.mapper = mapper;
+    }
 
     @GetMapping
-    public List<LoanModel> list(Pageable pageable){
-        return service.findAll(pageable)
-                .stream()
-                .map(assembler::toModel)
-                .toList();
+    public Page<LoanModel> list(Pageable pageable) {
+        return service.findAll(pageable).map(mapper::toModel);
     }
 
     @PostMapping
-    public ResponseEntity<LoanModel> create(@RequestBody @Valid LoanInput input,
-                                            @AuthenticationPrincipal User user){
-
-        Loan loan = service.create(input, user);
-        LoanModel model = assembler.toModel(loan);
-
-        URI uri = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .buildAndExpand(model.getId())
-                .toUri();
-
-        return ResponseEntity.created(uri).body(model);
+    public LoanModel create(@RequestBody @Valid LoanInput input,
+                            @AuthenticationPrincipal User user) {
+        return mapper.toModel(service.create(input, user));
     }
 
     @PutMapping("/{id}/approve")
     public LoanModel approve(@PathVariable Long id) {
-        return assembler.toModel(service.approve(id));
+        return mapper.toModel(service.approve(id));
     }
 
     @PutMapping("/{id}/withdraw")
     public LoanModel withdraw(@PathVariable Long id) {
-        return assembler.toModel(service.withdraw(id));
+        return mapper.toModel(service.withdraw(id));
     }
 
     @PutMapping("/{id}/return")
-    public LoanModel returnBook(@PathVariable Long id){
-        return assembler.toModel(service.returnBook(id));
+    public LoanModel returnBook(@PathVariable Long id) {
+        return mapper.toModel(service.returnBook(id));
     }
 }
