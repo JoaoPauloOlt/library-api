@@ -10,7 +10,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "permissions")
 @EqualsAndHashCode
-public class Permissions {
+public class Permission {
 
     @EqualsAndHashCode.Include
     @Id

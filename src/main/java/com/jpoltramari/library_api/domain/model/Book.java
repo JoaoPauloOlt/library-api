@@ -6,34 +6,36 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-@JsonRootName("book")
+import java.util.ArrayList;
+import java.util.List;
+
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@JsonRootName("book")
 @Getter
 @Setter
 @Entity
+@Table(name = "books")
 public class Book {
 
-    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(nullable = false, unique = true, length = 13)
     private String isbn;
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false)
     private String genre;
 
-    @Column(nullable = false)
-    private Short totalQuantity;
-
-    @Column(nullable = false)
-    private Short availableQuantity;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(nullable = false)
-    private Author author;
+    @ManyToMany
+    @JoinTable(
+            name = "book_authors",
+            joinColumns = @JoinColumn(name = "book_id"),
+            inverseJoinColumns = @JoinColumn(name = "author_id")
+    )
+    private List<Author> authors = new ArrayList<>();
 }

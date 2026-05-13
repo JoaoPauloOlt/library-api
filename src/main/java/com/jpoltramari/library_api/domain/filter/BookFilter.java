@@ -10,5 +10,4 @@ public class BookFilter {
     private String title;
     private String genre;
     private String authorName;
-    private Boolean available;
 }
