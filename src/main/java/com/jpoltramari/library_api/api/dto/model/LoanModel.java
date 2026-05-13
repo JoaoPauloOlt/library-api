@@ -1,10 +1,12 @@
 package com.jpoltramari.library_api.api.dto.model;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 public class LoanModel {
 
     private Long id;
@@ -19,5 +21,4 @@ public class LoanModel {
     private LocalDateTime withdrawDate;
     private LocalDateTime dueDate;
     private LocalDateTime returnDate;
-
 }

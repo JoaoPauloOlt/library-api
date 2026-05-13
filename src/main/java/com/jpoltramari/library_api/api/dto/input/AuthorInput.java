@@ -1,9 +1,11 @@
 package com.jpoltramari.library_api.api.dto.input;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class AuthorInput {
 
     @NotBlank

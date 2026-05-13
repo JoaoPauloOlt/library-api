@@ -1,14 +1,17 @@
 package com.jpoltramari.library_api.api.dto.input;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import lombok.Data;
+import jakarta.validation.constraints.*;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+import java.util.List;
+
+@Getter
+@Setter
 public class BookInput {
 
     @NotBlank
+    @Size(min = 13, max = 13)
     private String isbn;
 
     @NotBlank
@@ -19,9 +22,8 @@ public class BookInput {
 
     @NotNull
     @Positive
-    private Short totalQuantity;
+    private Integer totalQuantity;
 
-    @NotNull
-    private Long authorId;
-
+    @NotEmpty
+    private List<Long> authorIds;
 }

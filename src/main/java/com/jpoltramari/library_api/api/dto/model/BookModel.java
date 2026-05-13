@@ -1,8 +1,12 @@
 package com.jpoltramari.library_api.api.dto.model;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+import java.util.List;
+
+@Getter
+@Setter
 public class BookModel {
 
     private Long id;
@@ -13,6 +17,6 @@ public class BookModel {
     private Short totalQuantity;
     private Short availableQuantity;
 
-    private AuthorModel author;
+    private List<AuthorModel> authors;
 
 }
