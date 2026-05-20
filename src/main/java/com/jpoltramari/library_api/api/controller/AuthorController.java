@@ -25,7 +25,8 @@ public class AuthorController {
 
     @GetMapping
     public Page<AuthorModel> list(Pageable pageable) {
-        return service.findAll(pageable).map(mapper::toModel);
+        return service.findAll(pageable)
+                .map(mapper::toModel);
     }
 
     @GetMapping("/{id}")
@@ -36,7 +37,7 @@ public class AuthorController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public AuthorModel create(@RequestBody @Valid AuthorInput input) {
-        return mapper.toModel(service.save(input));
+        return mapper.toModel(service.create(input));
     }
 
     @PutMapping("/{id}")

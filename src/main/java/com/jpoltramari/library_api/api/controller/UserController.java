@@ -5,11 +5,12 @@ import com.jpoltramari.library_api.api.dto.model.UserModel;
 import com.jpoltramari.library_api.api.mapper.UserMapper;
 import com.jpoltramari.library_api.domain.service.UserService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/users")
@@ -22,7 +23,8 @@ public class UserController {
 
     @GetMapping
     public Page<UserModel> list(Pageable pageable) {
-        return service.findAll(pageable).map(mapper::toModel);
+        return service.findAll(pageable)
+                .map(mapper::toModel);
     }
 
     @GetMapping("/{id}")
@@ -31,7 +33,8 @@ public class UserController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public UserModel create(@RequestBody @Valid UserInput input) {
-        return mapper.toModel(service.save(input));
+        return mapper.toModel(service.create(input));
     }
 }

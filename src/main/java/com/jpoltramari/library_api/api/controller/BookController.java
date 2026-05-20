@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,29 +25,32 @@ public class BookController {
 
     @GetMapping
     public Page<BookModel> list(BookFilter filter, Pageable pageable) {
-        return service.findAll(filter, pageable).map(mapper::toModel);
+        return service.findAll(filter, pageable)
+                .map(mapper::toModel);
     }
 
     @GetMapping("/{id}")
-    public BookModel findById(@PathVariable Long id) {
+    public BookModel findById(@PathVariable @Positive Long id) {
         return mapper.toModel(service.findOrFail(id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BookModel create(@RequestBody @Valid BookInput input) {
-        return mapper.toModel(service.save(input));
+        return mapper.toModel(service.create(input));
     }
 
     @PutMapping("/{id}")
-    public BookModel update(@PathVariable Long id,
-                            @RequestBody @Valid BookInput input) {
+    public BookModel update(
+            @PathVariable @Positive Long id,
+            @RequestBody @Valid BookInput input
+    ) {
         return mapper.toModel(service.update(id, input));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable @Positive Long id) {
         service.delete(id);
     }
 }

@@ -3,7 +3,9 @@ package com.jpoltramari.library_api.domain.service;
 import com.jpoltramari.library_api.api.dto.input.BookInput;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
-import com.jpoltramari.library_api.domain.exception.*;
+import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
+import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.filter.BookFilter;
 import com.jpoltramari.library_api.domain.model.Author;
 import com.jpoltramari.library_api.domain.model.Book;
@@ -12,13 +14,15 @@ import com.jpoltramari.library_api.domain.repository.AuthorRepository;
 import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.spec.BookSpecs;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -42,24 +46,29 @@ public class BookService {
 
     @Transactional
     public Book create(BookInput input) {
-
         validateIsbn(input.getIsbn());
 
         Book book = mapper.toEntity(input);
+        book.setAuthors(loadAuthors(input.getAuthorIds()));
 
-        Set<Author> authors = load.findAllById(input.getAuthorIds());
-        book.setAuthors(authors);
+        Book savedBook = repository.save(book);
 
-        Book saved = repository.save(book);
+        createCopies(savedBook, input.getTotalQuantity());
 
-        createCopies(saved, input.getTotalQuantity());
-        return saved;
+        return savedBook;
     }
 
     @Transactional
     public Book update(Long id, BookInput input) {
         Book book = findOrFail(id);
+
+        if (!book.getIsbn().equals(input.getIsbn())) {
+            validateIsbn(input.getIsbn());
+        }
+
         mapper.update(input, book);
+        book.setAuthors(loadAuthors(input.getAuthorIds()));
+
         return repository.save(book);
     }
 
@@ -71,27 +80,31 @@ public class BookService {
 
     private void validateIsbn(String isbn) {
         if (repository.existsByIsbn(isbn)) {
-            throw new BusinessException("ISBN already registered");
+            throw new BusinessException("ISBN already registered.");
         }
     }
 
     private Set<Author> loadAuthors(List<Long> authorIds) {
         List<Author> authors = authorRepository.findAllById(authorIds);
-        if(authors.size() != new HashSet<>(ids).size()){
-            throw new EntityNotFoundException("One or more authors were not found");
+
+        if (authors.size() != new HashSet<>(authorIds).size()) {
+            throw new EntityNotFoundException(
+                    "One or more authors were not found."
+            );
         }
+
         return new HashSet<>(authors);
     }
 
-    private void createCopies(Book book, int quantity){
+    private void createCopies(Book book, int quantity) {
         for (int i = 1; i <= quantity; i++) {
             BookCopy copy = new BookCopy();
             copy.setBook(book);
             copy.setStatus(CopyStatus.AVAILABLE);
-            copy.setLocation("DEFAULT-SHELF");
+            copy.setLocation(DEFAULT_LOCATION);
             copy.setBarcode(generateBarcode(book.getId(), i));
 
-            copyRepository.save(copy);
+            bookCopyRepository.save(copy);
         }
     }
 
