@@ -10,17 +10,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class AuthorService {
 
     private final AuthorRepository repository;
     private final AuthorMapper mapper;
-
-    public AuthorService(AuthorRepository repository,
-                         AuthorMapper mapper) {
-        this.repository = repository;
-        this.mapper = mapper;
-    }
 
     public Page<Author> findAll(Pageable pageable) {
         return repository.findAll(pageable);
@@ -32,7 +29,7 @@ public class AuthorService {
     }
 
     @Transactional
-    public Author save(AuthorInput input) {
+    public Author create(AuthorInput input) {
         Author author = mapper.toEntity(input);
         return repository.save(author);
     }

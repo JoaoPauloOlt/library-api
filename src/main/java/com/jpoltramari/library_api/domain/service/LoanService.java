@@ -22,47 +22,39 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class LoanService{
 
-    private static final int DEFAULT_LOAN_DAYS = 7;
+    private static final int LOAN_DAYS = 7;
 
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
     private final BookCopyRepository bookCopyRepository;
     private final UserRepository userRepository;
 
-    public LoanService(LoanRepository loanRepository,
-                       BookRepository bookRepository,
-                       BookCopyRepository bookCopyRepository,
-                       UserRepository userRepository) {
-        this.loanRepository = loanRepository;
-        this.bookRepository = bookRepository;
-        this.bookCopyRepository = bookCopyRepository;
-        this.userRepository = userRepository;
-    }
-
-    public Page<Loan> findAll(Pageable pageable) {
-        return loanRepository.findAll(pageable);
-    }
-
     @Transactional
-    public Loan create(LoanInput input, User user) {
+    public Loan create(Long bookId, Long userId) {
 
-        User managedUser = userRepository.findById(user.getId())
-                .orElseThrow(() -> new UserNotFoundException(user.getId()));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
 
-        Book book = bookRepository.findById(input.getBookId())
+        Book book = bookRepository.findById(bookId)
                 .orElseThrow(() ->
-                        new BookNotFoundException(input.getBookId()));
+                        new BookNotFoundException(bookId));
 
-        BookCopy copy = bookCopyRepository
-                .findFirstAvailableCopy(book.getId())
+        BookCopy copy = bookCopyRepository.findAvailableCopies(
+            book.getId(),
+            CopyStatus.AVAILABLE
+            ).stream()
+            .findFirst()
                 .orElseThrow(() ->
                         new BusinessException("No available copies"));
 
         Loan loan = new Loan();
-        loan.setUser(managedUser);
+        loan.setUser(user);
         loan.setBookCopy(copy);
         loan.setStatus(LoanStatus.REQUESTED);
         loan.setRequestDate(LocalDateTime.now());
@@ -73,8 +65,12 @@ public class LoanService{
     @Transactional
     public Loan approve(Long id) {
         Loan loan = findOrFail(id);
+
+        validateStatus(loan, LoanStatus.REQUESTED);
+
         loan.setStatus(LoanStatus.APPROVED);
         loan.setApprovalDate(LocalDateTime.now());
+
         return loanRepository.save(loan);
     }
 
@@ -82,12 +78,20 @@ public class LoanService{
     public Loan withdraw(Long id) {
         Loan loan = findOrFail(id);
 
+        validateStatus(loan, LoanStatus.APPROVED);
+
         BookCopy copy = loan.getBookCopy();
-        copy.setStatus(CopyStatus.LOANED);
+
+        if(copy.getStatus() != CopyStatus.AVAILABLE){
+            throw new BusinessException("Copy is not available");
+        }
+
+        copy.setStatus(CopyStatus.UNDER_LOAN);
+        bookCopyRepository.save(copy);
 
         loan.setStatus(LoanStatus.ACTIVE);
         loan.setWithdrawableDate(LocalDateTime.now());
-        loan.setDueDate(LocalDateTime.now().plusDays(DEFAULT_LOAN_DAYS));
+        loan.setDueDate(LocalDateTime.now().plusDays(LOAN_DAYS));
 
         return loanRepository.save(loan);
     }
@@ -96,8 +100,11 @@ public class LoanService{
     public Loan returnBook(Long id) {
         Loan loan = findOrFail(id);
 
+        validateStatus(loan, LoanStatus.ACTIVE)
+
         BookCopy copy = loan.getBookCopy();
         copy.setStatus(CopyStatus.AVAILABLE);
+        copyRepository.save(copy);
 
         loan.setStatus(LoanStatus.RETURNED);
         loan.setReturnDate(LocalDateTime.now());
@@ -108,5 +115,12 @@ public class LoanService{
     private Loan findOrFail(Long id){
         return loanRepository.findById(id)
                 .orElseThrow(()-> new LoanNotFoundException(id));
+    }
+
+    private void validateStatus(Loan loan, LoanStatus expected){
+        if(loan.getStatus() != expected){
+            throw new BusinessException("
+            Invalid status transition. Expected: " + expected)
+        }
     }
 }

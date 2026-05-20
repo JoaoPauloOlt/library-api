@@ -18,8 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class BookService {
 
     private static final String DEFAULT_LOCATION = "Shelf A";
@@ -28,16 +30,6 @@ public class BookService {
     private final AuthorRepository authorRepository;
     private final BookCopyRepository bookCopyRepository;
     private final BookMapper mapper;
-
-    public BookService(BookRepository repository,
-                       AuthorRepository authorRepository,
-                       BookCopyRepository bookCopyRepository,
-                       BookMapper mapper) {
-        this.repository = repository;
-        this.authorRepository = authorRepository;
-        this.bookCopyRepository = bookCopyRepository;
-        this.mapper = mapper;
-    }
 
     public Page<Book> findAll(BookFilter filter, Pageable pageable) {
         return repository.findAll(BookSpecs.usingFilter(filter), pageable);
@@ -49,37 +41,19 @@ public class BookService {
     }
 
     @Transactional
-    public Book save(BookInput input) {
+    public Book create(BookInput input) {
 
-        if (repository.existsByIsbn(input.getIsbn())) {
-            throw new BusinessException("ISBN already registered");
-        }
-
-        List<Author> authors =
-                authorRepository.findAllById(input.getAuthorIds());
-
-        if (authors.size() != input.getAuthorIds().size()) {
-            throw new EntityNotFoundException(
-                    "One or more authors were not found"
-            );
-        }
+        validateIsbn(input.getIsbn());
 
         Book book = mapper.toEntity(input);
+
+        Set<Author> authors = load.findAllById(input.getAuthorIds());
         book.setAuthors(authors);
 
-        repository.save(book);
+        Book saved = repository.save(book);
 
-        for (int i = 1; i <= input.getTotalQuantity(); i++) {
-            BookCopy copy = new BookCopy();
-            copy.setBook(book);
-            copy.setBarcode(generateBarcode(book.getId(), i));
-            copy.setStatus(CopyStatus.AVAILABLE);
-            copy.setLocation(DEFAULT_LOCATION);
-
-            bookCopyRepository.save(copy);
-        }
-
-        return book;
+        createCopies(saved, input.getTotalQuantity());
+        return saved;
     }
 
     @Transactional
@@ -95,7 +69,33 @@ public class BookService {
         repository.delete(book);
     }
 
-    private String generateBarcode(Long bookId, int sequence) {
-        return String.format("BOOK-%d-COPY-%03d", bookId, sequence);
+    private void validateIsbn(String isbn) {
+        if (repository.existsByIsbn(isbn)) {
+            throw new BusinessException("ISBN already registered");
+        }
+    }
+
+    private Set<Author> loadAuthors(List<Long> authorIds) {
+        List<Author> authors = authorRepository.findAllById(authorIds);
+        if(authors.size() != new HashSet<>(ids).size()){
+            throw new EntityNotFoundException("One or more authors were not found");
+        }
+        return new HashSet<>(authors);
+    }
+
+    private void createCopies(Book book, int quantity){
+        for (int i = 1; i <= quantity; i++) {
+            BookCopy copy = new BookCopy();
+            copy.setBook(book);
+            copy.setStatus(CopyStatus.AVAILABLE);
+            copy.setLocation("DEFAULT-SHELF");
+            copy.setBarcode(generateBarcode(book.getId(), i));
+
+            copyRepository.save(copy);
+        }
+    }
+
+    private String generateBarcode(Long bookId, int index) {
+        return String.format("BK-%d-%04d", bookId, index);
     }
 }

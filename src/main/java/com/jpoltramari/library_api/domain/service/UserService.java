@@ -8,6 +8,7 @@ import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.exception.UserNotFoundException;
 import com.jpoltramari.library_api.domain.model.Group;
 import com.jpoltramari.library_api.domain.model.User;
+import com.jpoltramari.library_api.domain.enums.Role;
 import com.jpoltramari.library_api.domain.repository.GroupRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -18,23 +19,16 @@ import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository repository;
     private final GroupRepository groupRepository;
     private final PasswordEncoder encoder;
     private final UserMapper mapper;
-
-    public UserService(UserRepository repository,
-                       GroupRepository groupRepository,
-                       PasswordEncoder encoder,
-                       UserMapper mapper) {
-        this.repository = repository;
-        this.groupRepository = groupRepository;
-        this.encoder = encoder;
-        this.mapper = mapper;
-    }
 
     public Page<User> findAll(Pageable pageable) {
         return repository.findAll(pageable);
@@ -46,7 +40,7 @@ public class UserService {
     }
 
     @Transactional
-    public User save(UserInput input) {
+    public User create(UserInput input) {
 
         if (repository.existsByEmail(input.getEmail())){
             throw new BusinessException("Email already registered");
@@ -56,8 +50,8 @@ public class UserService {
         user.setPassword(encoder.encode(user.getPassword()));
         user.setStatus(UserStatus.ACTIVE);
 
-        Group defaultGroup = groupRepository.findByName("ALUNO")
-                .orElseThrow(() -> new EntityNotFoundException("Default group ALUNO was not found"));
+        Group defaultGroup = groupRepository.findByName("USER")
+                .orElseThrow(() -> new EntityNotFoundException("Default group USER was not found"));
 
         user.setGroups(Set.of(defaultGroup));
 
