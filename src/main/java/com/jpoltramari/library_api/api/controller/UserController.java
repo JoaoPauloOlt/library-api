@@ -9,17 +9,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
+@Validated
 public class UserController {
 
     private final UserService service;
     private final UserMapper mapper;
-
-    public UserController(UserService service, UserMapper mapper) {
-        this.service = service;
-        this.mapper = mapper;
-    }
 
     @GetMapping
     public Page<UserModel> list(Pageable pageable) {
