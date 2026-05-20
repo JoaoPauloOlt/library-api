@@ -1,21 +1,19 @@
 package com.jpoltramari.library_api.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonRootName;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
-@JsonRootName("author")
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Getter
-@Setter
 @Entity
 @Table(name = "authors")
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Author {
 
     @EqualsAndHashCode.Include
@@ -23,13 +21,14 @@ public class Author {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @NotBlank
+    @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(nullable = false)
+    @NotBlank
+    @Column(nullable = false, length = 40)
     private String nationality;
 
-    @ManyToMany(mappedBy = "authors")
-    @JsonIgnore
-    private List<Book> books = new ArrayList<>();
+    @ManyToMany(mappedBy = "authors", fetch = FetchType.LAZY)
+    private Set<Book> books = new HashSet<>();
 }

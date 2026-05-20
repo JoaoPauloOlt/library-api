@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.domain.model;
 
 import com.jpoltramari.library_api.domain.enums.UserStatus;
+import com.jpoltramari.library_api.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -11,11 +12,11 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Getter
-@Setter
 @Entity
 @Table(name = "users")
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class User {
 
     @EqualsAndHashCode.Include
@@ -43,7 +44,7 @@ public class User {
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateRegister;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_groups",
             joinColumns = @JoinColumn(name = "user_id"),

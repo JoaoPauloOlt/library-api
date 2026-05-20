@@ -8,10 +8,10 @@ import lombok.Setter;
 import java.util.HashSet;
 import java.util.Set;
 
-@Getter
-@Setter
 @Entity
 @Table(name = "groups")
+@Getter
+@Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Group {
 
@@ -23,10 +23,10 @@ public class Group {
     @Column(nullable = false, unique = true, length = 50)
     private String name;
 
-    @Column(length = 50)
+    @Column(length = 100)
     private String description;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "group_permissions",
             joinColumns = @JoinColumn(name = "group_id"),

@@ -6,11 +6,11 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
+@Table(name = "book_copies")
 @Getter
 @Setter
-@Table(name = "book_copies")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class BookCopy {
 
     @Id
@@ -18,8 +18,8 @@ public class BookCopy {
     @EqualsAndHashCode.Include
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "book_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
     @Column(unique = true, nullable = false)
@@ -29,5 +29,9 @@ public class BookCopy {
     @Column(nullable = false)
     private CopyStatus status;
 
+    @Column(length = 100)
     private String location;
+
+    @Column(nullable = false)
+    private boolean active = true;
 }

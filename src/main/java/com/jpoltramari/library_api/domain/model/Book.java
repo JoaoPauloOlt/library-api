@@ -1,20 +1,17 @@
 package com.jpoltramari.library_api.domain.model;
 
-import com.fasterxml.jackson.annotation.JsonRootName;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.jpoltramari.library_api.domain.enums.Genre;
 
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@JsonRootName("book")
-@Getter
-@Setter
 @Entity
 @Table(name = "books")
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Book {
 
     @Id
@@ -25,17 +22,18 @@ public class Book {
     @Column(nullable = false, unique = true, length = 13)
     private String isbn;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 150)
     private String title;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String genre;
+    private Genre genre;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "book_authors",
             joinColumns = @JoinColumn(name = "book_id"),
             inverseJoinColumns = @JoinColumn(name = "author_id")
     )
-    private List<Author> authors = new ArrayList<>();
+    private Set<Author> authors = new HashSet<>();
 }

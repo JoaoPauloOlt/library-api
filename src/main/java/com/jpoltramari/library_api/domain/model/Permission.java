@@ -5,11 +5,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter
-@Setter
+
 @Entity
 @Table(name = "permissions")
-@EqualsAndHashCode
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Permission {
 
     @EqualsAndHashCode.Include

@@ -8,11 +8,11 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@Getter
-@Setter
 @Entity
 @Table(name = "loans")
+@Getter
+@Setter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Loan {
 
     @Id
@@ -26,15 +26,20 @@ public class Loan {
 
     @Column(nullable = false)
     private LocalDateTime requestDate;
+
     private LocalDateTime approvalDate;
     private LocalDateTime withdrawableDate;
     private LocalDateTime dueDate;
     private LocalDateTime returnDate;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "book_copy_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "book_copy_id", nullable = false)
     private BookCopy bookCopy;
+
+    @Column(nullable = false)
+    private Integer renewalCount = 0;
 }
