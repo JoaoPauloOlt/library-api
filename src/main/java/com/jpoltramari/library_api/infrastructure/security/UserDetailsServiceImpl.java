@@ -1,23 +1,25 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
 import com.jpoltramari.library_api.domain.repository.UserRepository;
-import org.springframework.security.core.userdetails.*;
+import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository repository;
-
-    public UserDetailsServiceImpl(UserRepository repository){
-        this.repository = repository;
-    }
+    private final RbacResolver rbacResolver;
 
     @Override
-    public UserDetails loadUserByUsername(String email){
+    public UserDetails loadUserByUsername(String email) {
         var user = repository.findByEmailWithGroupsAndPermissions(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
 
-        return new UserDetailsImpl(user);
+        return AuthenticatedUser.fromUser(user, rbacResolver);
     }
 }
