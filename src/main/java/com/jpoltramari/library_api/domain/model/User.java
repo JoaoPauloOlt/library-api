@@ -1,7 +1,6 @@
 package com.jpoltramari.library_api.domain.model;
 
 import com.jpoltramari.library_api.domain.enums.UserStatus;
-import com.jpoltramari.library_api.domain.enums.Role;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -43,6 +42,9 @@ public class User {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateRegister;
+
+    @Column(name = "token_version", nullable = false)
+    private Integer tokenVersion = 0;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

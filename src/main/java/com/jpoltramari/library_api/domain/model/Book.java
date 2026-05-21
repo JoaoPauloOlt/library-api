@@ -7,6 +7,9 @@ import lombok.Setter;
 
 import com.jpoltramari.library_api.domain.enums.Genre;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Table(name = "books")
 @Getter

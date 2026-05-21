@@ -21,11 +21,9 @@ public class Author {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
     @Column(nullable = false, length = 100)
     private String name;
 
-    @NotBlank
     @Column(nullable = false, length = 40)
     private String nationality;
 
