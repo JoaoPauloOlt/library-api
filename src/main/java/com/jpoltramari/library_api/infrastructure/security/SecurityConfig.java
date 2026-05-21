@@ -17,7 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
-@EnableMethodSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter filter;
@@ -58,6 +58,28 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/books", "/books/**")
+                            .hasAuthority("BOOK_READ")
+                        .requestMatchers(HttpMethod.POST, "/books")
+                            .hasAuthority("BOOK_CREATE")
+                        .requestMatchers(HttpMethod.PUT, "/books/**")
+                            .hasAuthority("BOOK_UPDATE")
+                        .requestMatchers(HttpMethod.DELETE, "/books/**")
+                            .hasAuthority("BOOK_DELETE")
+
+                        .requestMatchers(HttpMethod.GET, "/authors", "/authors/**")
+                            .hasAuthority("AUTHOR_READ")
+                        .requestMatchers(HttpMethod.POST, "/authors")
+                            .hasAuthority("AUTHOR_CREATE")
+                        .requestMatchers(HttpMethod.PUT, "/authors/**")
+                            .hasAuthority("AUTHOR_UPDATE")
+                        .requestMatchers(HttpMethod.DELETE, "/authors/**")
+                            .hasAuthority("AUTHOR_DELETE")
+
+                        .requestMatchers(HttpMethod.GET, "/users", "/users/**")
+                            .hasAuthority("USER_ADMIN")
+
                         .anyRequest().authenticated()
                 )
 

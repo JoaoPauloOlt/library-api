@@ -18,5 +18,8 @@ public class ErrorResponse {
     private String title;
     private String detail;
     private String path;
+    private String correlationId;
+    private String errorCode;
+    private String exceptionType;
 
 }
