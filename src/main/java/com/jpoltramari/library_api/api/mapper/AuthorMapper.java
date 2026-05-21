@@ -1,7 +1,8 @@
 package com.jpoltramari.library_api.api.mapper;
 
-import com.jpoltramari.library_api.api.dto.input.AuthorInput;
-import com.jpoltramari.library_api.api.dto.model.AuthorModel;
+import com.jpoltramari.library_api.api.dto.author.AuthorInput;
+import com.jpoltramari.library_api.api.dto.author.AuthorModel;
+import com.jpoltramari.library_api.api.dto.author.AuthorUpdateInput;
 import com.jpoltramari.library_api.domain.model.Author;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -21,5 +22,5 @@ public interface AuthorMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "books", ignore = true)
-    void update(AuthorInput input, @MappingTarget Author author);
+    void update(AuthorUpdateInput input, @MappingTarget Author author);
 }

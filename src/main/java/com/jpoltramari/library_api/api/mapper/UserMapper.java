@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.api.mapper;
 
-import com.jpoltramari.library_api.api.dto.input.UserInput;
-import com.jpoltramari.library_api.api.dto.model.UserModel;
+import com.jpoltramari.library_api.api.dto.user.UserInput;
+import com.jpoltramari.library_api.api.dto.user.UserModel;
 import com.jpoltramari.library_api.domain.model.Group;
 import com.jpoltramari.library_api.domain.model.User;
 import org.mapstruct.*;

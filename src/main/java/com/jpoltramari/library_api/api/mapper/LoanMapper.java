@@ -1,6 +1,6 @@
 package com.jpoltramari.library_api.api.mapper;
 
-import com.jpoltramari.library_api.api.dto.model.LoanModel;
+import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.domain.model.Loan;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
