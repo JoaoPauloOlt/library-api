@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.domain.service;
 
-import com.jpoltramari.library_api.api.dto.input.AuthorInput;
+import com.jpoltramari.library_api.api.dto.author.AuthorInput;
+import com.jpoltramari.library_api.api.dto.author.AuthorUpdateInput;
 import com.jpoltramari.library_api.api.mapper.AuthorMapper;
 import com.jpoltramari.library_api.domain.exception.AuthorNotFoundException;
 import com.jpoltramari.library_api.domain.model.Author;
@@ -35,7 +36,7 @@ public class AuthorService {
     }
 
     @Transactional
-    public Author update(Long id, AuthorInput input) {
+    public Author update(Long id, AuthorUpdateInput input) {
         Author author = findOrFail(id);
         mapper.update(input, author);
         return repository.save(author);

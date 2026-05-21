@@ -1,6 +1,6 @@
 package com.jpoltramari.library_api.domain.service;
 
-import com.jpoltramari.library_api.api.dto.input.UserInput;
+import com.jpoltramari.library_api.api.dto.user.UserInput;
 import com.jpoltramari.library_api.api.mapper.UserMapper;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
@@ -29,6 +29,7 @@ public class UserService {
     private final GroupRepository groupRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper mapper;
+    private final TokenVersionService tokenVersionService;
 
     public Page<User> findAll(Pageable pageable) {
         return repository.findAll(pageable);
@@ -41,14 +42,20 @@ public class UserService {
 
     @Transactional
     public User create(UserInput input) {
-        validateEmail(input.getEmail());
+        validateEmail(input.email());
 
         User user = mapper.toEntity(input);
-        user.setPassword(passwordEncoder.encode(input.getPassword()));
+        user.setPassword(passwordEncoder.encode(input.password()));
         user.setStatus(UserStatus.ACTIVE);
         user.setGroups(Set.of(findDefaultGroup()));
 
         return repository.save(user);
+    }
+
+    @Transactional
+    public void revokeAllSessions(Long userId) {
+        findOrFail(userId);
+        tokenVersionService.revokeAllSessions(userId);
     }
 
     private void validateEmail(String email) {

@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.domain.service;
 
-import com.jpoltramari.library_api.api.dto.input.BookInput;
+import com.jpoltramari.library_api.api.dto.book.BookInput;
+import com.jpoltramari.library_api.api.dto.book.BookUpdateInput;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
@@ -46,28 +47,31 @@ public class BookService {
 
     @Transactional
     public Book create(BookInput input) {
-        validateIsbn(input.getIsbn());
+        validateIsbn(input.isbn());
 
         Book book = mapper.toEntity(input);
-        book.setAuthors(loadAuthors(input.getAuthorIds()));
+        book.setAuthors(loadAuthors(input.authorIds()));
 
         Book savedBook = repository.save(book);
 
-        createCopies(savedBook, input.getTotalQuantity());
+        createCopies(savedBook, input.totalQuantity());
 
         return savedBook;
     }
 
     @Transactional
-    public Book update(Long id, BookInput input) {
+    public Book update(Long id, BookUpdateInput input) {
         Book book = findOrFail(id);
 
-        if (!book.getIsbn().equals(input.getIsbn())) {
-            validateIsbn(input.getIsbn());
+        if (input.isbn() != null && !book.getIsbn().equals(input.isbn())) {
+            validateIsbn(input.isbn());
         }
 
         mapper.update(input, book);
-        book.setAuthors(loadAuthors(input.getAuthorIds()));
+
+        if (input.authorIds() != null) {
+            book.setAuthors(loadAuthors(input.authorIds()));
+        }
 
         return repository.save(book);
     }

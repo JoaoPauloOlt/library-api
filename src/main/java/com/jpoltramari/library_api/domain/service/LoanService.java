@@ -1,11 +1,12 @@
 package com.jpoltramari.library_api.domain.service;
 
-import com.jpoltramari.library_api.api.dto.input.LoanInput;
+import com.jpoltramari.library_api.api.dto.loan.LoanInput;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.LoanNotFoundException;
+import com.jpoltramari.library_api.domain.exception.UserNotFoundException;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
@@ -13,6 +14,7 @@ import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
+import com.jpoltramari.library_api.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,26 +32,27 @@ public class LoanService {
     private final LoanRepository loanRepository;
     private final BookRepository bookRepository;
     private final BookCopyRepository bookCopyRepository;
+    private final UserRepository userRepository;
 
     public Page<Loan> findAll(Pageable pageable) {
         return loanRepository.findAll(pageable);
     }
 
-    public Page<Loan> findByUser(User user, Pageable pageable) {
-        return loanRepository.findByUser(user, pageable);
+    public Page<Loan> findByUserId(Long userId, Pageable pageable) {
+        return loanRepository.findByUserId(userId, pageable);
     }
 
     @Transactional
-    public Loan create(LoanInput input, User user) {
-        Long bookId = input.getBookId();
+    public Loan create(LoanInput input, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        Long bookId = input.bookId();
 
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new BookNotFoundException(bookId));
 
         BookCopy copy = bookCopyRepository
-                .findAvailableCopies(book.getId(), CopyStatus.AVAILABLE)
-                .stream()
-                .findFirst()
+                .findFirstAvailableCopy(book.getId())
                 .orElseThrow(() ->
                         new BusinessException("No available copies."));
 
@@ -86,11 +89,11 @@ public class LoanService {
             throw new BusinessException("Copy is not available.");
         }
 
-        copy.setStatus(CopyStatus.UNDER_LOAN);
+        copy.setStatus(CopyStatus.LOANED);
         bookCopyRepository.save(copy);
 
         loan.setStatus(LoanStatus.ACTIVE);
-        loan.setWithdrawDate(LocalDateTime.now());
+        loan.setWithdrawableDate(LocalDateTime.now());
         loan.setDueDate(LocalDateTime.now().plusDays(LOAN_DAYS));
 
         return loanRepository.save(loan);
@@ -118,7 +121,7 @@ public class LoanService {
 
         validateStatus(loan, LoanStatus.REQUESTED);
 
-        loan.setStatus(LoanStatus.CANCELLED);
+        loan.setStatus(LoanStatus.CANCELED);
 
         return loanRepository.save(loan);
     }
