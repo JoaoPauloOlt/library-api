@@ -1,0 +1,23 @@
+package com.jpoltramari.library_api.api.dto.book;
+
+import com.jpoltramari.library_api.domain.enums.Genre;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+
+import java.util.List;
+
+public record BookUpdateInput(
+
+        @Size(min = 13, max = 13)
+        String isbn,
+
+        @Size(max = 150)
+        String title,
+
+        Genre genre,
+
+        @Positive
+        Integer totalQuantity,
+
+        List<Long> authorIds
+) {}
