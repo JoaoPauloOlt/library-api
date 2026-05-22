@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,7 +16,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
-@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter filter;
@@ -76,6 +74,21 @@ public class SecurityConfig {
                             .hasAuthority("AUTHOR_UPDATE")
                         .requestMatchers(HttpMethod.DELETE, "/authors/**")
                             .hasAuthority("AUTHOR_DELETE")
+
+                        .requestMatchers(HttpMethod.GET, "/loans")
+                            .hasAuthority("LOAN_MANAGE")
+                        .requestMatchers(HttpMethod.GET, "/loans/my")
+                            .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/loans")
+                            .hasAuthority("CREATE_LOAN")
+                        .requestMatchers(HttpMethod.PUT, "/loans/*/approve")
+                            .hasAuthority("APPROVE_LOAN")
+                        .requestMatchers(HttpMethod.PUT, "/loans/*/withdraw")
+                            .hasAuthority("WITHDRAW_LOAN")
+                        .requestMatchers(HttpMethod.PUT, "/loans/*/return")
+                            .hasAuthority("RETURN_BOOK")
+                        .requestMatchers(HttpMethod.PUT, "/loans/*/cancel")
+                            .hasAuthority("CANCEL_LOAN")
 
                         .requestMatchers(HttpMethod.GET, "/users", "/users/**")
                             .hasAuthority("USER_ADMIN")
