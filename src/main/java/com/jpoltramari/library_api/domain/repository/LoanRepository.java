@@ -29,4 +29,6 @@ public interface LoanRepository extends CustomJpaRepository<Loan, Long> {
     """)
     long countActiveLoansByUser(Long userId,
                                 Collection<LoanStatus> statuses);
+
+    boolean existsByUserIdAndBookCopyBookIdAndStatusIn(Long userId, Long bookId, List<LoanStatus> statuses);
 }

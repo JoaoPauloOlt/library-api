@@ -7,7 +7,6 @@ import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.LoanNotFoundException;
 import com.jpoltramari.library_api.domain.exception.UserNotFoundException;
-import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -44,17 +44,26 @@ public class LoanService {
 
     @Transactional
     public Loan create(LoanInput input, Long userId) {
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+
         Long bookId = input.bookId();
 
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new BookNotFoundException(bookId));
+        if (!bookRepository.existsById(bookId)){
+            throw new BookNotFoundException(bookId);
+        }
+
+        validateNoActiveLoan(user, bookId);
 
         BookCopy copy = bookCopyRepository
-                .findFirstAvailableCopy(book.getId())
+                .findFirstAvailableCopy(bookId)
                 .orElseThrow(() ->
-                        new BusinessException("No available copies."));
+                        new BusinessException("No available copies for this book."));
+
+        if (copy.getStatus() != CopyStatus.AVAILABLE || !copy.isActive()){
+            throw new BusinessException("Copy no longer available.");
+        }
 
         Loan loan = new Loan();
         loan.setUser(user);
@@ -85,6 +94,10 @@ public class LoanService {
 
         BookCopy copy = loan.getBookCopy();
 
+        if (!copy.isActive()){
+            throw new BusinessException("The copy is inactive");
+        }
+
         if (copy.getStatus() != CopyStatus.AVAILABLE) {
             throw new BusinessException("Copy is not available.");
         }
@@ -106,6 +119,11 @@ public class LoanService {
         validateStatus(loan, LoanStatus.ACTIVE);
 
         BookCopy copy = loan.getBookCopy();
+
+        if (copy.getStatus() != CopyStatus.LOANED){
+            throw new BusinessException("Copy is not currently loaned");
+        }
+
         copy.setStatus(CopyStatus.AVAILABLE);
         bookCopyRepository.save(copy);
 
@@ -119,7 +137,9 @@ public class LoanService {
     public Loan cancel(Long id) {
         Loan loan = findOrFail(id);
 
-        validateStatus(loan, LoanStatus.REQUESTED);
+        if (loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.RETURNED) {
+            throw new BusinessException("Only requested or approved loans can be cancelled.");
+        }
 
         loan.setStatus(LoanStatus.CANCELED);
 
@@ -134,11 +154,28 @@ public class LoanService {
     private void validateStatus(Loan loan, LoanStatus expectedStatus) {
         if (loan.getStatus() != expectedStatus) {
             throw new BusinessException(
-                    "Invalid status transition. Expected: "
-                            + expectedStatus
-                            + ", current: "
-                            + loan.getStatus()
+                    String.format("Invalid status transition. Expected: %s, current: %s",
+                            expectedStatus,
+                            loan.getStatus()
+                    )
             );
+        }
+    }
+
+    private void validateNoActiveLoan(User user, Long bookId){
+        boolean exists = loanRepository.existsByUserIdAndBookCopyBookIdAndStatusIn(
+                user.getId(),
+                bookId,
+                List.of(
+                        LoanStatus.REQUESTED,
+                        LoanStatus.APPROVED,
+                        LoanStatus.ACTIVE,
+                        LoanStatus.LATE
+                )
+        );
+
+        if (exists){
+            throw new BusinessException("User already has an active loan for this book.");
         }
     }
 }
