@@ -40,10 +40,7 @@ public class AuthorController {
     }
 
     @PutMapping("/{id}")
-    public AuthorModel update(
-            @PathVariable @Positive Long id,
-            @RequestBody @Valid AuthorUpdateInput input
-    ) {
+    public AuthorModel update(@PathVariable @Positive Long id, @RequestBody @Valid AuthorUpdateInput input) {
         return mapper.toModel(service.update(id, input));
     }
 

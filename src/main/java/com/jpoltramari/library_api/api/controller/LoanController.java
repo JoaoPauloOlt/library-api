@@ -30,10 +30,7 @@ public class LoanController {
     }
 
     @GetMapping("/my")
-    public PageResponse<LoanModel> myLoans(
-            Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser principal
-    ) {
+    public PageResponse<LoanModel> myLoans(Pageable pageable, @AuthenticationPrincipal AuthenticatedUser principal) {
         return PageResponse.from(
                 service.findByUserId(principal.getUserId(), pageable),
                 mapper::toModel
@@ -42,10 +39,7 @@ public class LoanController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public LoanModel create(
-            @RequestBody @Valid LoanInput input,
-            @AuthenticationPrincipal AuthenticatedUser principal
-    ) {
+    public LoanModel create(@RequestBody @Valid LoanInput input, @AuthenticationPrincipal AuthenticatedUser principal) {
         return mapper.toModel(service.create(input, principal.getUserId()));
     }
 

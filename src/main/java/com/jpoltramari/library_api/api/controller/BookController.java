@@ -41,10 +41,7 @@ public class BookController {
     }
 
     @PutMapping("/{id}")
-    public BookModel update(
-            @PathVariable @Positive Long id,
-            @RequestBody @Valid BookUpdateInput input
-    ) {
+    public BookModel update(@PathVariable @Positive Long id, @RequestBody @Valid BookUpdateInput input) {
         return mapper.toModel(service.update(id, input));
     }
 
