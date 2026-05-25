@@ -11,8 +11,8 @@ public record BookModel(
         String title,
         String genre,
 
-        Integer totalQuantity,
-        Integer availableQuantity,
+        Long totalCopies,
+        Long availableCopies,
 
         List<AuthorModel> authors
 ) {}
