@@ -39,4 +39,7 @@ public class Book {
             inverseJoinColumns = @JoinColumn(name = "author_id")
     )
     private Set<Author> authors = new HashSet<>();
+
+    @OneToMany(mappedBy = "book", fetch = FetchType.LAZY)
+    private Set<BookCopy> copies = new HashSet<>();
 }
