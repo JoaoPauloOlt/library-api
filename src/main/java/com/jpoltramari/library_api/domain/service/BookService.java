@@ -3,16 +3,13 @@ package com.jpoltramari.library_api.domain.service;
 import com.jpoltramari.library_api.api.dto.book.BookInput;
 import com.jpoltramari.library_api.api.dto.book.BookUpdateInput;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
-import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.filter.BookFilter;
 import com.jpoltramari.library_api.domain.model.Author;
 import com.jpoltramari.library_api.domain.model.Book;
-import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.repository.AuthorRepository;
-import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.spec.BookSpecs;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +26,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class BookService {
 
-    private static final String DEFAULT_LOCATION = "Shelf A";
-
     private final BookRepository repository;
     private final AuthorRepository authorRepository;
-    private final BookCopyRepository bookCopyRepository;
     private final BookMapper mapper;
 
     public Page<Book> findAll(BookFilter filter, Pageable pageable) {
@@ -52,11 +46,7 @@ public class BookService {
         Book book = mapper.toEntity(input);
         book.setAuthors(loadAuthors(input.authorIds()));
 
-        Book savedBook = repository.save(book);
-
-        createCopies(savedBook, input.totalQuantity());
-
-        return savedBook;
+        return repository.save(book);
     }
 
     @Transactional
@@ -79,6 +69,11 @@ public class BookService {
     @Transactional
     public void delete(Long id) {
         Book book = findOrFail(id);
+
+        if (!book.getCopies().isEmpty()){
+            throw new BusinessException(
+                    "Cannot delete a book that has registered copies");
+        }
         repository.delete(book);
     }
 
@@ -98,21 +93,5 @@ public class BookService {
         }
 
         return new HashSet<>(authors);
-    }
-
-    private void createCopies(Book book, int quantity) {
-        for (int i = 1; i <= quantity; i++) {
-            BookCopy copy = new BookCopy();
-            copy.setBook(book);
-            copy.setStatus(CopyStatus.AVAILABLE);
-            copy.setLocation(DEFAULT_LOCATION);
-            copy.setBarcode(generateBarcode(book.getId(), i));
-
-            bookCopyRepository.save(copy);
-        }
-    }
-
-    private String generateBarcode(Long bookId, int index) {
-        return String.format("BK-%d-%04d", bookId, index);
     }
 }
