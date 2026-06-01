@@ -10,12 +10,17 @@ VALUES
     ('AUTHOR_UPDATE'),
     ('AUTHOR_DELETE'),
 
+    ('BOOK_COPY_READ'),
+    ('BOOK_COPY_CREATE'),
+    ('BOOK_COPY_UPDATE'),
+    ('BOOK_COPY_DELETE'),
+
     ('LOAN_CREATE'),
     ('LOAN_APPROVE'),
     ('LOAN_CANCEL'),
     ('LOAN_WITHDRAW'),
     ('LOAN_RETURN'),
-    ('LOAN_MANAGE'),
+    ('LOAN_READ_ALL'),
 
     ('USER_ADMIN');
 
@@ -48,12 +53,17 @@ FROM groups g
                             'AUTHOR_UPDATE',
                             'AUTHOR_DELETE',
 
+                            'BOOK_COPY_READ',
+                            'BOOK_COPY_CREATE',
+                            'BOOK_COPY_UPDATE',
+                            'BOOK_COPY_DELETE',
+
                             'LOAN_CREATE',
                             'LOAN_APPROVE',
                             'LOAN_CANCEL',
                             'LOAN_WITHDRAW',
                             'LOAN_RETURN',
-                            'LOAN_MANAGE'
+                            'LOAN_READ_ALL'
                   )
 WHERE g.name = 'LIBRARIAN';
 
