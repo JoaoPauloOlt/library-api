@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class BookController {
     private final BookMapper mapper;
 
     @GetMapping
-    public PageResponse<BookModel> list(BookFilter filter, Pageable pageable) {
+    public PageResponse<BookModel> list(@Valid BookFilter filter, @PageableDefault(size = 20, sort = "title") Pageable pageable) {
         return PageResponse.from(service.findAll(filter, pageable), mapper::toModel);
     }
 

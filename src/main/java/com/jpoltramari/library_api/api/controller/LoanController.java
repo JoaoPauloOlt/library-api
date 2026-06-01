@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -25,7 +26,7 @@ public class LoanController {
     private final LoanMapper mapper;
 
     @GetMapping
-    public PageResponse<LoanModel> list(Pageable pageable) {
+    public PageResponse<LoanModel> list(@PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
         return PageResponse.from(service.findAll(pageable), mapper::toModel);
     }
 
@@ -35,6 +36,11 @@ public class LoanController {
                 service.findByUserId(principal.getUserId(), pageable),
                 mapper::toModel
         );
+    }
+
+    @GetMapping("/{id}")
+    public LoanModel findById(@PathVariable @Positive Long id){
+        return mapper.toModel(service.findOrFail(id));
     }
 
     @PostMapping

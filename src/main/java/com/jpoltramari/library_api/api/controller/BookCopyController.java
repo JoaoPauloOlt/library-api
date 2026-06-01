@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.api.controller;
 
+import com.jpoltramari.library_api.api.dto.bookcopy.BookAvailabilityModel;
 import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyInput;
 import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyModel;
 import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyUpdateInput;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/book-copies")
+@RequestMapping("/books/{bookId}/copies")
 @RequiredArgsConstructor
 @Validated
 public class BookCopyController {
@@ -25,37 +26,46 @@ public class BookCopyController {
     private final BookCopyMapper mapper;
 
     @GetMapping("/{id}")
-    public BookCopyModel findById(@PathVariable @Positive Long id){
+    public BookCopyModel findById(@PathVariable @Positive Long id) {
         return mapper.toModel(service.findOrFail(id));
     }
 
-    @GetMapping("/book/{bookId}")
-    public List<BookCopyModel> findAllByBook(@PathVariable @Positive Long bookId){
+    @GetMapping
+    public List<BookCopyModel> findAllByBook(@PathVariable @Positive Long bookId) {
         return service.findAllByBook(bookId)
                 .stream()
                 .map(mapper::toModel)
                 .toList();
     }
 
+    @GetMapping("/availability")
+    public BookAvailabilityModel availability(@PathVariable @Positive Long bookId) {
+        return new BookAvailabilityModel(
+                bookId,
+                service.totalQuantity(bookId),
+                service.availableQuantity(bookId)
+        );
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BookCopyModel create(@RequestBody @Valid BookCopyInput input){
+    public BookCopyModel create(@RequestBody @Valid BookCopyInput input) {
         return mapper.toModel(service.create(input));
     }
 
     @PutMapping("/{id}")
-    public BookCopyModel update(@PathVariable @Positive Long id, @RequestBody @Valid BookCopyUpdateInput input){
+    public BookCopyModel update(@PathVariable @Positive Long id, @RequestBody @Valid BookCopyUpdateInput input) {
         return mapper.toModel(service.update(id, input));
     }
 
     @PatchMapping("/{id}/status")
-    public BookCopyModel changeStatus(@PathVariable Long id, @RequestParam CopyStatus status){
+    public BookCopyModel changeStatus(@PathVariable @Positive Long id, @RequestParam CopyStatus status) {
         return mapper.toModel(service.changeStatus(id, status));
     }
 
-    @DeleteMapping("{}")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable @Positive Long id){
+    public void delete(@PathVariable @Positive Long id) {
         service.delete(id);
     }
 }

@@ -19,6 +19,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final UserRepository userRepository;
+
     @Transactional
     public LoginResponse login(String email, String password) {
         authenticationManager.authenticate(

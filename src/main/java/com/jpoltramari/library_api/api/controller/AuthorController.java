@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,12 +25,12 @@ public class AuthorController {
     private final AuthorMapper mapper;
 
     @GetMapping
-    public PageResponse<AuthorModel> list(Pageable pageable) {
+    public PageResponse<AuthorModel> list(@PageableDefault(size = 20, sort = "name") Pageable pageable) {
         return PageResponse.from(service.findAll(pageable), mapper::toModel);
     }
 
     @GetMapping("/{id}")
-    public AuthorModel findById(@PathVariable Long id) {
+    public AuthorModel findById(@PathVariable @Positive Long id) {
         return mapper.toModel(service.findOrFail(id));
     }
 

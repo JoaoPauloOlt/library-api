@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record BookCopyInput (
+public record BookCopyInput(
 
         @NotNull
         Long bookId,
@@ -12,4 +12,5 @@ public record BookCopyInput (
         @NotBlank
         @Size(max = 100)
         String location
-){}
+) {
+}

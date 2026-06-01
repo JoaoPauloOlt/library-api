@@ -10,4 +10,5 @@ public record BookCopyModel(
 
         Long bookId,
         String bookTitle
-) {}
+) {
+}

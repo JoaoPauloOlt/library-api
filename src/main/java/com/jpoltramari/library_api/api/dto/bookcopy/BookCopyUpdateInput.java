@@ -11,4 +11,5 @@ public record BookCopyUpdateInput(
         String location,
 
         Boolean active
-) {}
+) {
+}
