@@ -4,13 +4,13 @@ import com.jpoltramari.library_api.api.dto.PageResponse;
 import com.jpoltramari.library_api.api.dto.user.UserInput;
 import com.jpoltramari.library_api.api.dto.user.UserModel;
 import com.jpoltramari.library_api.api.mapper.UserMapper;
-import com.jpoltramari.library_api.infrastructure.security.SecurityExpressions;
 import com.jpoltramari.library_api.domain.service.UserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,14 +24,12 @@ public class UserController {
     private final UserMapper mapper;
 
     @GetMapping
-    @PreAuthorize(SecurityExpressions.USER_ADMIN)
-    public PageResponse<UserModel> list(Pageable pageable) {
+    public PageResponse<UserModel> list(@PageableDefault(size = 20, sort = "name") Pageable pageable) {
         return PageResponse.from(service.findAll(pageable), mapper::toModel);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize(SecurityExpressions.USER_ADMIN)
-    public UserModel get(@PathVariable Long id) {
+    public UserModel get(@PathVariable @Positive Long id) {
         return mapper.toModel(service.findOrFail(id));
     }
 

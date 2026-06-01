@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,7 +16,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
-@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter filter;
@@ -76,6 +74,32 @@ public class SecurityConfig {
                             .hasAuthority("AUTHOR_UPDATE")
                         .requestMatchers(HttpMethod.DELETE, "/authors/**")
                             .hasAuthority("AUTHOR_DELETE")
+
+                        .requestMatchers(HttpMethod.GET, "/loans")
+                            .hasAuthority("LOAN_READ_ALL")
+                        .requestMatchers(HttpMethod.GET, "/loans/my")
+                            .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/loans")
+                            .hasAuthority("LOAN_CREATE")
+                        .requestMatchers(HttpMethod.PUT, "/loans/*/approve")
+                            .hasAuthority("LOAN_APPROVE")
+                        .requestMatchers(HttpMethod.PUT, "/loans/*/withdraw")
+                            .hasAuthority("LOAN_WITHDRAW")
+                        .requestMatchers(HttpMethod.PUT, "/loans/*/return")
+                            .hasAuthority("LOAN_RETURN")
+                        .requestMatchers(HttpMethod.PUT, "/loans/*/cancel")
+                            .hasAuthority("LOAN_CANCEL")
+
+                        .requestMatchers(HttpMethod.GET, "/books/*/copies/**")
+                            .hasAuthority("BOOK_COPY_READ")
+                        .requestMatchers(HttpMethod.POST, "/books/*/copies")
+                            .hasAuthority("BOOK_COPY_CREATE")
+                        .requestMatchers(HttpMethod.PUT, "/books/*/copies/**")
+                            .hasAuthority("BOOK_COPY_UPDATE")
+                        .requestMatchers(HttpMethod.PATCH, "/books/*/copies/**")
+                            .hasAuthority("BOOK_COPY_UPDATE")
+                        .requestMatchers(HttpMethod.DELETE, "/books/*/copies/**")
+                            .hasAuthority("BOOK_COPY_DELETE")
 
                         .requestMatchers(HttpMethod.GET, "/users", "/users/**")
                             .hasAuthority("USER_ADMIN")

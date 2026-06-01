@@ -18,10 +18,6 @@ public record BookInput(
         @NotNull
         Genre genre,
 
-        @NotNull
-        @Positive
-        Integer totalQuantity,
-
         @NotEmpty
         List<Long> authorIds
 ) {}

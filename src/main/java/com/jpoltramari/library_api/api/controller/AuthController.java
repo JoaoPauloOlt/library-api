@@ -29,10 +29,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(@RequestBody(required = false) LogoutInput input) {
-        if (input == null) {
-            return;
-        }
+    public void logout(@Valid @RequestBody LogoutInput input) {
         service.logout(input.refreshToken(), input.accessToken());
     }
 }

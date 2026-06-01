@@ -29,7 +29,6 @@ public class UserService {
     private final GroupRepository groupRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper mapper;
-    private final TokenVersionService tokenVersionService;
 
     public Page<User> findAll(Pageable pageable) {
         return repository.findAll(pageable);
@@ -50,12 +49,6 @@ public class UserService {
         user.setGroups(Set.of(findDefaultGroup()));
 
         return repository.save(user);
-    }
-
-    @Transactional
-    public void revokeAllSessions(Long userId) {
-        findOrFail(userId);
-        tokenVersionService.revokeAllSessions(userId);
     }
 
     private void validateEmail(String email) {

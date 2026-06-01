@@ -16,8 +16,5 @@ public record BookUpdateInput(
 
         Genre genre,
 
-        @Positive
-        Integer totalQuantity,
-
         List<Long> authorIds
 ) {}

@@ -27,6 +27,7 @@ public class Author {
     @Column(nullable = false, length = 40)
     private String nationality;
 
+    @JsonIgnore
     @ManyToMany(mappedBy = "authors", fetch = FetchType.LAZY)
     private Set<Book> books = new HashSet<>();
 }
