@@ -1,17 +1,17 @@
 package com.jpoltramari.library_api.domain.service;
 
 import com.jpoltramari.library_api.api.dto.book.BookInput;
-import com.jpoltramari.library_api.api.dto.book.BookUpdateInput;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
+import com.jpoltramari.library_api.domain.enums.Genre;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
+import com.jpoltramari.library_api.domain.filter.BookFilter;
 import com.jpoltramari.library_api.domain.model.Author;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.repository.AuthorRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
-import com.jpoltramari.library_api.domain.filter.BookFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
 import java.util.Optional;
@@ -62,7 +63,7 @@ class BookServiceTest {
 
     @Test
     void shouldCreateBookWithAuthors() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", "TECH", List.of(1L));
+        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, List.of(1L));
         Author author = new Author();
         Book book = new Book();
 
@@ -79,7 +80,7 @@ class BookServiceTest {
 
     @Test
     void shouldRejectDuplicateIsbn() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", "TECH", List.of(1L));
+        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, List.of(1L));
         when(repository.existsByIsbn(input.isbn())).thenReturn(true);
 
         assertThrows(BusinessException.class, () -> service.create(input));
@@ -87,7 +88,7 @@ class BookServiceTest {
 
     @Test
     void shouldRejectMissingAuthor() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", "TECH", List.of(1L, 2L));
+        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, List.of(1L, 2L));
         when(repository.existsByIsbn(input.isbn())).thenReturn(false);
         when(authorRepository.findAllById(input.authorIds())).thenReturn(List.of(new Author()));
 
@@ -117,7 +118,7 @@ class BookServiceTest {
     void shouldReturnFilteredPage() {
         BookFilter filter = new BookFilter();
         PageRequest pageable = PageRequest.of(0, 10);
-        when(repository.findAll(any(), any(PageRequest.class)))
+        when(repository.findAll(any(Specification.class), any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(new Book()), pageable, 1));
 
         assertNotNull(service.findAll(filter, pageable));
