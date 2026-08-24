@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
 
 import java.util.Optional;
 
@@ -38,7 +37,7 @@ class AuthServiceTest {
     @Test
     void shouldLoginAndIssueTokens() {
         User user = new User();
-        var issued = new RefreshTokenService.IssuedTokens("access", "refresh");
+        var issued = new RefreshTokenService.IssuedTokens("access", "refresh", null);
         when(userRepository.findByEmailWithGroupsAndPermissions("john@example.com")).thenReturn(Optional.of(user));
         when(refreshTokenService.issueTokens(user)).thenReturn(issued);
         when(jwtService.getExpiration()).thenReturn(900L);
@@ -53,7 +52,7 @@ class AuthServiceTest {
 
     @Test
     void shouldRefreshWhenTokenIsValid() {
-        var issued = new RefreshTokenService.IssuedTokens("access", "refresh");
+        var issued = new RefreshTokenService.IssuedTokens("access", "refresh", null);
         when(refreshTokenService.rotate("refresh-old")).thenReturn(Optional.of(issued));
         when(jwtService.getExpiration()).thenReturn(900L);
 
