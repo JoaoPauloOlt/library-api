@@ -1,159 +1,152 @@
 # 📚 Library API
 
-API RESTful para gerenciamento de biblioteca, desenvolvida com **Spring Boot**, seguindo boas práticas de arquitetura e segurança com **JWT**.
+REST API for library management, developed with **Java 17 + Spring Boot**. The project is being built as a portfolio-grade MVP, with authentication, authorization, catalog management, physical book copies and loan circulation.
 
----
+## 🧰 Stack
 
-## 🚀 Tecnologias
+- Java 17
+- Spring Boot
+- Spring Security
+- JWT
+- Spring Data JPA / Hibernate
+- PostgreSQL
+- Flyway
+- Maven
+- Docker / Docker Compose
+- OpenAPI / Swagger
 
-* Java 17+
-* Spring Boot
-* Spring Security
-* JWT (JSON Web Token)
-* Spring Data JPA
-* MySQL
-* Maven
+## 🏗️ Architecture
 
----
+The application follows a layered architecture with clear separation between API, domain and infrastructure concerns:
 
-## 🔐 Segurança
+```text
+api/
+  controller/
+  dto/
+  exception/
+  mapper/
 
-A API utiliza autenticação baseada em **JWT**:
+domain/
+  model/
+  enums/
+  repository/
+  service/
+  specification/
 
-* Login via `/auth/login`
-* Token deve ser enviado no header:
-
-```
-Authorization: Bearer {token}
-```
-
----
-
-## 📦 Funcionalidades
-
-### 👤 Usuários
-
-* Criar usuário
-* Listar usuários
-
-### ✍️ Autores
-
-* Criar, listar, buscar, atualizar e deletar autores
-
-### 📚 Livros
-
-* CRUD completo
-* Filtros dinâmicos:
-
-    * título
-    * gênero
-    * autor
-    * disponibilidade
-
-### 🔄 Empréstimos
-
-* Realizar empréstimo
-* Devolver livro
-* Listar empréstimos
-
----
-
-## 🧠 Arquitetura
-
-O projeto segue uma arquitetura em camadas:
-
-```
-api (controllers, DTOs, assemblers)
-domain (model, service, repository, exceptions)
-infrastructure (security, config)
+infrastructure/
+  security/
+  config/
 ```
 
----
+## 🔐 Security
 
-## ⚙️ Configuração
+Authentication uses JWT with Spring Security. Passwords are protected with BCrypt and authorization is based on RBAC permissions.
 
-### 🔹 Profiles
+The intended roles are:
 
-O projeto utiliza profiles:
+- **USER** — catalog and own-loan operations
+- **LIBRARIAN** — catalog, copies and circulation management
+- **ADMIN** — system administration
 
-* `dev` → ambiente local
-* `prod` → produção
+Never commit real credentials or JWT secrets. Development and production secrets are supplied through environment variables.
 
----
+## 📦 Core features
 
-### 🔹 Variáveis de ambiente (produção)
+### Catalog
 
-```env
-DB_URL=
-DB_USER=
-DB_PASS=
-JWT_SECRET=
+- Author CRUD
+- Book CRUD
+- ISBN validation and uniqueness
+- Dynamic book filtering
+- Pagination
+
+### Physical collection
+
+- Book copy management
+- Unique barcode per copy
+- Copy status (`AVAILABLE`, `LOANED`, `MAINTENANCE`)
+- Location tracking
+- Total and available quantity
+
+### Circulation
+
+- Loan creation
+- Loan return
+- Loan history
+- Business-rule validation
+
+### Identity and access
+
+- User registration
+- JWT authentication
+- Refresh tokens
+- Logout/session invalidation
+- Role/permission based authorization
+
+## 🗄️ Database
+
+PostgreSQL is the project's database. Schema changes are versioned with Flyway migrations under:
+
+```text
+src/main/resources/db/migration
 ```
 
----
+Current migrations cover the core schema, library domain, circulation, RBAC and refresh tokens.
 
-## ▶️ Como rodar o projeto
+## 🚀 Running locally
 
-### 1. Clonar repositório
+### Option 1 — Docker Compose
 
 ```bash
 git clone https://github.com/JoaoPauloOlt/library-api.git
+cd library-api
+
+cp .env.example .env
+# Edit .env and set JWT_SECRET
+
+docker compose up --build
 ```
 
-### 2. Configurar banco de dados
+The API will be available at `http://localhost:8080`.
 
-Crie um banco MySQL chamado:
+### Option 2 — Local Maven + PostgreSQL
 
-```
-library
-```
-
----
-
-### 3. Rodar aplicação
+Create a PostgreSQL database named `library`, configure the variables from `.env.example`, and run:
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
----
+## 📖 API documentation
 
-## 🧪 Testes da API
+When the application is running, OpenAPI documentation is available through Springdoc/Swagger UI.
 
-Você pode testar usando:
-
-* Postman
-* Insomnia
-
----
-
-### 🔑 Exemplo de login
-
-```json
-POST /auth/login
-
-{
-  "email": "user@email.com",
-  "password": "123"
-}
+```text
+http://localhost:8080/swagger-ui/index.html
 ```
 
----
+## 🧪 Testing
 
-## 🌐 CORS
+The project is being expanded with unit and integration tests as part of the MVP quality phase.
 
-A API está configurada para aceitar requisições de front-end (React/Vite).
+```bash
+./mvnw test
+```
 
----
+## 🗺️ MVP roadmap
 
-## 📌 Próximos passos
+- [x] Layered API architecture
+- [x] PostgreSQL + Flyway
+- [x] JWT authentication
+- [x] RBAC foundation
+- [x] Book copies model and API
+- [ ] Complete circulation workflow
+- [ ] Automated unit tests
+- [ ] Integration tests with Testcontainers
+- [ ] CI/CD
+- [ ] React frontend
+- [ ] Production deployment
 
-* Deploy no Render
-* Integração com front-end (React)
-* Documentação com Swagger
+## 👨‍💻 Author
 
----
-
-## 👨‍💻 Autor
-
-Desenvolvido por **João Paulo Oltramari**.
+Developed by **João Paulo Oltramari** as a personal software engineering project focused on backend development with Java and Spring Boot.
