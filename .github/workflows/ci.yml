@@ -10,6 +10,27 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: library
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d library"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/library
+      DB_USER: postgres
+      DB_PASS: postgres
+      JWT_SECRET: ci-test-secret-change-me-ci-test-secret-change-me
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
