@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
 
 @ExtendWith(MockitoExtension.class)
 class AuthorServiceTest {
@@ -48,7 +47,7 @@ class AuthorServiceTest {
 
     @Test
     void shouldCreateAuthor() {
-        AuthorInput input = new AuthorInput("Robert Martin");
+        AuthorInput input = new AuthorInput("Robert Martin", "American");
         Author author = new Author();
         when(mapper.toEntity(input)).thenReturn(author);
         when(repository.save(author)).thenReturn(author);
@@ -59,7 +58,7 @@ class AuthorServiceTest {
     @Test
     void shouldUpdateAuthor() {
         Author author = new Author();
-        AuthorUpdateInput input = new AuthorUpdateInput("Robert C. Martin");
+        AuthorUpdateInput input = new AuthorUpdateInput("Robert C. Martin", "American");
         when(repository.findById(1L)).thenReturn(Optional.of(author));
         when(repository.save(author)).thenReturn(author);
         assertEquals(author, service.update(1L, input));
