@@ -29,7 +29,7 @@ jobs:
       DB_URL: jdbc:postgresql://localhost:5432/library
       DB_USER: postgres
       DB_PASS: postgres
-      JWT_SECRET: ci-test-secret-change-me-ci-test-secret-change-me
+      JWT_SECRET: bGlicmFyeS1hcGktY2ktc2VjcmV0LXRlc3QtMjAyNi0wOC0yNA==
 
     steps:
       - name: Checkout
