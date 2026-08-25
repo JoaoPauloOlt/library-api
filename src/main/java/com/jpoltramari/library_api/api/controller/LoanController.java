@@ -26,7 +26,7 @@ public class LoanController {
     private final LoanMapper mapper;
 
     @GetMapping
-    public PageResponse<LoanModel> list(@PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+    public PageResponse<LoanModel> list(@PageableDefault(size = 20, sort = "requestDate") Pageable pageable) {
         return PageResponse.from(service.findAll(pageable), mapper::toModel);
     }
 
@@ -39,7 +39,7 @@ public class LoanController {
     }
 
     @GetMapping("/{id}")
-    public LoanModel findById(@PathVariable @Positive Long id){
+    public LoanModel findById(@PathVariable @Positive Long id) {
         return mapper.toModel(service.findOrFail(id));
     }
 
