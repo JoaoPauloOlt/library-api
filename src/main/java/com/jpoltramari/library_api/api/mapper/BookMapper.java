@@ -3,7 +3,6 @@ package com.jpoltramari.library_api.api.mapper;
 import com.jpoltramari.library_api.api.dto.book.BookInput;
 import com.jpoltramari.library_api.api.dto.book.BookModel;
 import com.jpoltramari.library_api.api.dto.book.BookUpdateInput;
-import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.model.Book;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -15,7 +14,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 public interface BookMapper {
 
     @Mapping(target = "totalCopies", expression = "java((long) book.getCopies().size())")
-    @Mapping(target = "availableCopies", expression = "java(book.getCopies().stream().filter(copy -> copy.getStatus() == CopyStatus.AVAILABLE && copy.isActive()).count())")
+    @Mapping(target = "availableCopies", expression = "java(book.getCopies().stream().filter(copy -> copy.getStatus() == com.jpoltramari.library_api.domain.enums.CopyStatus.AVAILABLE && copy.isActive()).count())")
     BookModel toModel(Book book);
 
     @Mapping(target = "id", ignore = true)
