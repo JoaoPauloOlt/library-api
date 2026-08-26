@@ -2,6 +2,7 @@ package com.jpoltramari.library_api.domain.repository;
 
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.model.Loan;
+import org.springframework.data.domain.EntityGraph;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
@@ -13,6 +14,7 @@ import java.util.List;
 @Repository
 public interface LoanRepository extends CustomJpaRepository<Loan, Long> {
 
+    @EntityGraph(attributePaths = {"bookCopy", "bookCopy.book", "bookCopy.book.authors"})
     Page<Loan> findByUserId(Long userId, Pageable pageable);
 
     List<Loan> findByUserId(Long userId);
