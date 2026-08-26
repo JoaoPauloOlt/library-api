@@ -63,7 +63,7 @@ class BookServiceTest {
 
     @Test
     void shouldCreateBookWithAuthors() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, List.of(1L));
+        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, List.of(1L));
         Author author = new Author();
         Book book = new Book();
 
@@ -80,7 +80,7 @@ class BookServiceTest {
 
     @Test
     void shouldRejectDuplicateIsbn() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, List.of(1L));
+        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, List.of(1L));
         when(repository.existsByIsbn(input.isbn())).thenReturn(true);
 
         assertThrows(BusinessException.class, () -> service.create(input));
@@ -88,7 +88,7 @@ class BookServiceTest {
 
     @Test
     void shouldRejectMissingAuthor() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, List.of(1L, 2L));
+        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, List.of(1L, 2L));
         when(repository.existsByIsbn(input.isbn())).thenReturn(false);
         when(authorRepository.findAllById(input.authorIds())).thenReturn(List.of(new Author()));
 
