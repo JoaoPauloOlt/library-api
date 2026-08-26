@@ -13,15 +13,19 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "spring", uses = AuthorMapper.class)
 public interface BookMapper {
 
+    @Mapping(target = "totalCopies", ignore = true)
+    @Mapping(target = "availableCopies", ignore = true)
     BookModel toModel(Book book);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "authors", ignore = true)
     @Mapping(target = "copies", ignore = true)
     Book toEntity(BookInput input);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "authors", ignore = true)
     @Mapping(target = "copies", ignore = true)
     void update(BookUpdateInput input, @MappingTarget Book book);

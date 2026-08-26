@@ -21,6 +21,7 @@ public interface UserMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "dateRegister", ignore = true)
     @Mapping(target = "groups", ignore = true)
+    @Mapping(target = "tokenVersion", ignore = true)
     User toEntity(UserInput input);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -29,6 +30,7 @@ public interface UserMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "dateRegister", ignore = true)
     @Mapping(target = "groups", ignore = true)
+    @Mapping(target = "tokenVersion", ignore = true)
     void update(UserInput input, @MappingTarget User user);
 
     @Named("mapGroups")

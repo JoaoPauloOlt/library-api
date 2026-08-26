@@ -18,6 +18,9 @@ public record BookInput(
         @NotNull
         Genre genre,
 
+        @Size(max = 500)
+        String coverUrl,
+
         @NotEmpty
         List<Long> authorIds
 ) {}
