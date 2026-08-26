@@ -44,24 +44,21 @@ public class LoanService {
 
     @Transactional
     public Loan create(LoanInput input, Long userId) {
-
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         Long bookId = input.bookId();
 
-        if (!bookRepository.existsById(bookId)){
+        if (!bookRepository.existsById(bookId)) {
             throw new BookNotFoundException(bookId);
         }
 
         validateNoActiveLoan(user, bookId);
 
-        BookCopy copy = bookCopyRepository
-                .findFirstAvailableCopy(bookId)
-                .orElseThrow(() ->
-                        new BusinessException("No available copies for this book."));
+        BookCopy copy = bookCopyRepository.findFirstAvailableCopy(bookId)
+                .orElseThrow(() -> new BusinessException("No available copies for this book."));
 
-        if (copy.getStatus() != CopyStatus.AVAILABLE || !copy.isActive()){
+        if (copy.getStatus() != CopyStatus.AVAILABLE || !copy.isActive()) {
             throw new BusinessException("Copy no longer available.");
         }
 
@@ -77,50 +74,50 @@ public class LoanService {
     @Transactional
     public Loan approve(Long id) {
         Loan loan = findOrFail(id);
-
         validateStatus(loan, LoanStatus.REQUESTED);
 
-        loan.setStatus(LoanStatus.APPROVED);
-        loan.setApprovalDate(LocalDateTime.now());
-
-        return loanRepository.save(loan);
-    }
-
-    @Transactional
-    public Loan withdraw(Long id) {
-        Loan loan = findOrFail(id);
-
-        validateStatus(loan, LoanStatus.APPROVED);
-
         BookCopy copy = loan.getBookCopy();
-
-        if (!copy.isActive()){
-            throw new BusinessException("The copy is inactive");
+        if (copy == null || !copy.isActive()) {
+            throw new BusinessException("The copy is inactive.");
         }
-
         if (copy.getStatus() != CopyStatus.AVAILABLE) {
             throw new BusinessException("Copy is not available.");
         }
 
+        LocalDateTime now = LocalDateTime.now();
         copy.setStatus(CopyStatus.LOANED);
         bookCopyRepository.save(copy);
 
         loan.setStatus(LoanStatus.ACTIVE);
-        loan.setWithdrawableDate(LocalDateTime.now());
-        loan.setDueDate(LocalDateTime.now().plusDays(LOAN_DAYS));
+        loan.setApprovalDate(now);
+        loan.setWithdrawableDate(now);
+        loan.setDueDate(now.plusDays(LOAN_DAYS));
 
         return loanRepository.save(loan);
+    }
+
+    /**
+     * @deprecated Approval now activates the loan and records the withdrawal
+     *             timestamp. Kept as a compatibility guard so old clients get
+     *             a clear domain error instead of performing a second transition.
+     */
+    @Deprecated
+    @Transactional
+    public Loan withdraw(Long id) {
+        Loan loan = findOrFail(id);
+        if (loan.getStatus() == LoanStatus.ACTIVE) {
+            throw new BusinessException("Loan is already active; approval completes the withdrawal.");
+        }
+        throw new BusinessException("Only requested loans can be approved.");
     }
 
     @Transactional
     public Loan returnBook(Long id) {
         Loan loan = findOrFail(id);
-
         validateStatus(loan, LoanStatus.ACTIVE);
 
         BookCopy copy = loan.getBookCopy();
-
-        if (copy.getStatus() != CopyStatus.LOANED){
+        if (copy.getStatus() != CopyStatus.LOANED) {
             throw new BusinessException("Copy is not currently loaned");
         }
 
@@ -138,11 +135,10 @@ public class LoanService {
         Loan loan = findOrFail(id);
 
         if (loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.RETURNED) {
-            throw new BusinessException("Only requested or approved loans can be cancelled.");
+            throw new BusinessException("Only requested loans can be cancelled.");
         }
 
         loan.setStatus(LoanStatus.CANCELED);
-
         return loanRepository.save(loan);
     }
 
@@ -155,26 +151,23 @@ public class LoanService {
         if (loan.getStatus() != expectedStatus) {
             throw new BusinessException(
                     String.format("Invalid status transition. Expected: %s, current: %s",
-                            expectedStatus,
-                            loan.getStatus()
-                    )
+                            expectedStatus, loan.getStatus())
             );
         }
     }
 
-    private void validateNoActiveLoan(User user, Long bookId){
+    private void validateNoActiveLoan(User user, Long bookId) {
         boolean exists = loanRepository.existsByUserIdAndBookCopyBookIdAndStatusIn(
                 user.getId(),
                 bookId,
                 List.of(
                         LoanStatus.REQUESTED,
-                        LoanStatus.APPROVED,
                         LoanStatus.ACTIVE,
                         LoanStatus.LATE
                 )
         );
 
-        if (exists){
+        if (exists) {
             throw new BusinessException("User already has an active loan for this book.");
         }
     }

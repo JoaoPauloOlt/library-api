@@ -54,11 +54,6 @@ public class LoanController {
         return mapper.toModel(service.approve(id));
     }
 
-    @PutMapping("/{id}/withdraw")
-    public LoanModel withdraw(@PathVariable @Positive Long id) {
-        return mapper.toModel(service.withdraw(id));
-    }
-
     @PutMapping("/{id}/return")
     public LoanModel returnBook(@PathVariable @Positive Long id) {
         return mapper.toModel(service.returnBook(id));

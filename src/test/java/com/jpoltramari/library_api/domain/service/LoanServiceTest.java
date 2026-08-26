@@ -78,15 +78,23 @@ class LoanServiceTest {
     }
 
     @Test
-    void shouldApproveRequestedLoan() {
+    void shouldApproveRequestedLoanAndActivateItImmediately() {
+        BookCopy copy = availableCopy();
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        loan.setBookCopy(copy);
+
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(loanRepository.save(loan)).thenReturn(loan);
+        when(bookCopyRepository.save(copy)).thenReturn(copy);
 
         Loan result = loanService.approve(1L);
 
-        assertEquals(LoanStatus.APPROVED, result.getStatus());
+        assertEquals(LoanStatus.ACTIVE, result.getStatus());
+        assertEquals(CopyStatus.LOANED, copy.getStatus());
         assertNotNull(result.getApprovalDate());
+        assertNotNull(result.getWithdrawableDate());
+        assertNotNull(result.getDueDate());
+        verify(bookCopyRepository).save(copy);
         verify(loanRepository).save(loan);
     }
 
@@ -99,23 +107,11 @@ class LoanServiceTest {
     }
 
     @Test
-    void shouldWithdrawApprovedLoanAndSetCopyAsLoaned() {
-        BookCopy copy = availableCopy();
-        Loan loan = loanWithStatus(LoanStatus.APPROVED);
-        loan.setBookCopy(copy);
-
+    void shouldRejectLegacyWithdrawTransition() {
+        Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-        when(loanRepository.save(loan)).thenReturn(loan);
-        when(bookCopyRepository.save(copy)).thenReturn(copy);
 
-        Loan result = loanService.withdraw(1L);
-
-        assertEquals(LoanStatus.ACTIVE, result.getStatus());
-        assertEquals(CopyStatus.LOANED, copy.getStatus());
-        assertNotNull(result.getWithdrawableDate());
-        assertNotNull(result.getDueDate());
-        verify(bookCopyRepository).save(copy);
-        verify(loanRepository).save(loan);
+        assertThrows(BusinessException.class, () -> loanService.withdraw(1L));
     }
 
     @Test
