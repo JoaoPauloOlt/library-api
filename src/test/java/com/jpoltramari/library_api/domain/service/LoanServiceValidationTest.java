@@ -16,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
 
@@ -45,7 +44,7 @@ class LoanServiceValidationTest {
 
     @Test
     void shouldRejectReturnWhenLoanIsNotActive() {
-        Loan loan = loanWithStatus(LoanStatus.APPROVED);
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(BusinessException.class, () -> service.returnBook(1L));
