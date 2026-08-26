@@ -13,6 +13,8 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 @Mapper(componentModel = "spring", uses = AuthorMapper.class)
 public interface BookMapper {
 
+    @Mapping(target = "totalCopies", ignore = true)
+    @Mapping(target = "availableCopies", ignore = true)
     BookModel toModel(Book book);
 
     @Mapping(target = "id", ignore = true)
