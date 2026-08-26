@@ -1,7 +1,7 @@
 ALTER TABLE books
-    ADD COLUMN IF NOT EXISTS publisher VARCHAR(255),
-    ADD COLUMN IF NOT EXISTS publication_date DATE,
-    ADD COLUMN IF NOT EXISTS page_count INTEGER,
-    ADD COLUMN IF NOT EXISTS language VARCHAR(100),
-    ADD COLUMN IF NOT EXISTS description TEXT,
-    ADD COLUMN IF NOT EXISTS cover_url TEXT;
+    ADD COLUMN publisher VARCHAR(255),
+    ADD COLUMN publication_date DATE,
+    ADD COLUMN page_count INTEGER,
+    ADD COLUMN language VARCHAR(100),
+    ADD COLUMN description TEXT,
+    ADD COLUMN cover_url VARCHAR(500);
