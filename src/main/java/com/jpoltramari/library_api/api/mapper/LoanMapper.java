@@ -24,6 +24,30 @@ public interface LoanMapper {
             """
     )
     @Mapping(
+            target = "bookCoverUrl",
+            expression = """
+                java(
+                    loan.getBookCopy() != null &&
+                    loan.getBookCopy().getBook() != null
+                        ? loan.getBookCopy().getBook().getCoverUrl()
+                        : null
+                )
+            """
+    )
+    @Mapping(
+            target = "bookAuthors",
+            expression = """
+                java(
+                    loan.getBookCopy() != null &&
+                    loan.getBookCopy().getBook() != null
+                        ? loan.getBookCopy().getBook().getAuthors().stream()
+                            .map(author -> author.getName())
+                            .toList()
+                        : java.util.List.of()
+                )
+            """
+    )
+    @Mapping(
             target = "userName",
             expression = """
                 java(
