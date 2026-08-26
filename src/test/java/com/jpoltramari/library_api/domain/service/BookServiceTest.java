@@ -11,6 +11,7 @@ import com.jpoltramari.library_api.domain.model.Author;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.repository.AuthorRepository;
+import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,13 +39,14 @@ class BookServiceTest {
 
     @Mock private BookRepository repository;
     @Mock private AuthorRepository authorRepository;
+    @Mock private BookCopyRepository bookCopyRepository;
     @Mock private BookMapper mapper;
 
     private BookService service;
 
     @BeforeEach
     void setUp() {
-        service = new BookService(repository, authorRepository, mapper);
+        service = new BookService(repository, authorRepository, bookCopyRepository, mapper);
     }
 
     @Test
@@ -62,8 +65,8 @@ class BookServiceTest {
     }
 
     @Test
-    void shouldCreateBookWithAuthors() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, List.of(1L));
+    void shouldCreateBookWithAuthorsAndPhysicalCopies() {
+        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, 3, List.of(1L));
         Author author = new Author();
         Book book = new Book();
 
@@ -76,6 +79,23 @@ class BookServiceTest {
 
         assertEquals(Set.of(author), result.getAuthors());
         verify(repository).save(book);
+        verify(bookCopyRepository).saveAll(any(List.class));
+    }
+
+    @Test
+    void shouldCreateBookWithoutPhysicalCopiesWhenQuantityIsZero() {
+        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, 0, List.of(1L));
+        Author author = new Author();
+        Book book = new Book();
+
+        when(repository.existsByIsbn(input.isbn())).thenReturn(false);
+        when(authorRepository.findAllById(List.of(1L))).thenReturn(List.of(author));
+        when(mapper.toEntity(input)).thenReturn(book);
+        when(repository.save(book)).thenReturn(book);
+
+        service.create(input);
+
+        verify(bookCopyRepository, never()).saveAll(any(List.class));
     }
 
     @Test
