@@ -21,6 +21,16 @@ public record BookInput(
         @Size(max = 500)
         String coverUrl,
 
+        @Min(0)
+        Integer quantity,
+
         @NotEmpty
         List<Long> authorIds
-) {}
+) {
+    /**
+     * Backwards-compatible constructor for callers that do not specify copies.
+     */
+    public BookInput(String isbn, String title, Genre genre, String coverUrl, List<Long> authorIds) {
+        this(isbn, title, genre, coverUrl, 0, authorIds);
+    }
+}
