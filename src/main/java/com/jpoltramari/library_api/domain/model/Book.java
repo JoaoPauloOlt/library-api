@@ -4,9 +4,11 @@ import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 import com.jpoltramari.library_api.domain.enums.Genre;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,6 +33,13 @@ public class Book {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Genre genre;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "cover_url", length = 500)
+    private String coverUrl;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

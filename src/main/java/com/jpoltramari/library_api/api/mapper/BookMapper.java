@@ -16,12 +16,14 @@ public interface BookMapper {
     BookModel toModel(Book book);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "authors", ignore = true)
     @Mapping(target = "copies", ignore = true)
     Book toEntity(BookInput input);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "authors", ignore = true)
     @Mapping(target = "copies", ignore = true)
     void update(BookUpdateInput input, @MappingTarget Book book);
