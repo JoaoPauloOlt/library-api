@@ -42,8 +42,8 @@ public class Book {
     @Column(name = "cover_url", length = 500)
     private String coverUrl;
 
-    /** Historical number of loans for the book. Returned loans remain part of the count. */
-    @Formula("(select count(l.id) from loans l join book_copies bc on bc.id = l.book_copy_id where bc.book_id = id)")
+    /** Number of real borrowing cycles; cancelled requests are not counted. */
+    @Formula("(select count(l.id) from loans l join book_copies bc on bc.id = l.book_copy_id where bc.book_id = id and l.status in ('ACTIVE', 'RETURNED', 'LATE'))")
     private Long loanCount;
 
     @ManyToMany(fetch = FetchType.LAZY)
