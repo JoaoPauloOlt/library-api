@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.api.dto.loan;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record LoanModel(
 
@@ -8,6 +9,8 @@ public record LoanModel(
         String status,
 
         String bookTitle,
+        String bookCoverUrl,
+        List<String> bookAuthors,
         String userName,
 
         LocalDateTime requestDate,
