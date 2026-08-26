@@ -16,6 +16,7 @@ public record BookModel(
 
         Long totalCopies,
         Long availableCopies,
+        Long loanCount,
 
         List<AuthorModel> authors
 ) {}
