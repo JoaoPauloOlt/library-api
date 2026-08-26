@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Formula;
 
 import com.jpoltramari.library_api.domain.enums.Genre;
 
@@ -40,6 +41,10 @@ public class Book {
 
     @Column(name = "cover_url", length = 500)
     private String coverUrl;
+
+    /** Historical number of loans for the book. Returned loans remain part of the count. */
+    @Formula("(select count(l.id) from loans l join book_copies bc on bc.id = l.book_copy_id where bc.book_id = id)")
+    private Long loanCount;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
