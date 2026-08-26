@@ -2,9 +2,9 @@ package com.jpoltramari.library_api.domain.repository;
 
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.model.Loan;
-import org.springframework.data.domain.EntityGraph;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
