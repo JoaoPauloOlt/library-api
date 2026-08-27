@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ develop, 'feature/**' ]
+    branches: [ develop, 'feature/**', 'fix/**', 'refactor/**', 'quality/**' ]
   pull_request:
-    branches: [ develop, 'feature/**' ]
+    branches: [ develop, main ]
 
 jobs:
   test:
@@ -42,5 +42,5 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Run tests
-        run: mvn -B test
+      - name: Run tests and coverage
+        run: mvn -B verify
