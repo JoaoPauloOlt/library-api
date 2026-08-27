@@ -16,4 +16,8 @@ public record BookInput(
     public BookInput(String isbn, String title, Genre genre, String coverUrl, List<Long> authorIds) {
         this(isbn, title, genre, null, coverUrl, 0, authorIds);
     }
+
+    public BookInput(String isbn, String title, Genre genre, String coverUrl, Integer quantity, List<Long> authorIds) {
+        this(isbn, title, genre, null, coverUrl, quantity, authorIds);
+    }
 }
