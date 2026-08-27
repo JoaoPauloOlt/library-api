@@ -1,13 +1,12 @@
 # 📚 Library API
 
-REST API for library management, developed with **Java 17 + Spring Boot**. The project is being built as a portfolio-grade MVP, with authentication, authorization, catalog management, physical book copies and loan circulation.
+REST API for library management, developed with **Java 17 + Spring Boot**. The project is a portfolio-grade library system with authentication, RBAC, catalog management, physical book copies and loan circulation.
 
-## 🧰 Stack
+## Stack
 
 - Java 17
 - Spring Boot
-- Spring Security
-- JWT
+- Spring Security + JWT
 - Spring Data JPA / Hibernate
 - PostgreSQL
 - Flyway
@@ -15,138 +14,116 @@ REST API for library management, developed with **Java 17 + Spring Boot**. The p
 - Docker / Docker Compose
 - OpenAPI / Swagger
 
-## 🏗️ Architecture
-
-The application follows a layered architecture with clear separation between API, domain and infrastructure concerns:
+## Architecture
 
 ```text
 api/
-  controller/
-  dto/
-  exception/
-  mapper/
-
+  controller/ dto/ exception/ mapper/
 domain/
-  model/
-  enums/
-  repository/
-  service/
-  specification/
-
+  model/ enums/ repository/ service/ specification/
 infrastructure/
-  security/
-  config/
+  security/ config/
 ```
 
-## 🔐 Security
+The application follows layered architecture and keeps business rules in the domain services.
 
-Authentication uses JWT with Spring Security. Passwords are protected with BCrypt and authorization is based on RBAC permissions.
+## Security and RBAC
 
-The intended roles are:
+Authentication uses JWT and passwords are protected with BCrypt. Authorization is permission-based:
 
 - **USER** — catalog and own-loan operations
-- **LIBRARIAN** — catalog, copies and circulation management
+- **LIBRARIAN** — catalog, physical copies and circulation management
 - **ADMIN** — system administration
 
-Never commit real credentials or JWT secrets. Development and production secrets are supplied through environment variables.
+Never commit real credentials, JWT secrets or database credentials. Use environment variables.
 
-## 📦 Core features
-
-### Catalog
+## Catalog
 
 - Author CRUD
 - Book CRUD
 - ISBN validation and uniqueness
-- Dynamic book filtering
-- Pagination
+- Dynamic filtering and pagination
+- Book creation with physical-copy quantity
+- Book cover URL
+- Book description/synopsis
+- `GET /books/{id}` for individual book details
+- Total, available and loan-count metadata
 
-### Physical collection
+### Book model
 
-- Book copy management
-- Unique barcode per copy
-- Copy status (`AVAILABLE`, `LOANED`, `MAINTENANCE`)
-- Location tracking
-- Total and available quantity
+A book exposes, among other fields:
 
-### Circulation
+```json
+{
+  "id": 1,
+  "isbn": "9780451524935",
+  "title": "1984",
+  "genre": "SCIENCE_FICTION",
+  "createdAt": "2026-08-26T12:00:00",
+  "coverUrl": "https://...",
+  "description": "Book synopsis...",
+  "totalCopies": 3,
+  "availableCopies": 2,
+  "loanCount": 5,
+  "authors": []
+}
+```
+
+## Physical collection
+
+- Book copies with unique barcodes
+- Copy statuses such as `AVAILABLE`, `LOANED` and `MAINTENANCE`
+- Quantity creation during book registration
+- Total and available quantity calculation
+
+## Circulation
 
 - Loan creation
-- Loan return
+- Approval/activation workflow
+- Loan return and cancellation
+- Own-loan and all-loan views
 - Loan history
 - Business-rule validation
 
-### Identity and access
+## Database and migrations
 
-- User registration
-- JWT authentication
-- Refresh tokens
-- Logout/session invalidation
-- Role/permission based authorization
-
-## 🗄️ Database
-
-PostgreSQL is the project's database. Schema changes are versioned with Flyway migrations under:
+PostgreSQL is the database. Schema changes are versioned with Flyway under:
 
 ```text
 src/main/resources/db/migration
 ```
 
-Current migrations cover the core schema, library domain, circulation, RBAC and refresh tokens.
+The migration chain currently includes `V1` through `V6`, `V8`, `V9` and `V10`. **Never modify an already executed migration**; introduce the next version instead.
 
-## 🚀 Running locally
+`V10__add_book_description.sql` adds the nullable `description` column to `books` for the individual book details page.
 
-### Option 1 — Docker Compose
+## Running locally
 
 ```bash
 git clone https://github.com/JoaoPauloOlt/library-api.git
 cd library-api
-
 cp .env.example .env
-# Edit .env and set JWT_SECRET
-
-docker compose up --build
-```
-
-The API will be available at `http://localhost:8080`.
-
-### Option 2 — Local Maven + PostgreSQL
-
-Create a PostgreSQL database named `library`, configure the variables from `.env.example`, and run:
-
-```bash
 ./mvnw spring-boot:run
 ```
 
-## 📖 API documentation
+The API runs on `http://localhost:8080` by default.
 
-When the application is running, OpenAPI documentation is available through Springdoc/Swagger UI.
-
-```text
-http://localhost:8080/swagger-ui/index.html
-```
-
-## 🧪 Testing
-
-The project is being expanded with unit and integration tests as part of the MVP quality phase.
+## Testing
 
 ```bash
 ./mvnw test
 ```
 
-## 🗺️ MVP roadmap
+The CI validates compilation and automated tests before changes are merged into `develop`.
 
-- [x] Layered API architecture
-- [x] PostgreSQL + Flyway
-- [x] JWT authentication
-- [x] RBAC foundation
-- [x] Book copies model and API
-- [ ] Complete circulation workflow
-- [ ] Automated unit tests
-- [ ] Integration tests with Testcontainers
-- [ ] CI/CD
-- [ ] React frontend
-- [ ] Production deployment
+## API documentation
 
-## 👨‍💻 Author
+When running locally, Swagger UI is available at:
 
-Developed by **João Paulo Oltramari** as a personal software engineering project focused on backend development with Java and Spring Boot.
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+## Development workflow
+
+Use short-lived feature/fix branches, descriptive commits, CI validation and Pull Requests targeting `develop`. Database changes must always use a new Flyway version.

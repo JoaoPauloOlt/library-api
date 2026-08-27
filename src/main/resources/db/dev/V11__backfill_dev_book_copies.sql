@@ -1,5 +1,5 @@
 -- DEV ONLY: ensure every existing development book has physical copies.
--- New books can now define their copy quantity through BookInput.
+-- New books can define their copy quantity through BookInput.
 -- This migration only fills books that currently have no registered copies.
 
 INSERT INTO book_copies (book_id, barcode, status, location, active)
