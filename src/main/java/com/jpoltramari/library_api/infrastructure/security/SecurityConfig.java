@@ -38,20 +38,14 @@ public class SecurityConfig {
 
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-
-                .cors(cors ->
-                        cors.configurationSource(corsConfigurationSource)
-                )
-
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(sm ->
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(handler)
                         .accessDeniedHandler(handler)
                 )
-
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -106,12 +100,7 @@ public class SecurityConfig {
 
                         .anyRequest().authenticated()
                 )
-
-                .addFilterBefore(
-                        filter,
-                        UsernamePasswordAuthenticationFilter.class
-                )
-
+                .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
