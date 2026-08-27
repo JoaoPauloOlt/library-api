@@ -33,9 +33,9 @@ class RbacResolverTest {
                 .findFirst()
                 .orElseThrow();
 
-        userGroup.getPermissions().add(permission("BOOK_READ"));
-        librarianGroup.getPermissions().add(permission("BOOK_READ"));
-        librarianGroup.getPermissions().add(permission("BOOK_UPDATE"));
+        userGroup.getPermissions().add(permission(1L, "BOOK_READ"));
+        librarianGroup.getPermissions().add(permission(1L, "BOOK_READ"));
+        librarianGroup.getPermissions().add(permission(2L, "BOOK_UPDATE"));
 
         assertThat(resolver.resolvePermissions(user))
                 .containsExactly("BOOK_READ", "BOOK_UPDATE");
@@ -54,16 +54,19 @@ class RbacResolverTest {
 
     private User userWithGroups(String... names) {
         User user = new User();
+        long id = 1L;
         for (String name : names) {
             Group group = new Group();
+            group.setId(id++);
             group.setName(name);
             user.getGroups().add(group);
         }
         return user;
     }
 
-    private Permission permission(String name) {
+    private Permission permission(Long id, String name) {
         Permission permission = new Permission();
+        permission.setId(id);
         permission.setName(name);
         return permission;
     }
