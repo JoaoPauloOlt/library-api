@@ -51,6 +51,18 @@ class DevSeedIntegrationTest {
     }
 
     @Test
+    void shouldLoadDevBookDescriptions() {
+        assertThat(bookRepository.findByIsbn("9780451524935").orElseThrow().getDescription())
+                .isNotBlank();
+        assertThat(bookRepository.findByIsbn("9780141439518").orElseThrow().getDescription())
+                .isNotBlank();
+        assertThat(bookRepository.findByIsbn("9780743273565").orElseThrow().getDescription())
+                .isNotBlank();
+        assertThat(bookRepository.findByIsbn("9780316769488").orElseThrow().getDescription())
+                .isNotBlank();
+    }
+
+    @Test
     void shouldLoadDevLoanScenarios() {
         User user = userRepository.findByEmail("user@library.com").orElseThrow();
 
