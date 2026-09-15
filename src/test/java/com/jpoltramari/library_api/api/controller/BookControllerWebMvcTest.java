@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.api.dto.book.BookModel;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.service.BookService;
+import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,9 @@ class BookControllerWebMvcTest {
 
     @MockBean
     private CorsConfigurationSource corsConfigurationSource;
+
+    @MockBean
+    private ErrorProperties errorProperties;
 
     @Test
     void shouldRejectBookListWithoutAuthentication() throws Exception {
