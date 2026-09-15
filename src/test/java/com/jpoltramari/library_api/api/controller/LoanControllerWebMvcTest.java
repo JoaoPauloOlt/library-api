@@ -15,6 +15,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.time.Instant;
 import java.util.List;
@@ -45,6 +46,9 @@ class LoanControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private CorsConfigurationSource corsConfigurationSource;
 
     @Test
     void shouldRequireAuthenticationForOwnLoans() throws Exception {
