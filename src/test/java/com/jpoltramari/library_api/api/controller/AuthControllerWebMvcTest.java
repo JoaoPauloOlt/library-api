@@ -2,6 +2,7 @@ package com.jpoltramari.library_api.api.controller;
 
 import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
 import com.jpoltramari.library_api.domain.service.AuthService;
+import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ class AuthControllerWebMvcTest {
 
     @MockBean
     private CorsConfigurationSource corsConfigurationSource;
+
+    @MockBean
+    private ErrorProperties errorProperties;
 
     @Test
     void shouldLoginThroughPublicEndpoint() throws Exception {
