@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.service.LoanService;
+import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
@@ -49,6 +50,9 @@ class LoanControllerWebMvcTest {
 
     @MockBean
     private CorsConfigurationSource corsConfigurationSource;
+
+    @MockBean
+    private ErrorProperties errorProperties;
 
     @Test
     void shouldRequireAuthenticationForOwnLoans() throws Exception {
