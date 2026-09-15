@@ -18,7 +18,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
-@Import(com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class)
+@Import({
+        com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class,
+        ApiSecurityExceptionHandler.class
+})
 class AuthControllerWebMvcTest {
 
     @Autowired
@@ -29,9 +32,6 @@ class AuthControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockBean
-    private ApiSecurityExceptionHandler apiSecurityExceptionHandler;
 
     @Test
     void shouldLoginThroughPublicEndpoint() throws Exception {
