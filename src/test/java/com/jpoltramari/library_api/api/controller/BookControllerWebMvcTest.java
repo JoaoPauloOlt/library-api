@@ -25,7 +25,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BookController.class)
-@Import(com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class)
+@Import({
+        com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class,
+        ApiSecurityExceptionHandler.class
+})
 class BookControllerWebMvcTest {
 
     @Autowired
@@ -39,9 +42,6 @@ class BookControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockBean
-    private ApiSecurityExceptionHandler apiSecurityExceptionHandler;
 
     @Test
     void shouldRejectBookListWithoutAuthentication() throws Exception {
