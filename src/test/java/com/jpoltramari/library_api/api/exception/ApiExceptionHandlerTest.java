@@ -5,7 +5,7 @@ import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -64,9 +64,9 @@ class ApiExceptionHandlerTest {
     void shouldReturnBadRequestForControllerConstraintViolation() {
         @SuppressWarnings("unchecked")
         ConstraintViolation<Object> violation = org.mockito.Mockito.mock(ConstraintViolation.class);
-        org.mockito.Mockito.when(violation.getPropertyPath()).thenReturn(
-                org.hibernate.validator.internal.engine.path.PathImpl.createPathFromString("findById.id")
-        );
+        Path propertyPath = org.mockito.Mockito.mock(Path.class);
+        org.mockito.Mockito.when(propertyPath.toString()).thenReturn("findById.id");
+        org.mockito.Mockito.when(violation.getPropertyPath()).thenReturn(propertyPath);
         org.mockito.Mockito.when(violation.getMessage()).thenReturn("must be greater than 0");
 
         ConstraintViolationException exception = new ConstraintViolationException(Set.of(violation));
