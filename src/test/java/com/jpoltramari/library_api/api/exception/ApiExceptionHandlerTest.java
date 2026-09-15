@@ -3,12 +3,16 @@ package com.jpoltramari.library_api.api.exception;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.http.ResponseEntity;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -54,6 +58,26 @@ class ApiExceptionHandlerTest {
         assertThat(response.getBody().getTitle()).isEqualTo("Business rule violation");
         assertThat(response.getBody().getDetail()).isEqualTo("Book has no available copies");
         assertThat(response.getBody().getErrorCode()).isEqualTo("BUSINESS_RULE");
+    }
+
+    @Test
+    void shouldReturnBadRequestForControllerConstraintViolation() {
+        @SuppressWarnings("unchecked")
+        ConstraintViolation<Object> violation = org.mockito.Mockito.mock(ConstraintViolation.class);
+        Path propertyPath = org.mockito.Mockito.mock(Path.class);
+        org.mockito.Mockito.when(propertyPath.toString()).thenReturn("findById.id");
+        org.mockito.Mockito.when(violation.getPropertyPath()).thenReturn(propertyPath);
+        org.mockito.Mockito.when(violation.getMessage()).thenReturn("must be greater than 0");
+
+        ConstraintViolationException exception = new ConstraintViolationException(Set.of(violation));
+
+        ResponseEntity<ErrorResponse> response = handler.handleConstraintViolation(exception, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getTitle()).isEqualTo("Validation failed");
+        assertThat(response.getBody().getDetail()).contains("findById.id: must be greater than 0");
+        assertThat(response.getBody().getErrorCode()).isEqualTo("VALIDATION_ERROR");
     }
 
     @Test

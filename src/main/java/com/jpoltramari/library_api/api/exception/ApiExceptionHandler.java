@@ -6,6 +6,7 @@ import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.filter.CorrelationIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -60,6 +61,28 @@ public class ApiExceptionHandler {
                 .collect(Collectors.joining("; "));
 
         log.warn("event=bad_request reason=validation_failed path={} correlationId={}",
+                request.getRequestURI(), correlationId());
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                "Validation failed",
+                detail,
+                "VALIDATION_ERROR",
+                request
+        );
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
+            ConstraintViolationException ex,
+            HttpServletRequest request
+    ) {
+        String detail = ex.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .sorted()
+                .collect(Collectors.joining("; "));
+
+        log.warn("event=bad_request reason=constraint_violation path={} correlationId={}",
                 request.getRequestURI(), correlationId());
 
         return buildResponse(
