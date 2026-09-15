@@ -28,7 +28,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(LoanController.class)
-@Import(com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class)
+@Import({
+        com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class,
+        ApiSecurityExceptionHandler.class
+})
 class LoanControllerWebMvcTest {
 
     @Autowired
@@ -42,9 +45,6 @@ class LoanControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockBean
-    private ApiSecurityExceptionHandler apiSecurityExceptionHandler;
 
     @Test
     void shouldRequireAuthenticationForOwnLoans() throws Exception {
