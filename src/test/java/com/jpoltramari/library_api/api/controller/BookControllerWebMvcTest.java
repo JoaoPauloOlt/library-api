@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.List;
 
@@ -42,6 +43,9 @@ class BookControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockBean
+    private CorsConfigurationSource corsConfigurationSource;
 
     @Test
     void shouldRejectBookListWithoutAuthentication() throws Exception {
