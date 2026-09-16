@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.api.dto.book.BookModel;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.service.BookService;
+import com.jpoltramari.library_api.infrastructure.config.CorsConfig;
 import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
@@ -15,7 +16,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.util.List;
 
@@ -29,7 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(BookController.class)
 @Import({
         com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class,
-        ApiSecurityExceptionHandler.class
+        ApiSecurityExceptionHandler.class,
+        CorsConfig.class
 })
 class BookControllerWebMvcTest {
 
@@ -44,9 +45,6 @@ class BookControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockBean
-    private CorsConfigurationSource corsConfigurationSource;
 
     @MockBean
     private ErrorProperties errorProperties;
