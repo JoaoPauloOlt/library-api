@@ -3,7 +3,6 @@ package com.jpoltramari.library_api.api.controller;
 import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
 import com.jpoltramari.library_api.domain.service.AuthService;
-import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,9 +25,6 @@ class AuthControllerWebMvcTest {
 
     @MockBean
     private AuthService service;
-
-    @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Test
     void shouldLoginThroughPublicEndpoint() throws Exception {
