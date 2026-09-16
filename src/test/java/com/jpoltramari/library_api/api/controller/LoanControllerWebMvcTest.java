@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.service.LoanService;
+import com.jpoltramari.library_api.infrastructure.config.CorsConfig;
 import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
@@ -16,7 +17,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.cors.CorsConfigurationSource;
 
 import java.time.Instant;
 import java.util.List;
@@ -32,7 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(LoanController.class)
 @Import({
         com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class,
-        ApiSecurityExceptionHandler.class
+        ApiSecurityExceptionHandler.class,
+        CorsConfig.class
 })
 class LoanControllerWebMvcTest {
 
@@ -47,9 +48,6 @@ class LoanControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockBean
-    private CorsConfigurationSource corsConfigurationSource;
 
     @MockBean
     private ErrorProperties errorProperties;
