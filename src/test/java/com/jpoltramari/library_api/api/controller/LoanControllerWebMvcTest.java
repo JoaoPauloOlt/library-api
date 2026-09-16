@@ -1,21 +1,18 @@
 package com.jpoltramari.library_api.api.controller;
 
+import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.service.LoanService;
-import com.jpoltramari.library_api.infrastructure.config.CorsConfig;
-import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
-import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
-import com.jpoltramari.library_api.infrastructure.security.SecurityConfig;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -30,13 +27,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = LoanController.class)
-@Import({
-        LoanController.class,
-        SecurityConfig.class,
-        ApiSecurityExceptionHandler.class,
-        CorsConfig.class
-})
+@SpringBootTest(classes = LibraryApiApplication.class)
+@AutoConfigureMockMvc
 class LoanControllerWebMvcTest {
 
     @Autowired
@@ -50,9 +42,6 @@ class LoanControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockBean
-    private ErrorProperties errorProperties;
 
     @Test
     void shouldRequireAuthenticationForOwnLoans() throws Exception {
