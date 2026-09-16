@@ -15,6 +15,7 @@ public interface BookMapper {
 
     @Mapping(target = "totalCopies", expression = "java((long) book.getCopies().size())")
     @Mapping(target = "availableCopies", expression = "java(book.getCopies().stream().filter(copy -> copy.getStatus() == com.jpoltramari.library_api.domain.enums.CopyStatus.AVAILABLE && copy.isActive()).count())")
+    @Mapping(target = "loanCount", source = "loanCount")
     BookModel toModel(Book book);
 
     @Mapping(target = "id", ignore = true)
