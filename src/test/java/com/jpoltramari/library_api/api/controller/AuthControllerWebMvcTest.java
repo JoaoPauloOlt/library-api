@@ -2,6 +2,7 @@ package com.jpoltramari.library_api.api.controller;
 
 import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
 import com.jpoltramari.library_api.domain.service.AuthService;
+import com.jpoltramari.library_api.infrastructure.config.CorsConfig;
 import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
@@ -11,7 +12,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.cors.CorsConfigurationSource;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,7 +22,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(AuthController.class)
 @Import({
         com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class,
-        ApiSecurityExceptionHandler.class
+        ApiSecurityExceptionHandler.class,
+        CorsConfig.class
 })
 class AuthControllerWebMvcTest {
 
@@ -34,9 +35,6 @@ class AuthControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockBean
-    private CorsConfigurationSource corsConfigurationSource;
 
     @MockBean
     private ErrorProperties errorProperties;
