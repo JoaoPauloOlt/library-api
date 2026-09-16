@@ -8,6 +8,7 @@ import com.jpoltramari.library_api.infrastructure.config.CorsConfig;
 import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
+import com.jpoltramari.library_api.infrastructure.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -26,9 +27,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(BookController.class)
+@WebMvcTest(controllers = BookController.class)
 @Import({
-        com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class,
+        BookController.class,
+        SecurityConfig.class,
         ApiSecurityExceptionHandler.class,
         CorsConfig.class
 })
