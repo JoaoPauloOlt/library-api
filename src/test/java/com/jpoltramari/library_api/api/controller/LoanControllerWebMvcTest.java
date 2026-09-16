@@ -6,7 +6,6 @@ import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.service.LoanService;
 import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
-import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,9 +38,6 @@ class LoanControllerWebMvcTest {
 
     @MockBean
     private LoanMapper mapper;
-
-    @MockBean
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Test
     void shouldRequireAuthenticationForOwnLoans() throws Exception {
