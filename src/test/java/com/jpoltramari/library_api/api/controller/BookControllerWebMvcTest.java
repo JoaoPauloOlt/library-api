@@ -1,19 +1,16 @@
 package com.jpoltramari.library_api.api.controller;
 
+import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.dto.book.BookModel;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.service.BookService;
-import com.jpoltramari.library_api.infrastructure.config.CorsConfig;
-import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
-import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
-import com.jpoltramari.library_api.infrastructure.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
@@ -27,13 +24,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = BookController.class)
-@Import({
-        BookController.class,
-        SecurityConfig.class,
-        ApiSecurityExceptionHandler.class,
-        CorsConfig.class
-})
+@SpringBootTest(classes = LibraryApiApplication.class)
+@AutoConfigureMockMvc
 class BookControllerWebMvcTest {
 
     @Autowired
@@ -47,9 +39,6 @@ class BookControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockBean
-    private ErrorProperties errorProperties;
 
     @Test
     void shouldRejectBookListWithoutAuthentication() throws Exception {
