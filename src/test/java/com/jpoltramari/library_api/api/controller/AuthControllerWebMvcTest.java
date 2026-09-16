@@ -1,17 +1,14 @@
 package com.jpoltramari.library_api.api.controller;
 
+import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
 import com.jpoltramari.library_api.domain.service.AuthService;
-import com.jpoltramari.library_api.infrastructure.config.CorsConfig;
-import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
-import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
-import com.jpoltramari.library_api.infrastructure.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.Mockito.verify;
@@ -20,13 +17,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = AuthController.class)
-@Import({
-        AuthController.class,
-        SecurityConfig.class,
-        ApiSecurityExceptionHandler.class,
-        CorsConfig.class
-})
+@SpringBootTest(classes = LibraryApiApplication.class)
+@AutoConfigureMockMvc
 class AuthControllerWebMvcTest {
 
     @Autowired
@@ -37,9 +29,6 @@ class AuthControllerWebMvcTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @MockBean
-    private ErrorProperties errorProperties;
 
     @Test
     void shouldLoginThroughPublicEndpoint() throws Exception {
