@@ -9,6 +9,7 @@ import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.ApiSecurityExceptionHandler;
 import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
 import com.jpoltramari.library_api.infrastructure.security.JwtAuthenticationFilter;
+import com.jpoltramari.library_api.infrastructure.security.SecurityConfig;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +30,10 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(LoanController.class)
+@WebMvcTest(controllers = LoanController.class)
 @Import({
-        com.jpoltramari.library_api.infrastructure.security.SecurityConfig.class,
+        LoanController.class,
+        SecurityConfig.class,
         ApiSecurityExceptionHandler.class,
         CorsConfig.class
 })
