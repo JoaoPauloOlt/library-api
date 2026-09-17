@@ -10,6 +10,8 @@ import com.jpoltramari.library_api.domain.filter.BookFilter;
 import com.jpoltramari.library_api.domain.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -38,9 +40,9 @@ public class BookController {
     @Operation(summary = "List books", description = "Returns a paginated list of books with optional filters.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Books returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
     public PageResponse<BookModel> list(
@@ -54,10 +56,10 @@ public class BookController {
     @Operation(summary = "Get a book", description = "Returns a book by its identifier.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Book returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book identifier", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Invalid book identifier", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{id}")
     public BookModel findById(@Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long id) {
@@ -67,10 +69,10 @@ public class BookController {
     @Operation(summary = "Create a book", description = "Creates a book and provisions the requested number of physical copies.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Book created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book data", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Book conflicts with existing data", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Invalid book data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Book conflicts with existing data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -81,11 +83,11 @@ public class BookController {
     @Operation(summary = "Update a book", description = "Updates the catalog information of an existing book.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Book updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book data or identifier", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Book conflicts with existing data", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Invalid book data or identifier", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Book conflicts with existing data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{id}")
     public BookModel update(
@@ -98,11 +100,11 @@ public class BookController {
     @Operation(summary = "Delete a book", description = "Deletes a book when business rules allow it.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Book deleted successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book identifier", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Book has conflicting dependencies", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @io.swagger.v3.oas.annotations.media.Content(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "400", description = "Invalid book identifier", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Book has conflicting dependencies", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
