@@ -18,7 +18,7 @@ public record BookUpdateInput(
         @Size(max = 150)
         String title,
 
-        @Schema(description = "Book genre.", example = "FICTION")
+        @Schema(description = "Book genre.", example = "CLASSIC")
         Genre genre,
 
         @Schema(description = "Book synopsis or description.", example = "A dystopian novel about surveillance and authoritarian control.", maxLength = 5000)
