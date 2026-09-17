@@ -24,7 +24,7 @@ public record BookInput(
         @Size(max = 150)
         String title,
 
-        @Schema(description = "Book genre.", example = "FICTION", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "Book genre.", example = "CLASSIC", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull
         Genre genre,
 
