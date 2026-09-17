@@ -14,7 +14,7 @@ public record BookModel(
         String isbn,
         @Schema(description = "Book title.", example = "1984")
         String title,
-        @Schema(description = "Book genre.", example = "FICTION")
+        @Schema(description = "Book genre.", example = "CLASSIC")
         String genre,
         @Schema(description = "Book creation timestamp.", example = "2026-09-16T14:30:00")
         LocalDateTime createdAt,
