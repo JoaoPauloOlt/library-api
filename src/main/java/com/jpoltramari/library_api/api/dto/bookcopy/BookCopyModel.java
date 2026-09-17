@@ -6,7 +6,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record BookCopyModel(
         @Schema(description = "Physical copy identifier.", example = "1")
         Long id,
-        @Schema(description = "Unique barcode generated for the physical copy.", example = "9780451524935-0001")
+        @Schema(description = "Unique barcode generated for the physical copy.", example = "BK-550e8400-e29b-41d4-a716-446655440000")
         String barcode,
         @Schema(description = "Current physical copy status.", example = "AVAILABLE")
         String status,
