@@ -23,6 +23,8 @@ public interface BookCopyRepository
 
     List<BookCopy> findAllByBookId(Long bookId);
 
+    Optional<BookCopy> findByIdAndBookId(Long id, Long bookId);
+
     boolean existsByBarcode(String barcode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
