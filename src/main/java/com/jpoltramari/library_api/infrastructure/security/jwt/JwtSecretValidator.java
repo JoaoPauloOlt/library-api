@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
-import io.jsonwebtoken.io.Decoders;\nimport io.jsonwebtoken.io.DecodingException;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
