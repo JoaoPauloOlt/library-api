@@ -47,13 +47,16 @@ VALUES
     ('J. D. Salinger', 'American')
 ON CONFLICT DO NOTHING;
 
-INSERT INTO books (isbn, title, genre)
+INSERT INTO books (isbn, title, genre, description)
 VALUES
-    ('9780451524935', '1984', 'SCIENCE_FICTION'),
-    ('9780141439518', 'Pride and Prejudice', 'CLASSIC'),
-    ('9780743273565', 'The Great Gatsby', 'CLASSIC'),
-    ('9780316769488', 'The Catcher in the Rye', 'DRAMA')
-ON CONFLICT (isbn) DO NOTHING;
+    ('9780451524935', '1984', 'SCIENCE_FICTION', 'A dystopian novel about surveillance, authoritarianism, and the manipulation of truth.'),
+    ('9780141439518', 'Pride and Prejudice', 'CLASSIC', 'A novel about social expectations, relationships, and the misunderstandings between Elizabeth Bennet and Mr. Darcy.'),
+    ('9780743273565', 'The Great Gatsby', 'CLASSIC', 'A novel set in the Jazz Age that explores wealth, ambition, identity, and the pursuit of an idealized past.'),
+    ('9780316769488', 'The Catcher in the Rye', 'DRAMA', 'A coming-of-age novel following Holden Caulfield as he navigates alienation, grief, and adolescence.')
+ON CONFLICT (isbn) DO UPDATE
+SET title = EXCLUDED.title,
+    genre = EXCLUDED.genre,
+    description = EXCLUDED.description;
 
 INSERT INTO book_authors (book_id, author_id)
 SELECT b.id, a.id
