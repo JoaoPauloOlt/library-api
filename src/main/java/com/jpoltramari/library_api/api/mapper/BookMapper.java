@@ -22,6 +22,7 @@ public interface BookMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "authors", ignore = true)
     @Mapping(target = "copies", ignore = true)
+    @Mapping(target = "loanCount", ignore = true)
     Book toEntity(BookInput input);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -29,5 +30,6 @@ public interface BookMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "authors", ignore = true)
     @Mapping(target = "copies", ignore = true)
+    @Mapping(target = "loanCount", ignore = true)
     void update(BookUpdateInput input, @MappingTarget Book book);
 }
