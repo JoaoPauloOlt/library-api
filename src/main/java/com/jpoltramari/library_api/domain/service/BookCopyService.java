@@ -121,7 +121,7 @@ public class BookCopyService {
         );
     }
 
-    private BookCopy findOrFailForBook(Long bookId, Long id) {
+    public BookCopy findOrFailForBook(Long bookId, Long id) {
         validateBookExists(bookId);
         return repository.findByIdAndBookId(id, bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book copy not found."));
