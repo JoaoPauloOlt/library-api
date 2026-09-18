@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.domain.repository;
 
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
+import com.jpoltramari.library_api.domain.model.BookCopy;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 
