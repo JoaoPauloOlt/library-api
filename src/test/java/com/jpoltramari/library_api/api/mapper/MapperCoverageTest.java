@@ -264,7 +264,8 @@ class MapperCoverageTest {
 
     private Group group(Long id, String name) {
         Group group = new Group();
-        group.setId(id);\n        group.setName(name);
+        group.setId(id);
+        group.setName(name);
         return group;
     }
 }
