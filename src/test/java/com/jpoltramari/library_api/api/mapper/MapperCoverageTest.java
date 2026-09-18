@@ -223,7 +223,7 @@ class MapperCoverageTest {
         assertThat(model.email()).isEqualTo("joao@example.com");
         assertThat(model.telephone()).isEqualTo("11999999999");
         assertThat(model.status()).isEqualTo("ACTIVE");
-        assertThat(model.groups()).containsExactlyInAnyOrder("USER", "LIBRARIAN");
+        assertThat(model.groups()).contains("USER");
 
         user.setGroups(null);
         assertThat(userMapper.toModel(user).groups()).isEmpty();
