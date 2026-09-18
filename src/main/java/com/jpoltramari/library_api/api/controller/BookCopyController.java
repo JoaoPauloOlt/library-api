@@ -47,7 +47,7 @@ public class BookCopyController {
     public BookCopyModel findById(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
             @Parameter(description = "Physical copy identifier", example = "1") @PathVariable @Positive Long id) {
-        return mapper.toModel(service.findOrFail(id));
+        return mapper.toModel(service.findOrFailForBook(bookId, id));
     }
 
     @GetMapping
@@ -95,8 +95,10 @@ public class BookCopyController {
             @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content),
             @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
     })
-    public BookCopyModel create(@RequestBody @Valid BookCopyInput input) {
-        return mapper.toModel(service.create(input));
+    public BookCopyModel create(
+            @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
+            @RequestBody @Valid BookCopyInput input) {
+        return mapper.toModel(service.create(bookId, input));
     }
 
     @PutMapping("/{id}")
@@ -112,7 +114,7 @@ public class BookCopyController {
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
             @Parameter(description = "Physical copy identifier", example = "1") @PathVariable @Positive Long id,
             @RequestBody @Valid BookCopyUpdateInput input) {
-        return mapper.toModel(service.update(id, input));
+        return mapper.toModel(service.update(bookId, id, input));
     }
 
     @PatchMapping("/{id}/status")
@@ -125,9 +127,10 @@ public class BookCopyController {
             @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content)
     })
     public BookCopyModel changeStatus(
+            @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
             @Parameter(description = "Physical copy identifier", example = "1") @PathVariable @Positive Long id,
             @Parameter(in = ParameterIn.QUERY, description = "New physical copy status", example = "AVAILABLE") @RequestParam CopyStatus status) {
-        return mapper.toModel(service.changeStatus(id, status));
+        return mapper.toModel(service.changeStatus(bookId, id, status));
     }
 
     @DeleteMapping("/{id}")
@@ -141,7 +144,8 @@ public class BookCopyController {
             @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content)
     })
     public void delete(
+            @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
             @Parameter(description = "Physical copy identifier", example = "1") @PathVariable @Positive Long id) {
-        service.delete(id);
+        service.delete(bookId, id);
     }
 }
