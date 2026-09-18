@@ -62,6 +62,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/loans").hasAuthority("LOAN_READ_ALL")
                         .requestMatchers(HttpMethod.GET, "/loans/my").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/loans/*").hasAuthority("LOAN_READ_ALL")
                         .requestMatchers(HttpMethod.POST, "/loans").hasAuthority("LOAN_CREATE")
                         .requestMatchers(HttpMethod.PUT, "/loans/*/approve").hasAuthority("LOAN_APPROVE")
                         .requestMatchers(HttpMethod.PUT, "/loans/*/withdraw").hasAuthority("LOAN_WITHDRAW")
