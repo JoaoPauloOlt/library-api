@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -29,6 +30,20 @@ class BookCopyControllerWebMvcTest {
 
     @MockBean
     private BookCopyMapper mapper;
+
+    @Test
+    @WithMockUser(authorities = "BOOK_COPY_READ")
+    void shouldAllowCopyDetailWithReadPermission() throws Exception {
+        mockMvc.perform(get("/books/1/copies/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(authorities = "BOOK_COPY_READ")
+    void shouldRejectInvalidCopyIdentifier() throws Exception {
+        mockMvc.perform(get("/books/1/copies/0"))
+                .andExpect(status().isBadRequest());
+    }
 
     @Test
     void shouldRejectUnauthenticatedCopyListing() throws Exception {
