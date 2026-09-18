@@ -42,7 +42,7 @@ class BookCopyServiceTest {
         when(bookRepository.findById(10L)).thenReturn(Optional.of(book));
         when(repository.save(any(BookCopy.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        BookCopy result = service.create(new BookCopyInput(10L, "A-01"));
+        BookCopy result = service.create(10L, new BookCopyInput(10L, "A-01"));
 
         assertEquals(book, result.getBook());
         assertEquals(CopyStatus.AVAILABLE, result.getStatus());
@@ -60,6 +60,19 @@ class BookCopyServiceTest {
     }
 
     @Test
+    void shouldRejectCopyFromAnotherBook() {
+        BookCopy copy = new BookCopy();
+        Book book = new Book();
+        book.setId(20L);
+        copy.setBook(book);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.empty());
+
+        assertThrows(com.jpoltramari.library_api.domain.exception.EntityNotFoundException.class,
+                () -> service.findOrFailForBook(10L, 1L));
+    }
+
+    @Test
     void shouldUpdateOnlyProvidedFields() {
         BookCopy copy = new BookCopy();
         copy.setStatus(CopyStatus.AVAILABLE);
@@ -68,7 +81,7 @@ class BookCopyServiceTest {
         when(repository.findById(1L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
-        BookCopy result = service.update(1L, new BookCopyUpdateInput(CopyStatus.MAINTENANCE, null, null));
+        BookCopy result = service.update(10L, 1L, new BookCopyUpdateInput(CopyStatus.MAINTENANCE, null, null));
 
         assertEquals(CopyStatus.MAINTENANCE, result.getStatus());
         assertEquals("A-01", result.getLocation());
@@ -82,7 +95,7 @@ class BookCopyServiceTest {
         when(repository.findById(1L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
-        BookCopy result = service.changeStatus(1L, CopyStatus.MAINTENANCE);
+        BookCopy result = service.changeStatus(10L, 1L, CopyStatus.MAINTENANCE);
 
         assertEquals(CopyStatus.MAINTENANCE, result.getStatus());
         verify(repository).save(copy);
