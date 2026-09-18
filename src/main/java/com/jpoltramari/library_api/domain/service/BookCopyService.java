@@ -38,7 +38,10 @@ public class BookCopyService {
     }
 
     @Transactional
-    public BookCopy create(BookCopyInput input){
+    public BookCopy create(Long bookId, BookCopyInput input){
+        if (!bookId.equals(input.bookId())) {
+            throw new com.jpoltramari.library_api.domain.exception.BusinessException("Book ID in path does not match book ID in request.");
+        }
         Book book = bookRepository.findById(
                 input.bookId())
                 .orElseThrow(()-> new BookNotFoundException(input.bookId()));
@@ -57,11 +60,12 @@ public class BookCopyService {
 
     @Transactional
     public BookCopy update(
+            Long bookId,
             Long id,
             BookCopyUpdateInput input
     ) {
 
-        BookCopy copy = findOrFail(id);
+        BookCopy copy = findOrFailForBook(bookId, id);
 
         if (input.status() != null) {
             copy.setStatus(input.status());
@@ -79,20 +83,21 @@ public class BookCopyService {
     }
 
     @Transactional
-    public void delete(Long id) {
+    public void delete(Long bookId, Long id) {
 
-        BookCopy copy = findOrFail(id);
+        BookCopy copy = findOrFailForBook(bookId, id);
 
         repository.delete(copy);
     }
 
     @Transactional
     public BookCopy changeStatus(
+            Long bookId,
             Long id,
             CopyStatus status
     ) {
 
-        BookCopy copy = findOrFail(id);
+        BookCopy copy = findOrFailForBook(bookId, id);
 
         copy.setStatus(status);
 
@@ -114,6 +119,12 @@ public class BookCopyService {
                 bookId,
                 CopyStatus.AVAILABLE
         );
+    }
+
+    private BookCopy findOrFailForBook(Long bookId, Long id) {
+        validateBookExists(bookId);
+        return repository.findByIdAndBookId(id, bookId)
+                .orElseThrow(() -> new EntityNotFoundException("Book copy not found."));
     }
 
     private void validateBookExists(Long bookId){
