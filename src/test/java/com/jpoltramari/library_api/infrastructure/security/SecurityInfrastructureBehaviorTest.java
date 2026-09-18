@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
 import com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshot;
 import jakarta.servlet.FilterChain;
@@ -40,12 +41,12 @@ class SecurityInfrastructureBehaviorTest {
 
         MockHttpServletRequest missing = new MockHttpServletRequest("GET", "/books");
         filter.doFilterInternal(missing, new MockHttpServletResponse(), chain);
-        verify(chain).doFilter(missing, any());
+        verify(chain).doFilter(eq(missing), any());
 
         MockHttpServletRequest empty = new MockHttpServletRequest("GET", "/books");
         empty.addHeader("Authorization", "Bearer   ");
         filter.doFilterInternal(empty, new MockHttpServletResponse(), chain);
-        verify(chain).doFilter(empty, any());
+        verify(chain).doFilter(eq(empty), any());
 
         verifyNoInteractions(jwtService, validator);
     }
@@ -106,13 +107,13 @@ class SecurityInfrastructureBehaviorTest {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/books");
         filter.doFilterInternal(request, new MockHttpServletResponse(), chain);
 
-        verify(chain).doFilter(request, any());
+        verify(chain).doFilter(eq(request), any());
         verifyNoInteractions(jwtService, validator);
     }
 
     @Test
     void shouldWriteUnauthorizedAndForbiddenSecurityResponses() throws Exception {
-        ApiSecurityExceptionHandler handler = new ApiSecurityExceptionHandler(new ObjectMapper());
+        ApiSecurityExceptionHandler handler = new ApiSecurityExceptionHandler(new ObjectMapper().registerModule(new JavaTimeModule()));
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/books");
         MockHttpServletResponse unauthorized = new MockHttpServletResponse();
