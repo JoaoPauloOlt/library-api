@@ -21,6 +21,7 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
 
     public static final String MDC_KEY = "correlationId";
     public static final String HEADER = "X-Correlation-Id";
+    private static final String REQUEST_LOG_FORMAT = "event={} method={} path={} status={} durationMs={}";
 
     @Override
     protected void doFilterInternal(
@@ -68,14 +69,11 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         String event = status >= 500 ? "request_failed" : status >= 400 ? "request_rejected" : "request_completed";
 
         if (status >= 500) {
-            log.error("event={} method={} path={} status={} durationMs={}",
-                    event, request.getMethod(), request.getRequestURI(), status, durationMs);
+            log.error(REQUEST_LOG_FORMAT, event, request.getMethod(), request.getRequestURI(), status, durationMs);
         } else if (status >= 400) {
-            log.warn("event={} method={} path={} status={} durationMs={}",
-                    event, request.getMethod(), request.getRequestURI(), status, durationMs);
+            log.warn(REQUEST_LOG_FORMAT, event, request.getMethod(), request.getRequestURI(), status, durationMs);
         } else {
-            log.info("event={} method={} path={} status={} durationMs={}",
-                    event, request.getMethod(), request.getRequestURI(), status, durationMs);
+            log.info(REQUEST_LOG_FORMAT, event, request.getMethod(), request.getRequestURI(), status, durationMs);
         }
     }
 }
