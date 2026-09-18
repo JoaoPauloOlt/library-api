@@ -11,7 +11,8 @@ import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
 import com.jpoltramari.library_api.infrastructure.security.snapshot.CachedUserSecuritySnapshotAdapter;
 import com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshot;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;\nimport io.jsonwebtoken.io.DecodingException;
+import org.mockito.Mockito;
+import io.jsonwebtoken.io.DecodingException;
 
 import java.time.Instant;
 import java.util.Optional;
