@@ -97,16 +97,6 @@ public class LoanService {
         return loanRepository.save(loan);
     }
 
-    @Deprecated
-    @Transactional
-    public Loan withdraw(Long id) {
-        Loan loan = findOrFail(id);
-        if (loan.getStatus() == LoanStatus.ACTIVE) {
-            throw new BusinessException("Loan is already active; approval completes the withdrawal.");
-        }
-        throw new BusinessException("Only requested loans can be approved.");
-    }
-
     @Transactional
     public Loan returnBook(Long id) {
         Loan loan = findOrFail(id);
