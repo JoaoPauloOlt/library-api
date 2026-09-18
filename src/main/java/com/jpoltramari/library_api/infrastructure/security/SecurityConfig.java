@@ -20,6 +20,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @Configuration
 public class SecurityConfig {
 
+    private static final String BOOK_COPIES_PATH = "/books/*/copies/**";
+    private static final String BOOKS_PATH = "/books/**";
+    private static final String AUTHORS_PATH = "/authors/**";
+
     private final JwtAuthenticationFilter filter;
     private final CorsConfigurationSource corsConfigurationSource;
 
@@ -44,21 +48,21 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/books/*/copies/**").hasAuthority("BOOK_COPY_READ")
+                        .requestMatchers(HttpMethod.GET, BOOK_COPIES_PATH).hasAuthority("BOOK_COPY_READ")
                         .requestMatchers(HttpMethod.POST, "/books/*/copies").hasAuthority("BOOK_COPY_CREATE")
-                        .requestMatchers(HttpMethod.PUT, "/books/*/copies/**").hasAuthority("BOOK_COPY_UPDATE")
-                        .requestMatchers(HttpMethod.PATCH, "/books/*/copies/**").hasAuthority("BOOK_COPY_UPDATE")
-                        .requestMatchers(HttpMethod.DELETE, "/books/*/copies/**").hasAuthority("BOOK_COPY_DELETE")
+                        .requestMatchers(HttpMethod.PUT, BOOK_COPIES_PATH).hasAuthority("BOOK_COPY_UPDATE")
+                        .requestMatchers(HttpMethod.PATCH, BOOK_COPIES_PATH).hasAuthority("BOOK_COPY_UPDATE")
+                        .requestMatchers(HttpMethod.DELETE, BOOK_COPIES_PATH).hasAuthority("BOOK_COPY_DELETE")
 
-                        .requestMatchers(HttpMethod.GET, "/books", "/books/**").hasAuthority("BOOK_READ")
+                        .requestMatchers(HttpMethod.GET, "/books", BOOKS_PATH).hasAuthority("BOOK_READ")
                         .requestMatchers(HttpMethod.POST, "/books").hasAuthority("BOOK_CREATE")
-                        .requestMatchers(HttpMethod.PUT, "/books/**").hasAuthority("BOOK_UPDATE")
-                        .requestMatchers(HttpMethod.DELETE, "/books/**").hasAuthority("BOOK_DELETE")
+                        .requestMatchers(HttpMethod.PUT, BOOKS_PATH).hasAuthority("BOOK_UPDATE")
+                        .requestMatchers(HttpMethod.DELETE, BOOKS_PATH).hasAuthority("BOOK_DELETE")
 
-                        .requestMatchers(HttpMethod.GET, "/authors", "/authors/**").hasAuthority("AUTHOR_READ")
+                        .requestMatchers(HttpMethod.GET, "/authors", AUTHORS_PATH).hasAuthority("AUTHOR_READ")
                         .requestMatchers(HttpMethod.POST, "/authors").hasAuthority("AUTHOR_CREATE")
-                        .requestMatchers(HttpMethod.PUT, "/authors/**").hasAuthority("AUTHOR_UPDATE")
-                        .requestMatchers(HttpMethod.DELETE, "/authors/**").hasAuthority("AUTHOR_DELETE")
+                        .requestMatchers(HttpMethod.PUT, AUTHORS_PATH).hasAuthority("AUTHOR_UPDATE")
+                        .requestMatchers(HttpMethod.DELETE, AUTHORS_PATH).hasAuthority("AUTHOR_DELETE")
 
                         .requestMatchers(HttpMethod.GET, "/loans").hasAuthority("LOAN_READ_ALL")
                         .requestMatchers(HttpMethod.GET, "/loans/my").authenticated()
