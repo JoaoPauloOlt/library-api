@@ -83,6 +83,32 @@ class LoanControllerWebMvcTest {
     }
 
     @Test
+    void shouldRequireAuthenticationForLoanDetail() throws Exception {
+        mockMvc.perform(get("/loans/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldRequireLoanReadAllPermissionForLoanDetail() throws Exception {
+        mockMvc.perform(get("/loans/1").with(user(principal(42L))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldAllowLoanDetailWithReadAllPermission() throws Exception {
+        Loan loan = new Loan();
+        loan.setId(10L);
+
+        when(service.findOrFail(10L)).thenReturn(loan);
+
+        mockMvc.perform(get("/loans/10")
+                        .with(user(principal(42L, "LOAN_READ_ALL"))))
+                .andExpect(status().isOk());
+
+        verify(service).findOrFail(10L);
+    }
+
+    @Test
     void shouldRequireAuthenticationForLoanCreation() throws Exception {
         mockMvc.perform(post("/loans")
                         .contentType(APPLICATION_JSON)
