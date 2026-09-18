@@ -94,23 +94,23 @@ class JwtInfrastructureCoverageTest {
     @Test
     void shouldValidateJwtSecretConfiguration() {
         JwtProperties valid = properties();
-        new JwtSecretValidator(valid).validate();
+        org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(valid), "validate");
 
         JwtProperties blank = properties();
         blank.setSecret(" ");
-        assertThatThrownBy(() -> new JwtSecretValidator(blank).validate())
+        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(blank), "validate"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("jwt.secret must be configured");
 
         JwtProperties invalidBase64 = properties();
         invalidBase64.setSecret("%%%");
-        assertThatThrownBy(() -> new JwtSecretValidator(invalidBase64).validate())
+        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(invalidBase64), "validate"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("jwt.secret must be a valid Base64-encoded key");
 
         JwtProperties shortKey = properties();
         shortKey.setSecret("c2hvcnQ=");
-        assertThatThrownBy(() -> new JwtSecretValidator(shortKey).validate())
+        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(shortKey), "validate"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("at least 32 bytes");
     }
