@@ -20,6 +20,7 @@ class LibraryApiApplicationTests {
 
     @Test
     void contextLoads() {
+        // Intentionally empty: successful execution verifies that the Spring application context loads correctly.
     }
 
     @Test

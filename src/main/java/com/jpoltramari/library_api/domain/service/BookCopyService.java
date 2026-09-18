@@ -54,7 +54,7 @@ public class BookCopyService {
         copy.setStatus(CopyStatus.AVAILABLE);
         copy.setActive(true);
 
-        copy.setBarcode(generateBarcode(book.getId()));
+        copy.setBarcode(generateBarcode());
 
         return repository.save(copy);
     }
@@ -134,7 +134,7 @@ public class BookCopyService {
         }
     }
 
-    private String generateBarcode(Long bookId){
+    private String generateBarcode(){
         return "BK-" + UUID.randomUUID();
     }
 }
