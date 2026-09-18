@@ -64,7 +64,8 @@ class LoanServiceTest {
         when(bookRepository.existsById(10L)).thenReturn(true);
         when(loanRepository.existsByUserIdAndBookCopyBookIdAndStatusIn(any(), any(), any()))
                 .thenReturn(false);
-        when(bookCopyRepository.findFirstAvailableCopy(10L)).thenReturn(Optional.of(copy));
+        when(bookCopyRepository.findFirstByBookIdAndActiveTrueAndStatusOrderByIdAsc(10L, CopyStatus.AVAILABLE))
+                .thenReturn(Optional.of(copy));
         when(loanRepository.save(any(Loan.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 

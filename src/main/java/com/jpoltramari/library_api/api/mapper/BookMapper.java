@@ -15,13 +15,14 @@ public interface BookMapper {
 
     @Mapping(target = "totalCopies", expression = "java((long) book.getCopies().size())")
     @Mapping(target = "availableCopies", expression = "java(book.getCopies().stream().filter(copy -> copy.getStatus() == com.jpoltramari.library_api.domain.enums.CopyStatus.AVAILABLE && copy.isActive()).count())")
-    @Mapping(target = "loanCount", source = "loanCount")
+    @Mapping(target = "loanCount", expression = "java(book.getLoanCount())")
     BookModel toModel(Book book);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "authors", ignore = true)
     @Mapping(target = "copies", ignore = true)
+    @Mapping(target = "loanCount", ignore = true)
     Book toEntity(BookInput input);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -29,5 +30,6 @@ public interface BookMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "authors", ignore = true)
     @Mapping(target = "copies", ignore = true)
+    @Mapping(target = "loanCount", ignore = true)
     void update(BookUpdateInput input, @MappingTarget Book book);
 }
