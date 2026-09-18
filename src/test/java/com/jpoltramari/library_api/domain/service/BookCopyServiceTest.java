@@ -56,7 +56,7 @@ class BookCopyServiceTest {
         when(bookRepository.findById(10L)).thenReturn(Optional.empty());
 
         assertThrows(BookNotFoundException.class,
-                () -> service.create(new BookCopyInput(10L, "A-01")));
+                () -> service.create(10L, new BookCopyInput(10L, "A-01")));
     }
 
     @Test
@@ -78,7 +78,8 @@ class BookCopyServiceTest {
         copy.setStatus(CopyStatus.AVAILABLE);
         copy.setLocation("A-01");
         copy.setActive(true);
-        when(repository.findById(1L)).thenReturn(Optional.of(copy));
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
         BookCopy result = service.update(10L, 1L, new BookCopyUpdateInput(CopyStatus.MAINTENANCE, null, null));
@@ -92,7 +93,8 @@ class BookCopyServiceTest {
     void shouldChangeStatus() {
         BookCopy copy = new BookCopy();
         copy.setStatus(CopyStatus.AVAILABLE);
-        when(repository.findById(1L)).thenReturn(Optional.of(copy));
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
         BookCopy result = service.changeStatus(10L, 1L, CopyStatus.MAINTENANCE);
