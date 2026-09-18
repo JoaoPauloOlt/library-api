@@ -55,7 +55,8 @@ public class LoanService {
 
         validateNoActiveLoan(user, bookId);
 
-        BookCopy copy = bookCopyRepository.findFirstAvailableCopy(bookId)
+        BookCopy copy = bookCopyRepository.findFirstByBookIdAndActiveTrueAndStatusOrderByIdAsc(
+                        bookId, CopyStatus.AVAILABLE)
                 .orElseThrow(() -> new BusinessException("No available copies for this book."));
 
         if (copy.getStatus() != CopyStatus.AVAILABLE || !copy.isActive()) {
@@ -96,11 +97,6 @@ public class LoanService {
         return loanRepository.save(loan);
     }
 
-    /**
-     * @deprecated Approval now activates the loan and records the withdrawal
-     *             timestamp. Kept as a compatibility guard so old clients get
-     *             a clear domain error instead of performing a second transition.
-     */
     @Deprecated
     @Transactional
     public Loan withdraw(Long id) {
@@ -158,14 +154,8 @@ public class LoanService {
 
     private void validateNoActiveLoan(User user, Long bookId) {
         boolean exists = loanRepository.existsByUserIdAndBookCopyBookIdAndStatusIn(
-                user.getId(),
-                bookId,
-                List.of(
-                        LoanStatus.REQUESTED,
-                        LoanStatus.ACTIVE,
-                        LoanStatus.LATE
-                )
-        );
+                user.getId(), bookId,
+                List.of(LoanStatus.REQUESTED, LoanStatus.ACTIVE, LoanStatus.LATE));
 
         if (exists) {
             throw new BusinessException("User already has an active loan for this book.");
