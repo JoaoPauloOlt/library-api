@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
 import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.DecodingException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +26,7 @@ public class JwtSecretValidator {
         byte[] keyBytes;
         try {
             keyBytes = Decoders.BASE64.decode(secret);
-        } catch (IllegalArgumentException ex) {
+        } catch (IllegalArgumentException | DecodingException ex) {
             throw new IllegalStateException("jwt.secret must be a valid Base64-encoded key", ex);
         }
 
