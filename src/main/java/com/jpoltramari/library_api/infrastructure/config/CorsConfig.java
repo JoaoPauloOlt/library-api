@@ -15,7 +15,8 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOriginPatterns(List.of(
-                "http://localhost:*"
+                "http://localhost:*",
+                "https://library-web-8lqa.onrender.com"
         ));
 
         config.setAllowedHeaders(List.of(
