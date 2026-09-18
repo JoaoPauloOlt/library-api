@@ -214,8 +214,8 @@ class MapperCoverageTest {
         user.setPassword("encoded");
         user.setStatus(UserStatus.ACTIVE);
         user.setGroups(new HashSet<>());
-        user.getGroups().add(group("USER"));
-        user.getGroups().add(group("LIBRARIAN"));
+        user.getGroups().add(group(1L, "USER"));
+        user.getGroups().add(group(2L, "LIBRARIAN"));
 
         var model = userMapper.toModel(user);
         assertThat(model.id()).isEqualTo(1L);
@@ -262,9 +262,9 @@ class MapperCoverageTest {
         return copy;
     }
 
-    private Group group(String name) {
+    private Group group(Long id, String name) {
         Group group = new Group();
-        group.setName(name);
+        group.setId(id);\n        group.setName(name);
         return group;
     }
 }
