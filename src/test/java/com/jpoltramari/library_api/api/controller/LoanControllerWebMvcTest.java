@@ -22,8 +22,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = LibraryApiApplication.class)
@@ -77,6 +80,65 @@ class LoanControllerWebMvcTest {
         mockMvc.perform(get("/loans")
                         .with(user(principal(42L, "LOAN_READ_ALL"))))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldRequireAuthenticationForLoanCreation() throws Exception {
+        mockMvc.perform(post("/loans")
+                        .contentType(APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldRequireLoanCreatePermission() throws Exception {
+        mockMvc.perform(post("/loans")
+                        .with(user(principal(42L)))
+                        .contentType(APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRequireLoanApprovePermission() throws Exception {
+        mockMvc.perform(put("/loans/1/approve")
+                        .with(user(principal(42L))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectInvalidLoanIdBeforeApproveAuthorization() throws Exception {
+        mockMvc.perform(put("/loans/0/approve")
+                        .with(user(principal(42L, "LOAN_APPROVE"))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldRequireLoanReturnPermission() throws Exception {
+        mockMvc.perform(put("/loans/1/return")
+                        .with(user(principal(42L))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectInvalidLoanIdBeforeReturnServiceCall() throws Exception {
+        mockMvc.perform(put("/loans/0/return")
+                        .with(user(principal(42L, "LOAN_RETURN"))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldRequireLoanCancelPermission() throws Exception {
+        mockMvc.perform(put("/loans/1/cancel")
+                        .with(user(principal(42L))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectInvalidLoanIdBeforeCancelServiceCall() throws Exception {
+        mockMvc.perform(put("/loans/0/cancel")
+                        .with(user(principal(42L, "LOAN_CANCEL"))))
+                .andExpect(status().isBadRequest());
     }
 
     private AuthenticatedUser principal(Long userId, String... permissions) {
