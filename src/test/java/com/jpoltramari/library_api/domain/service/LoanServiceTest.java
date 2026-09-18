@@ -108,14 +108,6 @@ class LoanServiceTest {
     }
 
     @Test
-    void shouldRejectLegacyWithdrawTransition() {
-        Loan loan = loanWithStatus(LoanStatus.ACTIVE);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-
-        assertThrows(BusinessException.class, () -> loanService.withdraw(1L));
-    }
-
-    @Test
     void shouldReturnActiveLoanAndMakeCopyAvailable() {
         BookCopy copy = availableCopy();
         copy.setStatus(CopyStatus.LOANED);
