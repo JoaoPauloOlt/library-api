@@ -18,6 +18,7 @@ import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -30,6 +31,9 @@ class MapperCoverageTest {
 
     private final AuthorMapper authorMapper = Mappers.getMapper(AuthorMapper.class);
     private final BookMapper bookMapper = Mappers.getMapper(BookMapper.class);
+    {
+        ReflectionTestUtils.setField(bookMapper, "authorMapper", authorMapper);
+    }
     private final BookCopyMapper copyMapper = Mappers.getMapper(BookCopyMapper.class);
     private final LoanMapper loanMapper = Mappers.getMapper(LoanMapper.class);
     private final UserMapper userMapper = Mappers.getMapper(UserMapper.class);
@@ -209,7 +213,9 @@ class MapperCoverageTest {
         user.setTelephone("11999999999");
         user.setPassword("encoded");
         user.setStatus(UserStatus.ACTIVE);
-        user.setGroups(new HashSet<>(Set.of(group("USER"), group("LIBRARIAN"))));
+        user.setGroups(new HashSet<>());
+        user.getGroups().add(group("USER"));
+        user.getGroups().add(group("LIBRARIAN"));
 
         var model = userMapper.toModel(user);
         assertThat(model.id()).isEqualTo(1L);
