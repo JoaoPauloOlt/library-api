@@ -1,7 +1,6 @@
 package com.jpoltramari.library_api.domain.repository;
 
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
-import com.jpoltramari.library_api.domain.model.BookCopy;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -28,13 +27,13 @@ public interface BookCopyRepository
     boolean existsByBarcode(String barcode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("""
+    @Query(value = """
         select bc
         from BookCopy bc
         where bc.book.id = :bookId
             and bc.active = true
             and bc.status = com.jpoltramari.library_api.domain.enums.CopyStatus.AVAILABLE
         order by bc.id
-""")
+        """)
     Optional<BookCopy> findFirstAvailableCopy(Long bookId);
 }
