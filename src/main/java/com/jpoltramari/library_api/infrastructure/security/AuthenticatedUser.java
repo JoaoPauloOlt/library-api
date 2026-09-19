@@ -27,7 +27,7 @@ public final class AuthenticatedUser implements UserDetails {
     private final boolean enabled;
     private final String password;
 
-    private AuthenticatedUser(
+    private record UserState(
             Long userId,
             String email,
             String name,
@@ -37,32 +37,27 @@ public final class AuthenticatedUser implements UserDetails {
             Collection<? extends GrantedAuthority> authorities,
             boolean enabled,
             String password
-    ) {
-        this.userId = userId;
-        this.email = email;
-        this.name = name;
-        this.groups = List.copyOf(groups);
-        this.permissions = List.copyOf(permissions);
-        this.tokenVersion = tokenVersion;
-        this.authorities = authorities;
-        this.enabled = enabled;
-        this.password = password;
+    ) {}
+
+    private AuthenticatedUser(UserState state) {
+        this.userId = state.userId();
+        this.email = state.email();
+        this.name = state.name();
+        this.groups = List.copyOf(state.groups());
+        this.permissions = List.copyOf(state.permissions());
+        this.tokenVersion = state.tokenVersion();
+        this.authorities = state.authorities();
+        this.enabled = state.enabled();
+        this.password = state.password();
     }
 
     public static AuthenticatedUser fromClaims(JwtClaims claims) {
         var authorities = claims.authorities();
 
-        return new AuthenticatedUser(
-                claims.userId(),
-                claims.email(),
-                claims.name(),
-                claims.groups(),
-                claims.permissions(),
-                claims.tokenVersion(),
-                authorities,
-                true,
-                null
-        );
+        return new AuthenticatedUser(new UserState(
+                claims.userId(), claims.email(), claims.name(), claims.groups(),
+                claims.permissions(), claims.tokenVersion(), authorities, true, null
+        ));
     }
 
     public static AuthenticatedUser fromUser(User user, RbacResolver rbacResolver) {
@@ -74,17 +69,11 @@ public final class AuthenticatedUser implements UserDetails {
                 .map(a -> (GrantedAuthority) a)
                 .toList();
 
-        return new AuthenticatedUser(
-                user.getId(),
-                user.getEmail(),
-                user.getName(),
-                groups,
-                permissions,
-                user.getTokenVersion(),
-                authorities,
-                user.getStatus() == UserStatus.ACTIVE,
-                user.getPassword()
-        );
+        return new AuthenticatedUser(new UserState(
+                user.getId(), user.getEmail(), user.getName(), groups,
+                permissions, user.getTokenVersion(), authorities,
+                user.getStatus() == UserStatus.ACTIVE, user.getPassword()
+        ));
     }
 
     public Long getUserId() {
@@ -92,7 +81,7 @@ public final class AuthenticatedUser implements UserDetails {
     }
 
     public String getEmail() {
-        return email;
+        return getEmail();
     }
 
     public String getName() {
