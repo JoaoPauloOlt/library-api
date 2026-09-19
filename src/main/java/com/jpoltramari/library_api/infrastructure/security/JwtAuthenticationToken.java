@@ -29,6 +29,6 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     public JwtClaims getClaims() {
-        return claims;
+        return (JwtClaims) getCredentials();
     }
 }

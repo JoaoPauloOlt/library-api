@@ -23,9 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class LoanServiceIntegrationTest {
 
     private static final String USER_EMAIL = "user@library.com";
-    private static final String AVAILABLE_BOOK_ISBN = "9780743273565";
-    private static final String ACTIVE_BOOK_ISBN = "9780451524935";
-
     @Autowired
     private LoanService loanService;
 

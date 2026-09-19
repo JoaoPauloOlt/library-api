@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -67,7 +68,7 @@ public class LoanService {
         loan.setUser(user);
         loan.setBookCopy(copy);
         loan.setStatus(LoanStatus.REQUESTED);
-        loan.setRequestDate(LocalDateTime.now());
+        loan.setRequestDate(LocalDateTime.now(ZoneOffset.UTC));
 
         return loanRepository.save(loan);
     }
