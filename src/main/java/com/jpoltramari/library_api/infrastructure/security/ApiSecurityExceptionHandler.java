@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Slf4j
 @Component
@@ -70,7 +71,7 @@ public class ApiSecurityExceptionHandler
                        String path) throws IOException {
 
         var body = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .status(status.value())
                 .title(title)
                 .detail(detail)
