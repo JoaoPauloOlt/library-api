@@ -48,6 +48,7 @@ jobs:
         run: mvn -B verify
 
       # Issue #39: keep the generated coverage report available for objective analysis.
+      # The artifact is retained independently from the Maven 80% gate.
       - name: Publish JaCoCo report
         if: always()
         uses: actions/upload-artifact@v4
