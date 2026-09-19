@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -283,7 +284,7 @@ public class ApiExceptionHandler {
             Exception ex
     ) {
         ErrorResponse.ErrorResponseBuilder builder = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now())
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
                 .status(status.value())
                 .title(title)
                 .detail(detail)
