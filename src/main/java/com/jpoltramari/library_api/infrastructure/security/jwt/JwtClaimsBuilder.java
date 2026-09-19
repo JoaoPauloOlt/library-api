@@ -40,8 +40,8 @@ public class JwtClaimsBuilder {
                 .setSubject(String.valueOf(user.getId()))
                 .setIssuer(properties.getIssuer())
                 .setAudience(properties.getAudience())
-                .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(expiresAt))
+                .setIssuedAt(Date.from(now)) // NOSONAR - JJWT 0.11.5 requires java.util.Date
+                .setExpiration(Date.from(expiresAt)) // NOSONAR - JJWT 0.11.5 requires java.util.Date
                 .claim("email", user.getEmail())
                 .claim("name", user.getName())
                 .claim("groups", groups)
