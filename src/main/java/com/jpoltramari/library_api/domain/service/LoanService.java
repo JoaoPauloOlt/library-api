@@ -86,7 +86,7 @@ public class LoanService {
             throw new BusinessException("Copy is not available.");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
         copy.setStatus(CopyStatus.LOANED);
         bookCopyRepository.save(copy);
 
@@ -112,7 +112,7 @@ public class LoanService {
         bookCopyRepository.save(copy);
 
         loan.setStatus(LoanStatus.RETURNED);
-        loan.setReturnDate(LocalDateTime.now());
+        loan.setReturnDate(LocalDateTime.now(ZoneOffset.UTC));
 
         return loanRepository.save(loan);
     }
