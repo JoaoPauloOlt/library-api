@@ -66,7 +66,14 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
 
     private void logRequest(HttpServletRequest request, HttpServletResponse response, long durationMs) {
         int status = response.getStatus();
-        String event = status >= 500 ? "request_failed" : status >= 400 ? "request_rejected" : "request_completed";
+        String event;
+        if (status >= 500) {
+            event = "request_failed";
+        } else if (status >= 400) {
+            event = "request_rejected";
+        } else {
+            event = "request_completed";
+        }
 
         if (status >= 500) {
             log.error(REQUEST_LOG_FORMAT, event, request.getMethod(), request.getRequestURI(), status, durationMs);
