@@ -81,7 +81,7 @@ public final class AuthenticatedUser implements UserDetails {
     }
 
     public String getEmail() {
-        return getEmail();
+        return email;
     }
 
     public String getName() {
@@ -116,7 +116,7 @@ public final class AuthenticatedUser implements UserDetails {
 
     @Override
     public String getUsername() {
-        return email;
+        return getEmail();
     }
 
     @Override
