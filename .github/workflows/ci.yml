@@ -47,45 +47,6 @@ jobs:
       - name: Run tests and coverage
         run: mvn -B verify
 
-      - name: Publish JaCoCo report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-report
-          path: target/site/jacoco/
-          if-no-files-found: warn
-
-      - name: Print JaCoCo coverage summary
-        if: always()
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import xml.etree.ElementTree as ET
-          from pathlib import Path
-
-          report = Path("target/site/jacoco/jacoco.xml")
-          if not report.exists():
-              print("JaCoCo report not found: target/site/jacoco/jacoco.xml")
-              raise SystemExit(0)
-
-          root = ET.parse(report).getroot()
-          counters = {
-              c.attrib["type"]: c.attrib
-              for c in root.findall("counter")
-          }
-          line = counters.get("LINE")
-          if not line:
-              print("JaCoCo LINE counter not found")
-              raise SystemExit(0)
-
-          covered = int(line["covered"])
-          missed = int(line["missed"])
-          total = covered + missed
-          percentage = (covered / total * 100) if total else 0
-          print(f"JaCoCo global LINE coverage: {covered}/{total} = {percentage:.2f}%")
-          print(f"JaCoCo report: {report}")
-          PY
-
       - name: SonarCloud analysis
         if: always()
         uses: SonarSource/sonarqube-scan-action@v6
