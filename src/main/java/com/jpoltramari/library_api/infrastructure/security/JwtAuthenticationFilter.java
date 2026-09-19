@@ -50,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwtService.parseAndValidate(token)
-                .flatMap(claims -> validateAndBuild(claims))
+                .flatMap(this::validateAndBuild)
                 .ifPresent(authentication ->
                         SecurityContextHolder.getContext().setAuthentication(authentication)
                 );
