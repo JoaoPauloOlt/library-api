@@ -20,7 +20,7 @@ public class JwtAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getCredentials() {
-        return claims;
+        return (JwtClaims) getCredentials();
     }
 
     @Override
