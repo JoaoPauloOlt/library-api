@@ -5,7 +5,7 @@ import com.jpoltramari.library_api.api.dto.PageResponse;
 import com.jpoltramari.library_api.api.dto.user.UserInput;
 import com.jpoltramari.library_api.api.dto.user.UserModel;
 import com.jpoltramari.library_api.api.mapper.UserMapper;
-import com.jpoltramari.library_api.domain.service.UserService;
+import com.jpoltramari.library_api.application.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
