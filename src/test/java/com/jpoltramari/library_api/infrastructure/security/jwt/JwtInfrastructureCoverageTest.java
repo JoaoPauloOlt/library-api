@@ -12,7 +12,10 @@ import com.jpoltramari.library_api.infrastructure.security.snapshot.CachedUserSe
 import com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshot;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.DecodingException;
+
+import java.util.Date;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -68,6 +71,70 @@ class JwtInfrastructureCoverageTest {
         String token = otherBuilder.buildAccessToken(user(UserStatus.ACTIVE));
 
         assertThat(service.parseAndValidate(token)).isEmpty();
+    }
+
+    @Test
+    void shouldRejectExpiredToken() {
+        JwtProperties properties = properties();
+        properties.setExpiration(-1_000L);
+        JwtClaimsBuilder builder = new JwtClaimsBuilder(properties, new RbacResolver());
+        JwtService service = new JwtService(properties, builder, new InMemoryTokenBlacklist());
+
+        String token = service.generateToken(user(UserStatus.ACTIVE));
+
+        assertThat(service.parseAndValidate(token)).isEmpty();
+    }
+
+    @Test
+    void shouldRejectTokenWithUnexpectedIssuerOrAudience() {
+        JwtProperties properties = properties();
+        JwtClaimsBuilder builder = new JwtClaimsBuilder(properties, new RbacResolver());
+        JwtService service = new JwtService(properties, builder, new InMemoryTokenBlacklist());
+        User user = user(UserStatus.ACTIVE);
+
+        String wrongIssuer = Jwts.builder()
+                .setId("jti-issuer")
+                .setSubject(String.valueOf(user.getId()))
+                .setIssuer("another-api")
+                .setAudience(properties.getAudience())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 60_000L))
+                .signWith(builder.signingKey())
+                .compact();
+
+        String wrongAudience = Jwts.builder()
+                .setId("jti-audience")
+                .setSubject(String.valueOf(user.getId()))
+                .setIssuer(properties.getIssuer())
+                .setAudience("another-client")
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 60_000L))
+                .signWith(builder.signingKey())
+                .compact();
+
+        assertThat(service.parseAndValidate(wrongIssuer)).isEmpty();
+        assertThat(service.parseAndValidate(wrongAudience)).isEmpty();
+    }
+
+    @Test
+    void shouldParseTokenWithNonNumericSubjectAsMissingUserId() {
+        JwtProperties properties = properties();
+        JwtClaimsBuilder builder = new JwtClaimsBuilder(properties, new RbacResolver());
+        JwtService service = new JwtService(properties, builder, new InMemoryTokenBlacklist());
+
+        String token = Jwts.builder()
+                .setId("jti-invalid-user")
+                .setSubject("not-a-user-id")
+                .setIssuer(properties.getIssuer())
+                .setAudience(properties.getAudience())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 60_000L))
+                .signWith(builder.signingKey())
+                .compact();
+
+        assertThat(service.parseAndValidate(token))
+                .get()
+                .satisfies(claims -> assertThat(claims.userId()).isNull());
     }
 
     @Test
