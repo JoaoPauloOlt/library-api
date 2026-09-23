@@ -41,8 +41,8 @@ public class LoanController {
     @Operation(summary = "List all loans", description = "Returns a paginated list of loans. The default ordering uses the request date.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Loans returned successfully"),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public PageResponse<LoanModel> list(
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
@@ -53,7 +53,7 @@ public class LoanController {
     @Operation(summary = "List my loans", description = "Returns the authenticated user's loans in paginated form.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Loans returned successfully"),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public PageResponse<LoanModel> myLoans(
             @ParameterObject @PageableDefault(size = 20) Pageable pageable,
@@ -68,10 +68,10 @@ public class LoanController {
     @Operation(summary = "Get loan by ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Loan returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid loan ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "404", description = "Loan not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "400", description = "Invalid loan ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Loan not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public LoanModel findById(@Parameter(description = "Loan identifier", example = "1") @PathVariable @Positive Long id) {
         return mapper.toModel(service.findOrFail(id));
@@ -82,9 +82,9 @@ public class LoanController {
     @Operation(summary = "Create a loan request", description = "Creates a loan request for the authenticated user.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Loan request created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request or business validation failure", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "404", description = "Referenced book or resource not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "400", description = "Invalid request or business validation failure", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Referenced book or resource not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public LoanModel create(@RequestBody @Valid LoanInput input, @AuthenticationPrincipal AuthenticatedUser principal) {
         return mapper.toModel(service.create(input, principal.getUserId()));
@@ -94,10 +94,10 @@ public class LoanController {
     @Operation(summary = "Approve a loan", description = "Approves a pending loan and transitions it to the active state.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Loan approved successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid loan ID or invalid lifecycle transition", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "404", description = "Loan not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "400", description = "Invalid loan ID or invalid lifecycle transition", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Loan not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public LoanModel approve(@Parameter(description = "Loan identifier", example = "1") @PathVariable @Positive Long id) {
         return mapper.toModel(service.approve(id));
@@ -107,10 +107,10 @@ public class LoanController {
     @Operation(summary = "Return a loan", description = "Registers the return of an active loan.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Loan returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid loan ID or invalid lifecycle transition", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "404", description = "Loan not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "400", description = "Invalid loan ID or invalid lifecycle transition", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Loan not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public LoanModel returnBook(@Parameter(description = "Loan identifier", example = "1") @PathVariable @Positive Long id) {
         return mapper.toModel(service.returnBook(id));
@@ -120,10 +120,10 @@ public class LoanController {
     @Operation(summary = "Cancel a loan", description = "Cancels a loan according to the current lifecycle rules.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Loan cancelled successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid loan ID or invalid lifecycle transition", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "404", description = "Loan not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "400", description = "Invalid loan ID or invalid lifecycle transition", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Loan not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public LoanModel cancel(@Parameter(description = "Loan identifier", example = "1") @PathVariable @Positive Long id) {
         return mapper.toModel(service.cancel(id));
