@@ -60,7 +60,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void shouldReturnEmptyWhenRefreshTokenDoesNotExist() {
-        when(refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(HASH))
+        when(refreshTokenRepository.findByTokenHash(HASH))
                 .thenReturn(Optional.empty());
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
@@ -71,7 +71,7 @@ class RefreshTokenServiceTest {
     void shouldRevokeFamilyWhenRefreshTokenIsExpired() {
         RefreshToken token = storedToken();
         token.setExpiresAt(Instant.now().minusSeconds(1));
-        when(refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(HASH))
+        when(refreshTokenRepository.findByTokenHash(HASH))
                 .thenReturn(Optional.of(token));
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
@@ -84,7 +84,7 @@ class RefreshTokenServiceTest {
     void shouldRevokeFamilyWhenRefreshTokenWasAlreadyReplaced() {
         RefreshToken token = storedToken();
         token.setReplacedByJti("previous-jti");
-        when(refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(HASH))
+        when(refreshTokenRepository.findByTokenHash(HASH))
                 .thenReturn(Optional.of(token));
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
@@ -94,7 +94,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void shouldRejectRefreshWhenUserIsMissing() {
-        when(refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(HASH))
+        when(refreshTokenRepository.findByTokenHash(HASH))
                 .thenReturn(Optional.of(storedToken()));
         when(userRepository.findByIdWithGroupsAndPermissions(42L))
                 .thenReturn(Optional.empty());
@@ -107,7 +107,7 @@ class RefreshTokenServiceTest {
     void shouldRejectRefreshWhenUserIsInactive() {
         User user = activeUser();
         user.setStatus(UserStatus.INACTIVE);
-        when(refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(HASH))
+        when(refreshTokenRepository.findByTokenHash(HASH))
                 .thenReturn(Optional.of(storedToken()));
         when(userRepository.findByIdWithGroupsAndPermissions(42L))
                 .thenReturn(Optional.of(user));
@@ -121,7 +121,7 @@ class RefreshTokenServiceTest {
         RefreshToken token = storedToken();
         when(properties.getRefreshExpiration()).thenReturn(86_400_000L);
 
-        when(refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(HASH))
+        when(refreshTokenRepository.findByTokenHash(HASH))
                 .thenReturn(Optional.of(token));
         when(userRepository.findByIdWithGroupsAndPermissions(42L))
                 .thenReturn(Optional.of(user));
@@ -140,7 +140,7 @@ class RefreshTokenServiceTest {
     @Test
     void shouldRevokeExistingRefreshToken() {
         RefreshToken token = storedToken();
-        when(refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(HASH))
+        when(refreshTokenRepository.findByTokenHash(HASH))
                 .thenReturn(Optional.of(token));
 
         service.revoke(RAW_TOKEN);
@@ -151,7 +151,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void shouldDoNothingWhenRevokingUnknownRefreshToken() {
-        when(refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(HASH))
+        when(refreshTokenRepository.findByTokenHash(HASH))
                 .thenReturn(Optional.empty());
 
         service.revoke(RAW_TOKEN);
