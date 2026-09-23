@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.api.controller;
 
+import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.api.dto.bookcopy.BookAvailabilityModel;
 import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyInput;
 import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyModel;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -39,10 +41,10 @@ public class BookCopyController {
     @Operation(summary = "Get a physical copy by ID")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Book copy returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book or copy ID", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid book or copy ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public BookCopyModel findById(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
@@ -54,10 +56,10 @@ public class BookCopyController {
     @Operation(summary = "List physical copies of a book")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Book copies returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book ID", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid book ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public List<BookCopyModel> findAllByBook(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId) {
@@ -71,10 +73,10 @@ public class BookCopyController {
     @Operation(summary = "Get book copy availability", description = "Returns total and currently available physical copies for a book.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Availability returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book ID", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid book ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public BookAvailabilityModel availability(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId) {
@@ -90,10 +92,10 @@ public class BookCopyController {
     @Operation(summary = "Create a physical book copy")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Book copy created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book copy data", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid book copy data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public BookCopyModel create(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
@@ -105,10 +107,10 @@ public class BookCopyController {
     @Operation(summary = "Update a physical book copy")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Book copy updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book copy data", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid book copy data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public BookCopyModel update(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
@@ -121,10 +123,10 @@ public class BookCopyController {
     @Operation(summary = "Change physical copy status")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Book copy status updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid copy ID or status", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid copy ID or status", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public BookCopyModel changeStatus(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
@@ -138,10 +140,10 @@ public class BookCopyController {
     @Operation(summary = "Delete a physical book copy")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Book copy deleted successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid copy ID", content = @Content),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content),
-            @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content)
+            @ApiResponse(responseCode = "400", description = "Invalid copy ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public void delete(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,

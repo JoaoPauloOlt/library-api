@@ -18,6 +18,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -43,8 +44,7 @@ public class AuthorController {
     })
     @GetMapping
     public PageResponse<AuthorModel> list(
-            @Parameter(description = "Pagination and sorting. Example: page=0&size=20&sort=name,asc")
-            @PageableDefault(size = 20, sort = "name") Pageable pageable
+            @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable
     ) {
         return PageResponse.from(service.findAll(pageable), mapper::toModel);
     }
