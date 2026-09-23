@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.api.controller;
 
+import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.api.dto.auth.LoginInput;
 import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
 import com.jpoltramari.library_api.api.dto.auth.LogoutInput;
