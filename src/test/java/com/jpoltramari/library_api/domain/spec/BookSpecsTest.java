@@ -31,8 +31,8 @@ class BookSpecsTest {
         Predicate titlePredicate = mock(Predicate.class);
         Predicate genrePredicate = mock(Predicate.class);
 
-        when(root.get("title")).thenReturn(title);
-        when(root.get("genre")).thenReturn(genre);
+        doReturn(title).when(root).get("title");
+        doReturn(genre).when(root).get("genre");
         when(builder.lower(title)).thenReturn(title);
         when(builder.like(title, "%java%")).thenReturn(titlePredicate);
         when(builder.equal(genre, "TECH")).thenReturn(genrePredicate);
@@ -59,8 +59,8 @@ class BookSpecsTest {
         jakarta.persistence.criteria.Path<String> authorName = mock(jakarta.persistence.criteria.Path.class);
         Predicate predicate = mock(Predicate.class);
 
-        when(root.join("authors", JoinType.LEFT)).thenReturn(authorJoin);
-        when(authorJoin.get("name")).thenReturn(authorName);
+        doReturn(authorJoin).when(root).join("authors", JoinType.LEFT);
+        doReturn(authorName).when(authorJoin).get("name");
         when(builder.lower(authorName)).thenReturn(authorName);
         when(builder.like(authorName, "%machado%")).thenReturn(predicate);
         when(builder.and(any(Predicate[].class))).thenReturn(predicate);
