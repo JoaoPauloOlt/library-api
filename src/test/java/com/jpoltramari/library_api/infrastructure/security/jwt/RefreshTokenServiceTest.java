@@ -5,7 +5,7 @@ import com.jpoltramari.library_api.domain.model.RefreshToken;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.RefreshTokenRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
-import com.jpoltramari.library_api.domain.service.TokenVersionService;
+import com.jpoltramari.library_api.application.service.TokenVersionService;
 import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
