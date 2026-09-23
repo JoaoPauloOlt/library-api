@@ -38,7 +38,6 @@ class RefreshTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        when(properties.getRefreshExpiration()).thenReturn(86_400_000L);
         service = new RefreshTokenService(
                 properties, claimsBuilder, refreshTokenRepository,
                 userRepository, tokenVersionService, rbacResolver
@@ -48,6 +47,7 @@ class RefreshTokenServiceTest {
     @Test
     void shouldIssueAccessAndRefreshTokens() {
         User user = activeUser();
+        when(properties.getRefreshExpiration()).thenReturn(86_400_000L);
         when(claimsBuilder.buildAccessToken(user)).thenReturn("access-token");
 
         RefreshTokenService.IssuedTokens result = service.issueTokens(user);
@@ -120,6 +120,7 @@ class RefreshTokenServiceTest {
     void shouldRotateValidRefreshToken() {
         User user = activeUser();
         RefreshToken token = storedToken();
+        when(properties.getRefreshExpiration()).thenReturn(86_400_000L);
 
         when(refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(HASH))
                 .thenReturn(Optional.of(token));
@@ -161,6 +162,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void shouldExposeConfiguredRefreshExpiration() {
+        when(properties.getRefreshExpiration()).thenReturn(86_400_000L);
         assertThat(service.getRefreshExpiration()).isEqualTo(86_400_000L);
     }
 
