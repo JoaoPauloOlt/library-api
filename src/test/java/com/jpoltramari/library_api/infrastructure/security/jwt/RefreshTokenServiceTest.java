@@ -19,8 +19,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -132,8 +130,8 @@ class RefreshTokenServiceTest {
         RefreshTokenService.IssuedTokens result = service.rotate(RAW_TOKEN);
 
         assertThat(result).isNotNull();
-        assertThat(result.get().accessToken()).isEqualTo("new-access-token");
-        assertThat(result.get().refreshToken()).isNotBlank();
+        assertThat(result.accessToken()).isEqualTo("new-access-token");
+        assertThat(result.refreshToken()).isNotBlank();
         assertThat(token.getRevokedAt()).isNotNull();
         assertThat(token.getReplacedByJti()).isNotBlank();
         verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
