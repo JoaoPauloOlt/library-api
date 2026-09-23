@@ -44,7 +44,7 @@ public class RefreshTokenService {
     public Optional<IssuedTokens> rotate(String rawRefreshToken) {
         String hash = hashToken(rawRefreshToken);
 
-        Optional<RefreshToken> stored = refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(hash);
+        Optional<RefreshToken> stored = refreshTokenRepository.findByTokenHash(hash);
         if (stored.isEmpty()) {
             log.warn("event=refresh_rejected reason=token_not_found");
             return Optional.empty();
