@@ -6,7 +6,7 @@ import com.jpoltramari.library_api.domain.repository.RefreshTokenRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.domain.repository.UserSecuritySnapshotView;
 import com.jpoltramari.library_api.infrastructure.security.JwtService;
-import com.jpoltramari.library_api.domain.service.TokenVersionService;
+import com.jpoltramari.library_api.application.service.TokenVersionService;
 import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
 import com.jpoltramari.library_api.infrastructure.security.snapshot.CachedUserSecuritySnapshotAdapter;
 import com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshot;
