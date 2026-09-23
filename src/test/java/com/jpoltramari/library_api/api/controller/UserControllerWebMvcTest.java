@@ -4,7 +4,7 @@ import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.dto.user.UserModel;
 import com.jpoltramari.library_api.api.mapper.UserMapper;
 import com.jpoltramari.library_api.domain.model.User;
-import com.jpoltramari.library_api.domain.service.UserService;
+import com.jpoltramari.library_api.application.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
