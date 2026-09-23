@@ -1,4 +1,4 @@
-package com.jpoltramari.library_api.domain.service;
+package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.api.dto.author.AuthorInput;
 import com.jpoltramari.library_api.api.dto.author.AuthorUpdateInput;

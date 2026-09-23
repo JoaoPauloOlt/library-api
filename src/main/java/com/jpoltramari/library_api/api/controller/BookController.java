@@ -7,7 +7,7 @@ import com.jpoltramari.library_api.api.dto.book.BookUpdateInput;
 import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
 import com.jpoltramari.library_api.domain.filter.BookFilter;
-import com.jpoltramari.library_api.domain.service.BookService;
+import com.jpoltramari.library_api.application.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

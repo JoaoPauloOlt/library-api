@@ -7,7 +7,7 @@ import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyModel;
 import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyUpdateInput;
 import com.jpoltramari.library_api.api.mapper.BookCopyMapper;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
-import com.jpoltramari.library_api.domain.service.BookCopyService;
+import com.jpoltramari.library_api.application.service.BookCopyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;

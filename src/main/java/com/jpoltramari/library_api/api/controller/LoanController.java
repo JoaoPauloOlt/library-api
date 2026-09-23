@@ -5,7 +5,7 @@ import com.jpoltramari.library_api.api.dto.PageResponse;
 import com.jpoltramari.library_api.api.dto.loan.LoanInput;
 import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
-import com.jpoltramari.library_api.domain.service.LoanService;
+import com.jpoltramari.library_api.application.service.LoanService;
 import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

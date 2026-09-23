@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.api.controller;
 
 import com.jpoltramari.library_api.api.mapper.BookCopyMapper;
-import com.jpoltramari.library_api.domain.service.BookCopyService;
+import com.jpoltramari.library_api.application.service.BookCopyService;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

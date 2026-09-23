@@ -4,7 +4,7 @@ import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.dto.book.BookModel;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
 import com.jpoltramari.library_api.domain.model.Book;
-import com.jpoltramari.library_api.domain.service.BookService;
+import com.jpoltramari.library_api.application.service.BookService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

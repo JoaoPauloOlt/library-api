@@ -1,4 +1,4 @@
-package com.jpoltramari.library_api.domain.service;
+package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.domain.repository.RefreshTokenRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;

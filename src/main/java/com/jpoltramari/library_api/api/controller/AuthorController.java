@@ -6,7 +6,7 @@ import com.jpoltramari.library_api.api.dto.author.AuthorModel;
 import com.jpoltramari.library_api.api.dto.author.AuthorUpdateInput;
 import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.api.mapper.AuthorMapper;
-import com.jpoltramari.library_api.domain.service.AuthorService;
+import com.jpoltramari.library_api.application.service.AuthorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

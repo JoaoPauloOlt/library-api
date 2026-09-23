@@ -4,7 +4,7 @@ import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
-import com.jpoltramari.library_api.domain.service.LoanService;
+import com.jpoltramari.library_api.application.service.LoanService;
 import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
 import org.junit.jupiter.api.Test;

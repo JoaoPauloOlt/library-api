@@ -5,7 +5,7 @@ import com.jpoltramari.library_api.api.dto.auth.LoginInput;
 import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
 import com.jpoltramari.library_api.api.dto.auth.LogoutInput;
 import com.jpoltramari.library_api.api.dto.auth.RefreshTokenInput;
-import com.jpoltramari.library_api.domain.service.AuthService;
+import com.jpoltramari.library_api.application.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
