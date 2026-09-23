@@ -88,7 +88,7 @@ public class RefreshTokenService {
     @Transactional
     public void revoke(String rawRefreshToken) {
         String hash = hashToken(rawRefreshToken);
-        refreshTokenRepository.findByTokenHashAndRevokedAtIsNull(hash)
+        refreshTokenRepository.findByTokenHash(hash)
                 .ifPresent(token -> {
                     token.setRevokedAt(Instant.now());
                     refreshTokenRepository.save(token);
