@@ -6,7 +6,6 @@ import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.RefreshTokenRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.domain.service.TokenVersionService;
-import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
 import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -128,11 +127,11 @@ class RefreshTokenServiceTest {
                 .thenReturn(Optional.of(user));
         when(claimsBuilder.buildAccessToken(user)).thenReturn("new-access-token");
 
-        RefreshTokenService.IssuedTokens result = service.rotate(RAW_TOKEN);
+        Optional<RefreshTokenService.IssuedTokens> result = service.rotate(RAW_TOKEN);
 
-        assertThat(result).isNotNull();
-        assertThat(result.accessToken()).isEqualTo("new-access-token");
-        assertThat(result.refreshToken()).isNotBlank();
+        assertThat(result).isPresent();
+        assertThat(result.orElseThrow().accessToken()).isEqualTo("new-access-token");
+        assertThat(result.orElseThrow().refreshToken()).isNotBlank();
         assertThat(token.getRevokedAt()).isNotNull();
         assertThat(token.getReplacedByJti()).isNotBlank();
         verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
