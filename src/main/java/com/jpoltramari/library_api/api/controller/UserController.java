@@ -39,8 +39,8 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Users returned successfully"),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public PageResponse<UserModel> list(
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
@@ -52,10 +52,10 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "User returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid user ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "400", description = "Invalid user ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "User not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public UserModel get(@Parameter(description = "User identifier", example = "1") @PathVariable @Positive Long id) {
         return mapper.toModel(service.findOrFail(id));
@@ -66,8 +66,8 @@ public class UserController {
     @Operation(summary = "Register a user", description = "Creates a new user account. This endpoint is public and does not require a bearer token.")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "User created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid user data", content = @Content(schema = @Schema(implementation = ErrorResponse.class)),
-            @ApiResponse(responseCode = "409", description = "User email already registered", content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+            @ApiResponse(responseCode = "400", description = "Invalid user data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "User email already registered", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public UserModel create(@RequestBody @Valid UserInput input) {
         return mapper.toModel(service.create(input));
