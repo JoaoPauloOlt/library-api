@@ -2,7 +2,7 @@ package com.jpoltramari.library_api.api.controller;
 
 import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.mapper.AuthorMapper;
-import com.jpoltramari.library_api.domain.service.AuthorService;
+import com.jpoltramari.library_api.application.service.AuthorService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
