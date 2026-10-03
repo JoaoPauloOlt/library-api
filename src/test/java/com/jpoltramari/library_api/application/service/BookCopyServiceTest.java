@@ -56,7 +56,7 @@ class BookCopyServiceTest {
         when(bookRepository.findById(10L)).thenReturn(Optional.empty());
 
         assertThrows(BookNotFoundException.class,
-                () -> service.create(10L, new BookCopyInput(10L, "A-01")));
+                () -> service.create(10L, new CreateBookCopyCommand(10L, "A-01")));
     }
 
     @Test
