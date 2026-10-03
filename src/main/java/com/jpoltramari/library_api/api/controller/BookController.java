@@ -6,6 +6,8 @@ import com.jpoltramari.library_api.api.dto.book.BookModel;
 import com.jpoltramari.library_api.api.dto.book.BookUpdateInput;
 import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
+import com.jpoltramari.library_api.application.command.book.CreateBookCommand;
+import com.jpoltramari.library_api.application.command.book.UpdateBookCommand;
 import com.jpoltramari.library_api.domain.filter.BookFilter;
 import com.jpoltramari.library_api.application.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,13 +39,6 @@ public class BookController {
     private final BookService service;
     private final BookMapper mapper;
 
-    @Operation(summary = "List books", description = "Returns a paginated list of books with optional filters.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Books returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid filter or pagination parameters", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
     @GetMapping
     public PageResponse<BookModel> list(
             @ParameterObject @Valid BookFilter filter,
@@ -53,59 +48,33 @@ public class BookController {
         return PageResponse.from(service.findAll(filter, pageable), mapper::toModel);
     }
 
-    @Operation(summary = "Get a book", description = "Returns a book by its identifier.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Book returned successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book identifier", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
     @GetMapping("/{id}")
     public BookModel findById(@Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long id) {
         return mapper.toModel(service.findOrFail(id));
     }
 
-    @Operation(summary = "Create a book", description = "Creates a book and provisions the requested number of physical copies.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Book created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Book conflicts with existing data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BookModel create(@RequestBody @Valid BookInput input) {
-        return mapper.toModel(service.create(input));
+        CreateBookCommand command = new CreateBookCommand(
+                input.isbn(), input.title(), input.genre(), input.description(),
+                input.coverUrl(), input.quantity(), input.authorIds()
+        );
+        return mapper.toModel(service.create(command));
     }
 
-    @Operation(summary = "Update a book", description = "Updates the catalog information of an existing book.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Book updated successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book data or identifier", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Book conflicts with existing data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
     @PutMapping("/{id}")
     public BookModel update(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long id,
             @RequestBody @Valid BookUpdateInput input
     ) {
-        return mapper.toModel(service.update(id, input));
+        UpdateBookCommand command = new UpdateBookCommand(
+                input.isbn(), input.title(), input.genre(), input.description(),
+                input.coverUrl(), input.authorIds()
+        );
+        return mapper.toModel(service.update(id, command));
     }
 
-    @Operation(summary = "Delete a book", description = "Deletes a book when business rules allow it.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Book deleted successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid book identifier", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Book not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Book has conflicting dependencies", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
-    })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long id) {
