@@ -1,10 +1,9 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyInput;
-import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyUpdateInput;
+import com.jpoltramari.library_api.application.command.bookcopy.CreateBookCopyCommand;
+import com.jpoltramari.library_api.application.command.bookcopy.UpdateBookCopyCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
-import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.model.BookCopy;
@@ -26,58 +25,46 @@ public class BookCopyService {
 
     public List<BookCopy> findAllByBook(Long bookId){
         validateBookExists(bookId);
-
         return repository.findAllByBookId(bookId);
     }
 
     public BookCopy findOrFail(Long id){
         return repository.findById(id)
-                .orElseThrow(()->
-                        new EntityNotFoundException(
-                                "Book copy not found."
-                        ));
+                .orElseThrow(() -> new EntityNotFoundException("Book copy not found."));
     }
 
     @Transactional
-    public BookCopy create(Long bookId, BookCopyInput input){
-        if (!bookId.equals(input.bookId())) {
-            throw new BusinessException("Book ID in path does not match book ID in request.");
+    public BookCopy create(Long bookId, CreateBookCopyCommand command){
+        if (!bookId.equals(command.bookId())) {
+            throw new com.jpoltramari.library_api.domain.exception.BusinessException(
+                    "Book ID in path does not match book ID in request.");
         }
-        Book book = bookRepository.findById(
-                input.bookId())
-                .orElseThrow(()-> new BookNotFoundException(input.bookId()));
+
+        Book book = bookRepository.findById(command.bookId())
+                .orElseThrow(() -> new BookNotFoundException(command.bookId()));
 
         BookCopy copy = new BookCopy();
-
         copy.setBook(book);
-        copy.setLocation(input.location());
+        copy.setLocation(command.location());
         copy.setStatus(CopyStatus.AVAILABLE);
         copy.setActive(true);
-
         copy.setBarcode(generateBarcode());
 
         return repository.save(copy);
     }
 
     @Transactional
-    public BookCopy update(
-            Long bookId,
-            Long id,
-            BookCopyUpdateInput input
-    ) {
-
+    public BookCopy update(Long bookId, Long id, UpdateBookCopyCommand command) {
         BookCopy copy = findOrFailForBook(bookId, id);
 
-        if (input.status() != null) {
-            copy.setStatus(input.status());
+        if (command.status() != null) {
+            copy.setStatus(command.status());
         }
-
-        if (input.location() != null) {
-            copy.setLocation(input.location());
+        if (command.location() != null) {
+            copy.setLocation(command.location());
         }
-
-        if (input.active() != null) {
-            copy.setActive(input.active());
+        if (command.active() != null) {
+            copy.setActive(command.active());
         }
 
         return repository.save(copy);
@@ -85,41 +72,25 @@ public class BookCopyService {
 
     @Transactional
     public void delete(Long bookId, Long id) {
-
         BookCopy copy = findOrFailForBook(bookId, id);
-
         repository.delete(copy);
     }
 
     @Transactional
-    public BookCopy changeStatus(
-            Long bookId,
-            Long id,
-            CopyStatus status
-    ) {
-
+    public BookCopy changeStatus(Long bookId, Long id, CopyStatus status) {
         BookCopy copy = findOrFailForBook(bookId, id);
-
         copy.setStatus(status);
-
         return repository.save(copy);
     }
 
     public long totalQuantity(Long bookId) {
-
         validateBookExists(bookId);
-
         return repository.countByBookId(bookId);
     }
 
     public long availableQuantity(Long bookId) {
-
         validateBookExists(bookId);
-
-        return repository.countByBookIdAndStatus(
-                bookId,
-                CopyStatus.AVAILABLE
-        );
+        return repository.countByBookIdAndStatus(bookId, CopyStatus.AVAILABLE);
     }
 
     public BookCopy findOrFailForBook(Long bookId, Long id) {
