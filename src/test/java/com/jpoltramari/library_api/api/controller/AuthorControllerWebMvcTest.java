@@ -3,6 +3,7 @@ package com.jpoltramari.library_api.api.controller;
 import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.mapper.AuthorMapper;
 import com.jpoltramari.library_api.application.service.AuthorService;
+import com.jpoltramari.library_api.domain.model.Author;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,9 +16,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = LibraryApiApplication.class)
@@ -62,5 +67,37 @@ class AuthorControllerWebMvcTest {
                         .with(user("librarian")
                                 .authorities(new SimpleGrantedAuthority("AUTHOR_READ"))))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldCreateAuthorWithCreatePermission() throws Exception {
+        Author author = new Author();
+        when(service.create(any())).thenReturn(author);
+        when(mapper.toModel(author)).thenReturn(null);
+
+        mockMvc.perform(post("/authors")
+                        .with(user("librarian")
+                                .authorities(new SimpleGrantedAuthority("AUTHOR_CREATE")))
+                        .contentType(APPLICATION_JSON)
+                        .content("{"name":"Robert Martin","nationality":"American"}"))
+                .andExpect(status().isCreated());
+
+        verify(service).create(any());
+    }
+
+    @Test
+    void shouldUpdateAuthorWithUpdatePermission() throws Exception {
+        Author author = new Author();
+        when(service.update(org.mockito.ArgumentMatchers.eq(1L), any())).thenReturn(author);
+        when(mapper.toModel(author)).thenReturn(null);
+
+        mockMvc.perform(put("/authors/1")
+                        .with(user("librarian")
+                                .authorities(new SimpleGrantedAuthority("AUTHOR_UPDATE")))
+                        .contentType(APPLICATION_JSON)
+                        .content("{"name":"Robert C. Martin","nationality":"American"}"))
+                .andExpect(status().isOk());
+
+        verify(service).update(org.mockito.ArgumentMatchers.eq(1L), any());
     }
 }
