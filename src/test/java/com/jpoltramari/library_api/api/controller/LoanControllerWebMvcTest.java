@@ -52,7 +52,7 @@ class LoanControllerWebMvcTest {
 
     @Test
     void shouldAllowAuthenticatedUserToListOwnLoans() throws Exception {
-        AuthenticatedUser principal = principal(42L);
+        AuthenticatedPrincipal principal = principal(42L);
         when(service.findByUserId(eq(42L), any())).thenReturn(new PageImpl<>(List.of()));
 
         mockMvc.perform(get("/loans/my").with(user(principal)))
