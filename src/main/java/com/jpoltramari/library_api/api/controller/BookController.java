@@ -79,7 +79,11 @@ public class BookController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BookModel create(@RequestBody @Valid BookInput input) {
-        CreateBookCommand command = new CreateBookCommand(\n                input.isbn(), input.title(), input.genre(), input.description(),\n                input.coverUrl(), input.quantity(), input.authorIds()\n        );\n        return mapper.toModel(service.create(command));
+        CreateBookCommand command = new CreateBookCommand(
+                input.isbn(), input.title(), input.genre(), input.description(),
+                input.coverUrl(), input.quantity(), input.authorIds()
+        );
+        return mapper.toModel(service.create(command));
     }
 
     @Operation(summary = "Update a book", description = "Updates the catalog information of an existing book.")
@@ -96,7 +100,11 @@ public class BookController {
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long id,
             @RequestBody @Valid BookUpdateInput input
     ) {
-        UpdateBookCommand command = new UpdateBookCommand(\n                input.isbn(), input.title(), input.genre(), input.description(),\n                input.coverUrl(), input.authorIds()\n        );\n        return mapper.toModel(service.update(id, command));
+        UpdateBookCommand command = new UpdateBookCommand(
+                input.isbn(), input.title(), input.genre(), input.description(),
+                input.coverUrl(), input.authorIds()
+        );
+        return mapper.toModel(service.update(id, command));
     }
 
     @Operation(summary = "Delete a book", description = "Deletes a book when business rules allow it.")
