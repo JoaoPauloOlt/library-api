@@ -59,6 +59,31 @@ class BookCopyServiceTest {
                 () -> service.create(10L, new CreateBookCopyCommand(10L, "A-01")));
     }
 
+
+    @Test
+    void shouldRejectCreationWhenPathBookDiffersFromCommand() {
+        assertThrows(com.jpoltramari.library_api.domain.exception.BusinessException.class,
+                () -> service.create(10L, new CreateBookCopyCommand(20L, "A-01")));
+    }
+
+    @Test
+    void shouldUpdateAllProvidedFields() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.AVAILABLE);
+        copy.setLocation("A-01");
+        copy.setActive(true);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.of(copy));
+        when(repository.save(copy)).thenReturn(copy);
+
+        BookCopy result = service.update(10L, 1L,
+                new UpdateBookCopyCommand(CopyStatus.MAINTENANCE, "B-02", false));
+
+        assertEquals(CopyStatus.MAINTENANCE, result.getStatus());
+        assertEquals("B-02", result.getLocation());
+        assertFalse(result.isActive());
+    }
+
     @Test
     void shouldRejectCopyFromAnotherBook() {
         BookCopy copy = new BookCopy();
