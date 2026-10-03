@@ -142,7 +142,7 @@ class LoanControllerWebMvcTest {
                         .with(user(principal(42L, "LOAN_CREATE")))
                         .contentType(APPLICATION_JSON)
                         .content("{\"bookId\": 10}"))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
         verify(service).create(any(), eq(42L));
     }
