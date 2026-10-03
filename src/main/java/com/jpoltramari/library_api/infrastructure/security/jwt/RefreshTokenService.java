@@ -1,12 +1,12 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
 import com.jpoltramari.library_api.application.port.security.RefreshTokenPort;
+import com.jpoltramari.library_api.application.port.security.SessionRevocationPort;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.model.RefreshToken;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.RefreshTokenRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
-import com.jpoltramari.library_api.application.service.TokenVersionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +29,7 @@ public class RefreshTokenService implements RefreshTokenPort {
     private final JwtClaimsBuilder claimsBuilder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
-    private final TokenVersionService tokenVersionService;
+    private final SessionRevocationPort sessionRevocationPort;
 
     @Override
     @Transactional
@@ -116,7 +116,7 @@ public class RefreshTokenService implements RefreshTokenPort {
     }
 
     private void revokeFamilyAndBumpVersion(Long userId) {
-        tokenVersionService.revokeAllSessions(userId);
+        sessionRevocationPort.revokeAllSessions(userId);
     }
 
     public static String hashToken(String raw) {
