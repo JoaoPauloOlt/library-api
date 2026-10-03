@@ -3,8 +3,8 @@ package com.jpoltramari.library_api.api.controller;
 import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.dto.book.BookModel;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
-import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.application.service.BookService;
+import com.jpoltramari.library_api.domain.model.Book;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -19,8 +19,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = LibraryApiApplication.class)
@@ -38,14 +37,12 @@ class BookControllerWebMvcTest {
 
     @Test
     void shouldRejectBookListWithoutAuthentication() throws Exception {
-        mockMvc.perform(get("/books"))
-                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/books")).andExpect(status().isUnauthorized());
     }
 
     @Test
     void shouldRejectBookListWithoutBookReadPermission() throws Exception {
-        mockMvc.perform(get("/books").with(user("user")))
-                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/books").with(user("user"))).andExpect(status().isForbidden());
     }
 
     @Test
@@ -84,5 +81,33 @@ class BookControllerWebMvcTest {
                         .contentType("application/json")
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldCreateBookWithValidInput() throws Exception {
+        Book book = new Book();
+        BookModel model = new BookModel(
+                1L, "9780451524935", "1984", "SCIENCE_FICTION", null,
+                null, "Dystopian novel", 2L, 1L, 3L, List.of()
+        );
+        when(service.create(any())).thenReturn(book);
+        when(mapper.toModel(book)).thenReturn(model);
+
+        String payload = """
+                {
+                  "isbn": "9780451524935",
+                  "title": "1984",
+                  "genre": "SCIENCE_FICTION",
+                  "description": "Dystopian novel",
+                  "quantity": 1,
+                  "authorIds": [1]
+                }
+                """;
+
+        mockMvc.perform(post("/books")
+                        .with(user("librarian").authorities(new SimpleGrantedAuthority("BOOK_CREATE")))
+                        .contentType("application/json")
+                        .content(payload))
+                .andExpect(status().isCreated());
     }
 }
