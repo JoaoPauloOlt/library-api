@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyInput;
-import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyUpdateInput;
+import com.jpoltramari.library_api.application.command.bookcopy.CreateBookCopyCommand;
+import com.jpoltramari.library_api.application.command.bookcopy.UpdateBookCopyCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.model.Book;
@@ -42,7 +42,7 @@ class BookCopyServiceTest {
         when(bookRepository.findById(10L)).thenReturn(Optional.of(book));
         when(repository.save(any(BookCopy.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        BookCopy result = service.create(10L, new BookCopyInput(10L, "A-01"));
+        BookCopy result = service.create(10L, new CreateBookCopyCommand(10L, "A-01"));
 
         assertEquals(book, result.getBook());
         assertEquals(CopyStatus.AVAILABLE, result.getStatus());
@@ -82,7 +82,7 @@ class BookCopyServiceTest {
         when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
-        BookCopy result = service.update(10L, 1L, new BookCopyUpdateInput(CopyStatus.MAINTENANCE, null, null));
+        BookCopy result = service.update(10L, 1L, new UpdateBookCopyCommand(CopyStatus.MAINTENANCE, null, null));
 
         assertEquals(CopyStatus.MAINTENANCE, result.getStatus());
         assertEquals("A-01", result.getLocation());
@@ -101,6 +101,18 @@ class BookCopyServiceTest {
 
         assertEquals(CopyStatus.MAINTENANCE, result.getStatus());
         verify(repository).save(copy);
+    }
+
+    @Test
+    void shouldCoverCommandAccessors() {
+        CreateBookCopyCommand create = new CreateBookCopyCommand(10L, "A-01");
+        UpdateBookCopyCommand update = new UpdateBookCopyCommand(CopyStatus.MAINTENANCE, "B-02", true);
+
+        assertEquals(10L, create.bookId());
+        assertEquals("A-01", create.location());
+        assertEquals(CopyStatus.MAINTENANCE, update.status());
+        assertEquals("B-02", update.location());
+        assertTrue(update.active());
     }
 
     @Test
