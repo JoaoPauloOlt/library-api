@@ -131,6 +131,51 @@ class BookServiceTest {
     }
 
     @Test
+    void shouldUpdateBookWithIsbnAndAuthors() {
+        Book book = new Book();
+        book.setIsbn("9781234567890");
+        Author author = new Author();
+        when(repository.findById(1L)).thenReturn(Optional.of(book));
+        when(repository.existsByIsbn("9780000000000")).thenReturn(false);
+        when(authorRepository.findAllById(List.of(2L))).thenReturn(List.of(author));
+        when(repository.save(book)).thenReturn(book);
+
+        UpdateBookCommand command = new UpdateBookCommand(
+                "9780000000000", "Clean Code", Genre.COMIC, "Updated",
+                "https://example.com/cover.jpg", List.of(2L));
+
+        Book result = service.update(1L, command);
+
+        assertEquals("9780000000000", result.getIsbn());
+        assertEquals(Set.of(author), result.getAuthors());
+    }
+
+    @Test
+    void shouldCoverBookCommandAccessors() {
+        List<Long> authorIds = List.of(1L, 2L);
+        CreateBookCommand create = new CreateBookCommand(
+                "isbn", "title", Genre.COMIC, "description", "cover", 3, authorIds);
+        UpdateBookCommand update = new UpdateBookCommand(
+                "isbn", "title", Genre.COMIC, "description", "cover", authorIds);
+
+        assertAll(
+                () -> assertEquals("isbn", create.isbn()),
+                () -> assertEquals("title", create.title()),
+                () -> assertEquals(Genre.COMIC, create.genre()),
+                () -> assertEquals("description", create.description()),
+                () -> assertEquals("cover", create.coverUrl()),
+                () -> assertEquals(3, create.quantity()),
+                () -> assertEquals(authorIds, create.authorIds()),
+                () -> assertEquals("isbn", update.isbn()),
+                () -> assertEquals("title", update.title()),
+                () -> assertEquals(Genre.COMIC, update.genre()),
+                () -> assertEquals("description", update.description()),
+                () -> assertEquals("cover", update.coverUrl()),
+                () -> assertEquals(authorIds, update.authorIds())
+        );
+    }
+
+    @Test
     void shouldRejectDeletingBookWithCopies() {
         Book book = new Book();
         book.setCopies(Set.of(new BookCopy()));
