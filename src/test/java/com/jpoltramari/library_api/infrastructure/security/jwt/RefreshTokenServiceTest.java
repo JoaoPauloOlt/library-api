@@ -61,7 +61,7 @@ class RefreshTokenServiceTest {
         when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.empty());
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
-        verifyNoInteractions(userRepository, claimsBuilder, tokenVersionService);
+        verifyNoInteractions(userRepository, claimsBuilder, sessionRevocationPort);
     }
 
     @Test
@@ -84,7 +84,7 @@ class RefreshTokenServiceTest {
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
 
-        verify(tokenVersionService).revokeAllSessions(42L);
+        verify(sessionRevocationPort).revokeAllSessions(42L);
     }
 
     @Test
