@@ -1,6 +1,6 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.loan.LoanInput;
+import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
@@ -44,11 +44,11 @@ public class LoanService {
     }
 
     @Transactional
-    public Loan create(LoanInput input, Long userId) {
+    public Loan create(CreateLoanCommand command, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
-        Long bookId = input.bookId();
+        Long bookId = command.bookId();
 
         if (!bookRepository.existsById(bookId)) {
             throw new BookNotFoundException(bookId);

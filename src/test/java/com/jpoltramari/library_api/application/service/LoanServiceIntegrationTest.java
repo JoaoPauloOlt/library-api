@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.application.service;
 
+import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
@@ -44,7 +45,7 @@ class LoanServiceIntegrationTest {
                 .getId();
 
         Loan created = loanService.create(
-                new com.jpoltramari.library_api.api.dto.loan.LoanInput(bookId),
+                new CreateLoanCommand(bookId),
                 user.getId()
         );
 
@@ -81,7 +82,7 @@ class LoanServiceIntegrationTest {
                 .getId();
 
         assertThatThrownBy(() -> loanService.create(
-                new com.jpoltramari.library_api.api.dto.loan.LoanInput(bookId),
+                new CreateLoanCommand(bookId),
                 user.getId()
         ))
                 .isInstanceOf(BusinessException.class)
