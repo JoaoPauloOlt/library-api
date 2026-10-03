@@ -110,4 +110,32 @@ class BookControllerWebMvcTest {
                         .content(payload))
                 .andExpect(status().isCreated());
     }
+
+    @Test
+    void shouldUpdateBookWithValidInput() throws Exception {
+        Book book = new Book();
+        BookModel model = new BookModel(
+                1L, "9780451524935", "Clean Code", "SCIENCE_FICTION", null,
+                null, "Updated book", 2L, 1L, 3L, List.of()
+        );
+        when(service.update(any(), any())).thenReturn(book);
+        when(mapper.toModel(book)).thenReturn(model);
+
+        String payload = """
+                {
+                  "isbn": "9780451524935",
+                  "title": "Clean Code",
+                  "genre": "SCIENCE_FICTION",
+                  "description": "Updated book",
+                  "coverUrl": "https://example.com/cover.jpg",
+                  "authorIds": [1]
+                }
+                """;
+
+        mockMvc.perform(put("/books/1")
+                        .with(user("librarian").authorities(new SimpleGrantedAuthority("BOOK_UPDATE")))
+                        .contentType("application/json")
+                        .content(payload))
+                .andExpect(status().isOk());
+    }
 }
