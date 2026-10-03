@@ -6,6 +6,8 @@ import com.jpoltramari.library_api.api.dto.book.BookModel;
 import com.jpoltramari.library_api.api.dto.book.BookUpdateInput;
 import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.api.mapper.BookMapper;
+import com.jpoltramari.library_api.application.command.book.CreateBookCommand;
+import com.jpoltramari.library_api.application.command.book.UpdateBookCommand;
 import com.jpoltramari.library_api.domain.filter.BookFilter;
 import com.jpoltramari.library_api.application.service.BookService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -77,7 +79,11 @@ public class BookController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public BookModel create(@RequestBody @Valid BookInput input) {
-        return mapper.toModel(service.create(input));
+        CreateBookCommand command = new CreateBookCommand(
+                input.isbn(), input.title(), input.genre(), input.description(),
+                input.coverUrl(), input.quantity(), input.authorIds()
+        );
+        return mapper.toModel(service.create(command));
     }
 
     @Operation(summary = "Update a book", description = "Updates the catalog information of an existing book.")
@@ -94,7 +100,11 @@ public class BookController {
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long id,
             @RequestBody @Valid BookUpdateInput input
     ) {
-        return mapper.toModel(service.update(id, input));
+        UpdateBookCommand command = new UpdateBookCommand(
+                input.isbn(), input.title(), input.genre(), input.description(),
+                input.coverUrl(), input.authorIds()
+        );
+        return mapper.toModel(service.update(id, command));
     }
 
     @Operation(summary = "Delete a book", description = "Deletes a book when business rules allow it.")

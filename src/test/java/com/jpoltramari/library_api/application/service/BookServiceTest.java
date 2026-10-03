@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.book.BookInput;
-import com.jpoltramari.library_api.api.mapper.BookMapper;
+import com.jpoltramari.library_api.application.command.book.CreateBookCommand;
+import com.jpoltramari.library_api.application.command.book.UpdateBookCommand;
 import com.jpoltramari.library_api.domain.enums.Genre;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
@@ -26,13 +26,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class BookServiceTest {
@@ -40,13 +36,12 @@ class BookServiceTest {
     @Mock private BookRepository repository;
     @Mock private AuthorRepository authorRepository;
     @Mock private BookCopyRepository bookCopyRepository;
-    @Mock private BookMapper mapper;
 
     private BookService service;
 
     @BeforeEach
     void setUp() {
-        service = new BookService(repository, authorRepository, bookCopyRepository, mapper);
+        service = new BookService(repository, authorRepository, bookCopyRepository);
     }
 
     @Test
@@ -66,53 +61,118 @@ class BookServiceTest {
 
     @Test
     void shouldCreateBookWithAuthorsAndPhysicalCopies() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, 3, List.of(1L));
+        CreateBookCommand command = new CreateBookCommand(
+                "9781234567890", "Clean Code", Genre.COMIC, null, null, 3, List.of(1L));
         Author author = new Author();
-        Book book = new Book();
 
-        when(repository.existsByIsbn(input.isbn())).thenReturn(false);
+        when(repository.existsByIsbn(command.isbn())).thenReturn(false);
         when(authorRepository.findAllById(List.of(1L))).thenReturn(List.of(author));
-        when(mapper.toEntity(input)).thenReturn(book);
-        when(repository.save(book)).thenReturn(book);
+        when(repository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Book result = service.create(input);
+        Book result = service.create(command);
 
         assertEquals(Set.of(author), result.getAuthors());
-        verify(repository).save(book);
+        assertEquals(command.isbn(), result.getIsbn());
+        assertEquals(command.title(), result.getTitle());
+        verify(repository).save(any(Book.class));
         verify(bookCopyRepository).saveAll(any(List.class));
     }
 
     @Test
     void shouldCreateBookWithoutPhysicalCopiesWhenQuantityIsZero() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, 0, List.of(1L));
+        CreateBookCommand command = new CreateBookCommand(
+                "9781234567890", "Clean Code", Genre.COMIC, null, null, 0, List.of(1L));
         Author author = new Author();
-        Book book = new Book();
 
-        when(repository.existsByIsbn(input.isbn())).thenReturn(false);
+        when(repository.existsByIsbn(command.isbn())).thenReturn(false);
         when(authorRepository.findAllById(List.of(1L))).thenReturn(List.of(author));
-        when(mapper.toEntity(input)).thenReturn(book);
-        when(repository.save(book)).thenReturn(book);
+        when(repository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.create(input);
+        service.create(command);
 
         verify(bookCopyRepository, never()).saveAll(any(List.class));
     }
 
     @Test
     void shouldRejectDuplicateIsbn() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, List.of(1L));
-        when(repository.existsByIsbn(input.isbn())).thenReturn(true);
+        CreateBookCommand command = new CreateBookCommand(
+                "9781234567890", "Clean Code", Genre.COMIC, null, null, 0, List.of(1L));
+        when(repository.existsByIsbn(command.isbn())).thenReturn(true);
 
-        assertThrows(BusinessException.class, () -> service.create(input));
+        assertThrows(BusinessException.class, () -> service.create(command));
     }
 
     @Test
     void shouldRejectMissingAuthor() {
-        BookInput input = new BookInput("9781234567890", "Clean Code", Genre.COMIC, null, List.of(1L, 2L));
-        when(repository.existsByIsbn(input.isbn())).thenReturn(false);
-        when(authorRepository.findAllById(input.authorIds())).thenReturn(List.of(new Author()));
+        CreateBookCommand command = new CreateBookCommand(
+                "9781234567890", "Clean Code", Genre.COMIC, null, null, 0, List.of(1L, 2L));
+        when(repository.existsByIsbn(command.isbn())).thenReturn(false);
+        when(authorRepository.findAllById(command.authorIds())).thenReturn(List.of(new Author()));
 
-        assertThrows(EntityNotFoundException.class, () -> service.create(input));
+        assertThrows(EntityNotFoundException.class, () -> service.create(command));
+    }
+
+    @Test
+    void shouldUpdateBookFromCommand() {
+        Book book = new Book();
+        book.setIsbn("9781234567890");
+        when(repository.findById(1L)).thenReturn(Optional.of(book));
+        when(repository.save(book)).thenReturn(book);
+
+        UpdateBookCommand command = new UpdateBookCommand(
+                null, "Clean Code 2", Genre.COMIC, "Updated", "https://example.com/cover.jpg", null);
+
+        Book result = service.update(1L, command);
+
+        assertEquals("Clean Code 2", result.getTitle());
+        assertEquals("Updated", result.getDescription());
+        assertEquals("https://example.com/cover.jpg", result.getCoverUrl());
+        verify(repository).save(book);
+    }
+
+    @Test
+    void shouldUpdateBookWithIsbnAndAuthors() {
+        Book book = new Book();
+        book.setIsbn("9781234567890");
+        Author author = new Author();
+        when(repository.findById(1L)).thenReturn(Optional.of(book));
+        when(repository.existsByIsbn("9780000000000")).thenReturn(false);
+        when(authorRepository.findAllById(List.of(2L))).thenReturn(List.of(author));
+        when(repository.save(book)).thenReturn(book);
+
+        UpdateBookCommand command = new UpdateBookCommand(
+                "9780000000000", "Clean Code", Genre.COMIC, "Updated",
+                "https://example.com/cover.jpg", List.of(2L));
+
+        Book result = service.update(1L, command);
+
+        assertEquals("9780000000000", result.getIsbn());
+        assertEquals(Set.of(author), result.getAuthors());
+    }
+
+    @Test
+    void shouldCoverBookCommandAccessors() {
+        List<Long> authorIds = List.of(1L, 2L);
+        CreateBookCommand create = new CreateBookCommand(
+                "isbn", "title", Genre.COMIC, "description", "cover", 3, authorIds);
+        UpdateBookCommand update = new UpdateBookCommand(
+                "isbn", "title", Genre.COMIC, "description", "cover", authorIds);
+
+        assertAll(
+                () -> assertEquals("isbn", create.isbn()),
+                () -> assertEquals("title", create.title()),
+                () -> assertEquals(Genre.COMIC, create.genre()),
+                () -> assertEquals("description", create.description()),
+                () -> assertEquals("cover", create.coverUrl()),
+                () -> assertEquals(3, create.quantity()),
+                () -> assertEquals(authorIds, create.authorIds()),
+                () -> assertEquals("isbn", update.isbn()),
+                () -> assertEquals("title", update.title()),
+                () -> assertEquals(Genre.COMIC, update.genre()),
+                () -> assertEquals("description", update.description()),
+                () -> assertEquals("cover", update.coverUrl()),
+                () -> assertEquals(authorIds, update.authorIds())
+        );
     }
 
     @Test

@@ -1,8 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.book.BookInput;
-import com.jpoltramari.library_api.api.dto.book.BookUpdateInput;
-import com.jpoltramari.library_api.api.mapper.BookMapper;
+import com.jpoltramari.library_api.application.command.book.CreateBookCommand;
+import com.jpoltramari.library_api.application.command.book.UpdateBookCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
@@ -34,7 +33,6 @@ public class BookService {
     private final BookRepository repository;
     private final AuthorRepository authorRepository;
     private final BookCopyRepository bookCopyRepository;
-    private final BookMapper mapper;
 
     public Page<Book> findAll(BookFilter filter, Pageable pageable) {
         return repository.findAll(BookSpecs.usingFilter(filter), pageable);
@@ -46,31 +44,36 @@ public class BookService {
     }
 
     @Transactional
-    public Book create(BookInput input) {
-        validateIsbn(input.isbn());
+    public Book create(CreateBookCommand command) {
+        validateIsbn(command.isbn());
 
-        Book book = mapper.toEntity(input);
-        book.setAuthors(loadAuthors(input.authorIds()));
+        Book book = new Book();
+        book.setIsbn(command.isbn());
+        book.setTitle(command.title());
+        book.setGenre(command.genre());
+        book.setDescription(command.description());
+        book.setCoverUrl(command.coverUrl());
+        book.setAuthors(loadAuthors(command.authorIds()));
 
         Book savedBook = repository.save(book);
-        createCopies(savedBook, input.quantity());
+        createCopies(savedBook, command.quantity());
 
         return savedBook;
     }
 
     @Transactional
-    public Book update(Long id, BookUpdateInput input) {
+    public Book update(Long id, UpdateBookCommand command) {
         Book book = findOrFail(id);
 
-        if (input.isbn() != null && !book.getIsbn().equals(input.isbn())) {
-            validateIsbn(input.isbn());
+        if (command.isbn() != null && !command.isbn().equals(book.getIsbn())) {
+            validateIsbn(command.isbn());
+            book.setIsbn(command.isbn());
         }
-
-        mapper.update(input, book);
-
-        if (input.authorIds() != null) {
-            book.setAuthors(loadAuthors(input.authorIds()));
-        }
+        if (command.title() != null) book.setTitle(command.title());
+        if (command.genre() != null) book.setGenre(command.genre());
+        if (command.description() != null) book.setDescription(command.description());
+        if (command.coverUrl() != null) book.setCoverUrl(command.coverUrl());
+        if (command.authorIds() != null) book.setAuthors(loadAuthors(command.authorIds()));
 
         return repository.save(book);
     }
