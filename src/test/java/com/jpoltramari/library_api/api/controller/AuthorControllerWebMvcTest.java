@@ -79,7 +79,7 @@ class AuthorControllerWebMvcTest {
                         .with(user("librarian")
                                 .authorities(new SimpleGrantedAuthority("AUTHOR_CREATE")))
                         .contentType(APPLICATION_JSON)
-                        .content("{"name":"Robert Martin","nationality":"American"}"))
+                        .content("{\"name\":\"Robert Martin\",\"nationality\":\"American\"}"))
                 .andExpect(status().isCreated());
 
         verify(service).create(any());
@@ -95,7 +95,7 @@ class AuthorControllerWebMvcTest {
                         .with(user("librarian")
                                 .authorities(new SimpleGrantedAuthority("AUTHOR_UPDATE")))
                         .contentType(APPLICATION_JSON)
-                        .content("{"name":"Robert C. Martin","nationality":"American"}"))
+                        .content("{\"name\":\"Robert C. Martin\",\"nationality\":\"American\"}"))
                 .andExpect(status().isOk());
 
         verify(service).update(org.mockito.ArgumentMatchers.eq(1L), any());
