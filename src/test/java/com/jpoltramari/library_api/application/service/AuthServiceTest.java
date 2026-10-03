@@ -1,6 +1,6 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
+import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -42,9 +43,9 @@ class AuthServiceTest {
         when(refreshTokenService.issueTokens(user)).thenReturn(issued);
         when(jwtService.getExpiration()).thenReturn(900L);
 
-        LoginResponse response = service.login("john@example.com", "password123");
+        AuthenticationResult response = service.login("john@example.com", "password123");
 
-        assertEquals("access", response.token());
+        assertEquals("access", response.accessToken());
         assertEquals("refresh", response.refreshToken());
         assertEquals(900L, response.expiresIn());
         verify(authenticationManager).authenticate(any());
@@ -56,9 +57,9 @@ class AuthServiceTest {
         when(refreshTokenService.rotate("refresh-old")).thenReturn(Optional.of(issued));
         when(jwtService.getExpiration()).thenReturn(900L);
 
-        LoginResponse response = service.refresh("refresh-old");
+        AuthenticationResult response = service.refresh("refresh-old");
 
-        assertEquals("access", response.token());
+        assertEquals("access", response.accessToken());
         assertEquals("refresh", response.refreshToken());
     }
 
@@ -82,5 +83,15 @@ class AuthServiceTest {
         service.logout(" ", "access-token");
 
         verify(jwtService).blacklistAccessToken("access-token");
+    }
+
+    @Test
+    void shouldExposeAuthenticationResultAccessors() {
+        AuthenticationResult result = new AuthenticationResult("access", "refresh", 900L);
+
+        assertEquals("access", result.accessToken());
+        assertEquals("refresh", result.refreshToken());
+        assertEquals(900L, result.expiresIn());
+        assertTrue(result.expiresIn() > 0);
     }
 }
