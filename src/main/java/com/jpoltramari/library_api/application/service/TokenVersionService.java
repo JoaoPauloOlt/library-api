@@ -1,8 +1,8 @@
 package com.jpoltramari.library_api.application.service;
 
+import com.jpoltramari.library_api.application.port.security.UserSecuritySnapshotPort;
 import com.jpoltramari.library_api.domain.repository.RefreshTokenRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
-import com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshotPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,10 +1,10 @@
 package com.jpoltramari.library_api.application.service;
 
+import com.jpoltramari.library_api.application.port.security.AccessTokenPort;
+import com.jpoltramari.library_api.application.port.security.RefreshTokenPort;
 import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
-import com.jpoltramari.library_api.infrastructure.security.JwtService;
-import com.jpoltramari.library_api.infrastructure.security.jwt.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtService jwtService;
-    private final RefreshTokenService refreshTokenService;
+    private final AccessTokenPort accessTokenPort;
+    private final RefreshTokenPort refreshTokenPort;
     private final UserRepository userRepository;
 
     @Transactional
@@ -29,38 +29,35 @@ public class AuthService {
         var user = userRepository.findByEmailWithGroupsAndPermissions(email)
                 .orElseThrow();
 
-        var issued = refreshTokenService.issueTokens(user);
-        return toAuthenticationResult(issued.accessToken(), issued.refreshToken());
+        var issued = refreshTokenPort.issueTokens(user);
+        return toAuthenticationResult(issued);
     }
 
     @Transactional
     public AuthenticationResult refresh(String rawRefreshToken) {
-        return refreshTokenService.rotate(rawRefreshToken)
-                .map(issued -> toAuthenticationResult(
-                        issued.accessToken(),
-                        issued.refreshToken()
-                ))
+        return refreshTokenPort.rotate(rawRefreshToken)
+                .map(this::toAuthenticationResult)
                 .orElseThrow(() -> new BusinessException("Invalid or expired refresh token"));
     }
 
     @Transactional
     public void logout(String rawRefreshToken, String accessToken) {
         if (rawRefreshToken != null && !rawRefreshToken.isBlank()) {
-            refreshTokenService.revoke(rawRefreshToken);
+            refreshTokenPort.revoke(rawRefreshToken);
         }
         if (accessToken != null && !accessToken.isBlank()) {
             String token = accessToken.startsWith("Bearer ")
                     ? accessToken.substring(7).trim()
                     : accessToken.trim();
-            jwtService.blacklistAccessToken(token);
+            accessTokenPort.blacklistAccessToken(token);
         }
     }
 
-    private AuthenticationResult toAuthenticationResult(String accessToken, String refreshToken) {
+    private AuthenticationResult toAuthenticationResult(RefreshTokenPort.IssuedTokens issued) {
         return new AuthenticationResult(
-                accessToken,
-                refreshToken,
-                jwtService.getExpiration()
+                issued.accessToken(),
+                issued.refreshToken(),
+                accessTokenPort.getExpiration()
         );
     }
 }

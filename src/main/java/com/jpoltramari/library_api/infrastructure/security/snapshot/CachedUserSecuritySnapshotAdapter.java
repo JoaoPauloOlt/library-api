@@ -1,5 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security.snapshot;
 
+import com.jpoltramari.library_api.application.port.security.UserSecuritySnapshotPort;
+import com.jpoltramari.library_api.application.result.auth.UserSecuritySnapshot;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import org.springframework.stereotype.Component;
 

@@ -1,9 +1,9 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
+import com.jpoltramari.library_api.application.port.security.UserSecuritySnapshotPort;
+import com.jpoltramari.library_api.application.result.auth.UserSecuritySnapshot;
 import com.jpoltramari.library_api.infrastructure.security.filter.CorrelationIdFilter;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
-import com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshot;
-import com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshotPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;

@@ -1,4 +1,6 @@
-package com.jpoltramari.library_api.infrastructure.security.snapshot;
+package com.jpoltramari.library_api.application.port.security;
+
+import com.jpoltramari.library_api.application.result.auth.UserSecuritySnapshot;
 
 import java.util.Optional;
 

@@ -3,7 +3,6 @@ package com.jpoltramari.library_api.infrastructure.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
-import com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshot;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

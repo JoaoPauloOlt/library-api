@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
+import com.jpoltramari.library_api.application.port.security.AccessTokenPort;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaimsBuilder;
@@ -22,7 +23,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-public class JwtService {
+public class JwtService implements AccessTokenPort {
 
     private final JwtProperties properties;
     private final JwtClaimsBuilder claimsBuilder;
@@ -42,6 +43,7 @@ public class JwtService {
         return claimsBuilder.buildAccessToken(user);
     }
 
+    @Override
     public long getExpiration() {
         return properties.getExpiration();
     }
@@ -83,6 +85,7 @@ public class JwtService {
         return Optional.empty();
     }
 
+    @Override
     public void blacklistAccessToken(String token) {
         parseAndValidate(token).ifPresent(claims -> {
             if (claims.jti() != null && claims.expiresAt() != null) {

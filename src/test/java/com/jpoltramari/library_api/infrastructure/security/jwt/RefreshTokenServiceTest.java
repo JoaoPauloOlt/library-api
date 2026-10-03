@@ -1,12 +1,12 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
+import com.jpoltramari.library_api.application.port.security.RefreshTokenPort;
+import com.jpoltramari.library_api.application.service.TokenVersionService;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.model.RefreshToken;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.RefreshTokenRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
-import com.jpoltramari.library_api.application.service.TokenVersionService;
-import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,7 +31,6 @@ class RefreshTokenServiceTest {
     @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private UserRepository userRepository;
     @Mock private TokenVersionService tokenVersionService;
-    @Mock private RbacResolver rbacResolver;
 
     private RefreshTokenService service;
 
@@ -39,7 +38,7 @@ class RefreshTokenServiceTest {
     void setUp() {
         service = new RefreshTokenService(
                 properties, claimsBuilder, refreshTokenRepository,
-                userRepository, tokenVersionService, rbacResolver
+                userRepository, tokenVersionService
         );
     }
 
@@ -49,19 +48,17 @@ class RefreshTokenServiceTest {
         when(properties.getRefreshExpiration()).thenReturn(86_400_000L);
         when(claimsBuilder.buildAccessToken(user)).thenReturn("access-token");
 
-        RefreshTokenService.IssuedTokens result = service.issueTokens(user);
+        RefreshTokenPort.IssuedTokens result = service.issueTokens(user);
 
         assertThat(result.accessToken()).isEqualTo("access-token");
         assertThat(result.refreshToken()).isNotBlank();
-        assertThat(result.principal()).isNotNull();
         verify(claimsBuilder).buildAccessToken(user);
         verify(refreshTokenRepository).save(any(RefreshToken.class));
     }
 
     @Test
     void shouldReturnEmptyWhenRefreshTokenDoesNotExist() {
-        when(refreshTokenRepository.findByTokenHash(HASH))
-                .thenReturn(Optional.empty());
+        when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.empty());
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
         verifyNoInteractions(userRepository, claimsBuilder, tokenVersionService);
@@ -71,8 +68,7 @@ class RefreshTokenServiceTest {
     void shouldRevokeFamilyWhenRefreshTokenIsExpired() {
         RefreshToken token = storedToken();
         token.setExpiresAt(Instant.now().minusSeconds(1));
-        when(refreshTokenRepository.findByTokenHash(HASH))
-                .thenReturn(Optional.of(token));
+        when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.of(token));
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
 
@@ -84,8 +80,7 @@ class RefreshTokenServiceTest {
     void shouldRevokeFamilyWhenRefreshTokenWasAlreadyReplaced() {
         RefreshToken token = storedToken();
         token.setReplacedByJti("previous-jti");
-        when(refreshTokenRepository.findByTokenHash(HASH))
-                .thenReturn(Optional.of(token));
+        when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.of(token));
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
 
@@ -94,10 +89,8 @@ class RefreshTokenServiceTest {
 
     @Test
     void shouldRejectRefreshWhenUserIsMissing() {
-        when(refreshTokenRepository.findByTokenHash(HASH))
-                .thenReturn(Optional.of(storedToken()));
-        when(userRepository.findByIdWithGroupsAndPermissions(42L))
-                .thenReturn(Optional.empty());
+        when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.of(storedToken()));
+        when(userRepository.findByIdWithGroupsAndPermissions(42L)).thenReturn(Optional.empty());
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
         verify(refreshTokenRepository).save(any(RefreshToken.class));
@@ -107,10 +100,8 @@ class RefreshTokenServiceTest {
     void shouldRejectRefreshWhenUserIsInactive() {
         User user = activeUser();
         user.setStatus(UserStatus.INACTIVE);
-        when(refreshTokenRepository.findByTokenHash(HASH))
-                .thenReturn(Optional.of(storedToken()));
-        when(userRepository.findByIdWithGroupsAndPermissions(42L))
-                .thenReturn(Optional.of(user));
+        when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.of(storedToken()));
+        when(userRepository.findByIdWithGroupsAndPermissions(42L)).thenReturn(Optional.of(user));
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
     }
@@ -120,14 +111,11 @@ class RefreshTokenServiceTest {
         User user = activeUser();
         RefreshToken token = storedToken();
         when(properties.getRefreshExpiration()).thenReturn(86_400_000L);
-
-        when(refreshTokenRepository.findByTokenHash(HASH))
-                .thenReturn(Optional.of(token));
-        when(userRepository.findByIdWithGroupsAndPermissions(42L))
-                .thenReturn(Optional.of(user));
+        when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.of(token));
+        when(userRepository.findByIdWithGroupsAndPermissions(42L)).thenReturn(Optional.of(user));
         when(claimsBuilder.buildAccessToken(user)).thenReturn("new-access-token");
 
-        Optional<RefreshTokenService.IssuedTokens> result = service.rotate(RAW_TOKEN);
+        Optional<RefreshTokenPort.IssuedTokens> result = service.rotate(RAW_TOKEN);
 
         assertThat(result).isPresent();
         assertThat(result.orElseThrow().accessToken()).isEqualTo("new-access-token");
@@ -140,8 +128,7 @@ class RefreshTokenServiceTest {
     @Test
     void shouldRevokeExistingRefreshToken() {
         RefreshToken token = storedToken();
-        when(refreshTokenRepository.findByTokenHash(HASH))
-                .thenReturn(Optional.of(token));
+        when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.of(token));
 
         service.revoke(RAW_TOKEN);
 
@@ -151,8 +138,7 @@ class RefreshTokenServiceTest {
 
     @Test
     void shouldDoNothingWhenRevokingUnknownRefreshToken() {
-        when(refreshTokenRepository.findByTokenHash(HASH))
-                .thenReturn(Optional.empty());
+        when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.empty());
 
         service.revoke(RAW_TOKEN);
 
