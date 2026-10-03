@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.application.command.bookcopy.CreateBookCopyCo
 import com.jpoltramari.library_api.application.command.bookcopy.UpdateBookCopyCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
+import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.model.BookCopy;
@@ -36,7 +37,7 @@ public class BookCopyService {
     @Transactional
     public BookCopy create(Long bookId, CreateBookCopyCommand command){
         if (!bookId.equals(command.bookId())) {
-            throw new com.jpoltramari.library_api.domain.exception.BusinessException(
+            throw new BusinessException(
                     "Book ID in path does not match book ID in request.");
         }
 
