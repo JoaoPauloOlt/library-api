@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
@@ -15,7 +16,7 @@ import java.util.List;
  * Principal stored in {@link org.springframework.security.core.context.SecurityContext}.
  * Built from JWT claims on each request (no DB) or from {@link User} at login.
  */
-public final class AuthenticatedUser implements UserDetails {
+public final class AuthenticatedUser implements UserDetails, AuthenticatedPrincipal {
 
     private final Long userId;
     private final String email;
@@ -76,6 +77,7 @@ public final class AuthenticatedUser implements UserDetails {
         ));
     }
 
+    @Override
     public Long getUserId() {
         return userId;
     }
