@@ -6,6 +6,8 @@ import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyInput;
 import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyModel;
 import com.jpoltramari.library_api.api.dto.bookcopy.BookCopyUpdateInput;
 import com.jpoltramari.library_api.api.mapper.BookCopyMapper;
+import com.jpoltramari.library_api.application.command.bookcopy.CreateBookCopyCommand;
+import com.jpoltramari.library_api.application.command.bookcopy.UpdateBookCopyCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.application.service.BookCopyService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -100,7 +102,7 @@ public class BookCopyController {
     public BookCopyModel create(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
             @RequestBody @Valid BookCopyInput input) {
-        return mapper.toModel(service.create(bookId, input));
+        return mapper.toModel(service.create(bookId, new CreateBookCopyCommand(input.bookId(), input.location())));
     }
 
     @PutMapping("/{id}")
@@ -116,7 +118,7 @@ public class BookCopyController {
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
             @Parameter(description = "Physical copy identifier", example = "1") @PathVariable @Positive Long id,
             @RequestBody @Valid BookCopyUpdateInput input) {
-        return mapper.toModel(service.update(bookId, id, input));
+        return mapper.toModel(service.update(bookId, id, new UpdateBookCopyCommand(input.status(), input.location(), input.active())));
     }
 
     @PatchMapping("/{id}/status")

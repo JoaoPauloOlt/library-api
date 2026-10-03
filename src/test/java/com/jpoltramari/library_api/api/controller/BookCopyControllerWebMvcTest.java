@@ -10,10 +10,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.util.List;
 
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -92,4 +94,28 @@ class BookCopyControllerWebMvcTest {
                         .param("status", CopyStatus.AVAILABLE.name()))
                 .andExpect(status().isOk());
     }
+    @Test
+    @WithMockUser(authorities = "BOOK_COPY_CREATE")
+    void shouldCreateCopyWithCreatePermission() throws Exception {
+        when(service.create(eq(1L), any())).thenReturn(new com.jpoltramari.library_api.domain.model.BookCopy());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .post("/books/1/copies")
+                        .contentType("application/json")
+                        .content("{\"bookId\":1,\"location\":\"Shelf A-03\"}"))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    @WithMockUser(authorities = "BOOK_COPY_UPDATE")
+    void shouldUpdateCopyWithUpdatePermission() throws Exception {
+        when(service.update(eq(1L), eq(1L), any())).thenReturn(new com.jpoltramari.library_api.domain.model.BookCopy());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .put("/books/1/copies/1")
+                        .contentType("application/json")
+                        .content("{\"status\":\"MAINTENANCE\",\"location\":\"Shelf B-02\",\"active\":true}"))
+                .andExpect(status().isOk());
+    }
+
 }
