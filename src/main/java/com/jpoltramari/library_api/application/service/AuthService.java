@@ -1,6 +1,6 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
+import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.infrastructure.security.JwtService;
@@ -21,7 +21,7 @@ public class AuthService {
     private final UserRepository userRepository;
 
     @Transactional
-    public LoginResponse login(String email, String password) {
+    public AuthenticationResult login(String email, String password) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, password)
         );
@@ -30,13 +30,13 @@ public class AuthService {
                 .orElseThrow();
 
         var issued = refreshTokenService.issueTokens(user);
-        return toLoginResponse(issued.accessToken(), issued.refreshToken());
+        return toAuthenticationResult(issued.accessToken(), issued.refreshToken());
     }
 
     @Transactional
-    public LoginResponse refresh(String rawRefreshToken) {
+    public AuthenticationResult refresh(String rawRefreshToken) {
         return refreshTokenService.rotate(rawRefreshToken)
-                .map(issued -> toLoginResponse(
+                .map(issued -> toAuthenticationResult(
                         issued.accessToken(),
                         issued.refreshToken()
                 ))
@@ -56,8 +56,8 @@ public class AuthService {
         }
     }
 
-    private LoginResponse toLoginResponse(String accessToken, String refreshToken) {
-        return new LoginResponse(
+    private AuthenticationResult toAuthenticationResult(String accessToken, String refreshToken) {
+        return new AuthenticationResult(
                 accessToken,
                 refreshToken,
                 jwtService.getExpiration()
