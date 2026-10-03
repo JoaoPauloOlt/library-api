@@ -87,7 +87,7 @@ public class LoanController {
             @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Referenced book or resource not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public LoanModel create(@RequestBody @Valid LoanInput input, @AuthenticationPrincipal AuthenticatedPrincipal principal) {
+    public LoanModel create(@RequestBody @Valid LoanInput input, Authentication authentication) {
         return mapper.toModel(service.create(new CreateLoanCommand(input.bookId()), authenticatedPrincipal(authentication).getUserId()));
     }
 
