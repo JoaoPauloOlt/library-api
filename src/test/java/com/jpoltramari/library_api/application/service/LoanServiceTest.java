@@ -1,6 +1,6 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.loan.LoanInput;
+import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
@@ -69,7 +69,7 @@ class LoanServiceTest {
         when(loanRepository.save(any(Loan.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        Loan result = loanService.create(new LoanInput(10L), 1L);
+        Loan result = loanService.create(new CreateLoanCommand(10L), 1L);
 
         assertNotNull(result);
         assertEquals(user, result.getUser());
