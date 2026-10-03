@@ -191,7 +191,7 @@ class LoanControllerWebMvcTest {
                 .andExpect(status().isBadRequest());
     }
 
-    private AuthenticatedPrincipal principal(Long userId, String... permissions) {
+    private TestPrincipal principal(Long userId, String... permissions) {
         return new TestPrincipal(userId, permissions);
     }
 
