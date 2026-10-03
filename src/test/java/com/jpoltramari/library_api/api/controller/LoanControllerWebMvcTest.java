@@ -126,6 +126,28 @@ class LoanControllerWebMvcTest {
     }
 
     @Test
+    void shouldCreateLoanWithCreatePermission() throws Exception {
+        Loan loan = new Loan();
+        loan.setId(10L);
+
+        LoanModel model = new LoanModel(
+                10L, "REQUESTED", "1984", null, List.of("George Orwell"),
+                "Library User", null, null, null, null, null
+        );
+
+        when(service.create(any(), eq(42L))).thenReturn(loan);
+        when(mapper.toModel(loan)).thenReturn(model);
+
+        mockMvc.perform(post("/loans")
+                        .with(user(principal(42L, "LOAN_CREATE")))
+                        .contentType(APPLICATION_JSON)
+                        .content("{\"bookId\": 10}"))
+                .andExpect(status().isOk());
+
+        verify(service).create(any(), eq(42L));
+    }
+
+    @Test
     void shouldRequireLoanApprovePermission() throws Exception {
         mockMvc.perform(put("/loans/1/approve")
                         .with(user(principal(42L))))
