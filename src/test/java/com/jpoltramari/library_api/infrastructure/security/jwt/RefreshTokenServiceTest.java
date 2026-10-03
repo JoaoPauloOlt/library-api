@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
 import com.jpoltramari.library_api.application.port.security.RefreshTokenPort;
-import com.jpoltramari.library_api.application.service.TokenVersionService;
+import com.jpoltramari.library_api.application.port.security.SessionRevocationPort;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.model.RefreshToken;
 import com.jpoltramari.library_api.domain.model.User;
@@ -30,7 +30,7 @@ class RefreshTokenServiceTest {
     @Mock private JwtClaimsBuilder claimsBuilder;
     @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private UserRepository userRepository;
-    @Mock private TokenVersionService tokenVersionService;
+    @Mock private SessionRevocationPort sessionRevocationPort;
 
     private RefreshTokenService service;
 
@@ -38,7 +38,7 @@ class RefreshTokenServiceTest {
     void setUp() {
         service = new RefreshTokenService(
                 properties, claimsBuilder, refreshTokenRepository,
-                userRepository, tokenVersionService
+                userRepository, sessionRevocationPort
         );
     }
 
@@ -61,7 +61,7 @@ class RefreshTokenServiceTest {
         when(refreshTokenRepository.findByTokenHash(HASH)).thenReturn(Optional.empty());
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
-        verifyNoInteractions(userRepository, claimsBuilder, tokenVersionService);
+        verifyNoInteractions(userRepository, claimsBuilder, sessionRevocationPort);
     }
 
     @Test
@@ -72,7 +72,7 @@ class RefreshTokenServiceTest {
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
 
-        verify(tokenVersionService).revokeAllSessions(42L);
+        verify(sessionRevocationPort).revokeAllSessions(42L);
         verifyNoInteractions(userRepository, claimsBuilder);
     }
 
@@ -84,7 +84,7 @@ class RefreshTokenServiceTest {
 
         assertThat(service.rotate(RAW_TOKEN)).isEmpty();
 
-        verify(tokenVersionService).revokeAllSessions(42L);
+        verify(sessionRevocationPort).revokeAllSessions(42L);
     }
 
     @Test
