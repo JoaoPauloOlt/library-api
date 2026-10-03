@@ -1,13 +1,12 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
+import com.jpoltramari.library_api.application.port.security.RefreshTokenPort;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.model.RefreshToken;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.RefreshTokenRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.application.service.TokenVersionService;
-import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
-import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,22 +23,23 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RefreshTokenService {
+public class RefreshTokenService implements RefreshTokenPort {
 
     private final JwtProperties properties;
     private final JwtClaimsBuilder claimsBuilder;
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final TokenVersionService tokenVersionService;
-    private final RbacResolver rbacResolver;
 
+    @Override
     @Transactional
     public IssuedTokens issueTokens(User user) {
         String accessToken = claimsBuilder.buildAccessToken(user);
         String refreshToken = createRefreshToken(user);
-        return new IssuedTokens(accessToken, refreshToken, buildPrincipal(user));
+        return new IssuedTokens(accessToken, refreshToken);
     }
 
+    @Override
     @Transactional
     public Optional<IssuedTokens> rotate(String rawRefreshToken) {
         String hash = hashToken(rawRefreshToken);
@@ -80,11 +80,11 @@ public class RefreshTokenService {
 
         String newRefreshRaw = persistRefreshToken(user.getId(), newJti);
         String accessToken = claimsBuilder.buildAccessToken(user);
-        AuthenticatedUser principal = AuthenticatedUser.fromUser(user, rbacResolver);
 
-        return Optional.of(new IssuedTokens(accessToken, newRefreshRaw, principal));
+        return Optional.of(new IssuedTokens(accessToken, newRefreshRaw));
     }
 
+    @Override
     @Transactional
     public void revoke(String rawRefreshToken) {
         String hash = hashToken(rawRefreshToken);
@@ -119,10 +119,6 @@ public class RefreshTokenService {
         tokenVersionService.revokeAllSessions(userId);
     }
 
-    private AuthenticatedUser buildPrincipal(User user) {
-        return AuthenticatedUser.fromUser(user, rbacResolver);
-    }
-
     public static String hashToken(String raw) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -132,10 +128,4 @@ public class RefreshTokenService {
             throw new IllegalStateException("SHA-256 not available", e);
         }
     }
-
-    public record IssuedTokens(
-            String accessToken,
-            String refreshToken,
-            AuthenticatedUser principal
-    ) {}
 }
