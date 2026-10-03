@@ -5,6 +5,7 @@ import com.jpoltramari.library_api.api.dto.auth.LoginInput;
 import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
 import com.jpoltramari.library_api.api.dto.auth.LogoutInput;
 import com.jpoltramari.library_api.api.dto.auth.RefreshTokenInput;
+import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
 import com.jpoltramari.library_api.application.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -31,7 +32,7 @@ public class AuthController {
     })
     @PostMapping("/login")
     public LoginResponse login(@RequestBody @Valid LoginInput input) {
-        return service.login(input.email(), input.password());
+        return toLoginResponse(service.login(input.email(), input.password()));
     }
 
     @Operation(summary = "Refresh access token", description = "Issues a new access token using a valid refresh token.")
@@ -42,7 +43,7 @@ public class AuthController {
     })
     @PostMapping("/refresh")
     public LoginResponse refresh(@RequestBody @Valid RefreshTokenInput input) {
-        return service.refresh(input.refreshToken());
+        return toLoginResponse(service.refresh(input.refreshToken()));
     }
 
     @Operation(summary = "Logout", description = "Invalidates the current access and refresh token session.")
@@ -55,5 +56,13 @@ public class AuthController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@Valid @RequestBody LogoutInput input) {
         service.logout(input.refreshToken(), input.accessToken());
+    }
+
+    private LoginResponse toLoginResponse(AuthenticationResult result) {
+        return new LoginResponse(
+                result.accessToken(),
+                result.refreshToken(),
+                result.expiresIn()
+        );
     }
 }
