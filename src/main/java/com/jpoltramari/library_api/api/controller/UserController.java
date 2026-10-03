@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.api.controller;
 
 import com.jpoltramari.library_api.api.exception.ErrorResponse;
+import com.jpoltramari.library_api.application.command.user.CreateUserCommand;
 import com.jpoltramari.library_api.api.dto.PageResponse;
 import com.jpoltramari.library_api.api.dto.user.UserInput;
 import com.jpoltramari.library_api.api.dto.user.UserModel;
@@ -70,6 +71,7 @@ public class UserController {
             @ApiResponse(responseCode = "409", description = "User email already registered", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public UserModel create(@RequestBody @Valid UserInput input) {
-        return mapper.toModel(service.create(input));
+        return mapper.toModel(service.create(new CreateUserCommand(
+                input.name(), input.email(), input.telephone(), input.password())));
     }
 }

@@ -1,7 +1,6 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.user.UserInput;
-import com.jpoltramari.library_api.api.mapper.UserMapper;
+import com.jpoltramari.library_api.application.command.user.CreateUserCommand;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
@@ -28,7 +27,6 @@ public class UserService {
     private final UserRepository repository;
     private final GroupRepository groupRepository;
     private final PasswordEncoder passwordEncoder;
-    private final UserMapper mapper;
 
     public Page<User> findAll(Pageable pageable) {
         return repository.findAll(pageable);
@@ -40,11 +38,14 @@ public class UserService {
     }
 
     @Transactional
-    public User create(UserInput input) {
-        validateEmail(input.email());
+    public User create(CreateUserCommand command) {
+        validateEmail(command.email());
 
-        User user = mapper.toEntity(input);
-        user.setPassword(passwordEncoder.encode(input.password()));
+        User user = new User();
+        user.setName(command.name());
+        user.setEmail(command.email());
+        user.setTelephone(command.telephone());
+        user.setPassword(passwordEncoder.encode(command.password()));
         user.setStatus(UserStatus.ACTIVE);
         user.setGroups(Set.of(findDefaultGroup()));
 
