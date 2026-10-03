@@ -64,11 +64,10 @@ class BookServiceTest {
         CreateBookCommand command = new CreateBookCommand(
                 "9781234567890", "Clean Code", Genre.COMIC, null, null, 3, List.of(1L));
         Author author = new Author();
-        Book book = new Book();
 
         when(repository.existsByIsbn(command.isbn())).thenReturn(false);
         when(authorRepository.findAllById(List.of(1L))).thenReturn(List.of(author));
-        when(repository.save(any(Book.class))).thenReturn(book);
+        when(repository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Book result = service.create(command);
 
