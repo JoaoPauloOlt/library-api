@@ -7,7 +7,7 @@ import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.application.service.LoanService;
-import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -58,7 +58,7 @@ public class LoanController {
     })
     public PageResponse<LoanModel> myLoans(
             @ParameterObject @PageableDefault(size = 20) Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser principal) {
+            @AuthenticationPrincipal AuthenticatedPrincipal principal) {
         return PageResponse.from(
                 service.findByUserId(principal.getUserId(), pageable),
                 mapper::toModel
