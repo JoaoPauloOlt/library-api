@@ -6,6 +6,8 @@ import com.jpoltramari.library_api.api.dto.author.AuthorModel;
 import com.jpoltramari.library_api.api.dto.author.AuthorUpdateInput;
 import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.api.mapper.AuthorMapper;
+import com.jpoltramari.library_api.application.command.author.CreateAuthorCommand;
+import com.jpoltramari.library_api.application.command.author.UpdateAuthorCommand;
 import com.jpoltramari.library_api.application.service.AuthorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -73,7 +75,9 @@ public class AuthorController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public AuthorModel create(@RequestBody @Valid AuthorInput input) {
-        return mapper.toModel(service.create(input));
+        return mapper.toModel(service.create(
+                new CreateAuthorCommand(input.name(), input.nationality())
+        ));
     }
 
     @Operation(summary = "Update an author", description = "Updates an existing author.")
@@ -90,7 +94,10 @@ public class AuthorController {
             @Parameter(description = "Author identifier", example = "1") @PathVariable @Positive Long id,
             @RequestBody @Valid AuthorUpdateInput input
     ) {
-        return mapper.toModel(service.update(id, input));
+        return mapper.toModel(service.update(
+                id,
+                new UpdateAuthorCommand(input.name(), input.nationality())
+        ));
     }
 
     @Operation(summary = "Delete an author", description = "Deletes an author when business rules allow it.")
@@ -98,7 +105,6 @@ public class AuthorController {
             @ApiResponse(responseCode = "204", description = "Author deleted successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid author identifier", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Author not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "Author has conflicting dependencies", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })

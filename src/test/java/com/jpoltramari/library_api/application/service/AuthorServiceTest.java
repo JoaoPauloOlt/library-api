@@ -1,8 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.author.AuthorInput;
-import com.jpoltramari.library_api.api.dto.author.AuthorUpdateInput;
-import com.jpoltramari.library_api.api.mapper.AuthorMapper;
+import com.jpoltramari.library_api.application.command.author.CreateAuthorCommand;
+import com.jpoltramari.library_api.application.command.author.UpdateAuthorCommand;
 import com.jpoltramari.library_api.domain.exception.AuthorNotFoundException;
 import com.jpoltramari.library_api.domain.model.Author;
 import com.jpoltramari.library_api.domain.repository.AuthorRepository;
@@ -26,11 +25,10 @@ import static org.mockito.Mockito.when;
 class AuthorServiceTest {
 
     @Mock private AuthorRepository repository;
-    @Mock private AuthorMapper mapper;
     private AuthorService service;
 
     @BeforeEach
-    void setUp() { service = new AuthorService(repository, mapper); }
+    void setUp() { service = new AuthorService(repository); }
 
     @Test
     void shouldFindAuthorOrFail() {
@@ -47,22 +45,44 @@ class AuthorServiceTest {
 
     @Test
     void shouldCreateAuthor() {
-        AuthorInput input = new AuthorInput("Robert Martin", "American");
+        CreateAuthorCommand command = new CreateAuthorCommand("Robert Martin", "American");
         Author author = new Author();
-        when(mapper.toEntity(input)).thenReturn(author);
-        when(repository.save(author)).thenReturn(author);
-        assertEquals(author, service.create(input));
-        verify(repository).save(author);
+        when(repository.save(org.mockito.ArgumentMatchers.any(Author.class))).thenReturn(author);
+
+        assertEquals(author, service.create(command));
+        verify(repository).save(org.mockito.ArgumentMatchers.any(Author.class));
     }
 
     @Test
     void shouldUpdateAuthor() {
         Author author = new Author();
-        AuthorUpdateInput input = new AuthorUpdateInput("Robert C. Martin", "American");
+        author.setName("Robert Martin");
+        author.setNationality("American");
+        UpdateAuthorCommand command = new UpdateAuthorCommand("Robert C. Martin", "American");
+
         when(repository.findById(1L)).thenReturn(Optional.of(author));
         when(repository.save(author)).thenReturn(author);
-        assertEquals(author, service.update(1L, input));
-        verify(mapper).update(input, author);
+
+        assertEquals(author, service.update(1L, command));
+        assertEquals("Robert C. Martin", author.getName());
+        assertEquals("American", author.getNationality());
+        verify(repository).save(author);
+    }
+
+    @Test
+    void shouldUpdateOnlyProvidedAuthorFields() {
+        Author author = new Author();
+        author.setName("Robert Martin");
+        author.setNationality("American");
+        UpdateAuthorCommand command = new UpdateAuthorCommand(null, "British");
+
+        when(repository.findById(1L)).thenReturn(Optional.of(author));
+        when(repository.save(author)).thenReturn(author);
+
+        service.update(1L, command);
+
+        assertEquals("Robert Martin", author.getName());
+        assertEquals("British", author.getNationality());
     }
 
     @Test
