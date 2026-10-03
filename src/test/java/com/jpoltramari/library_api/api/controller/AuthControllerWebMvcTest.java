@@ -2,6 +2,7 @@ package com.jpoltramari.library_api.api.controller;
 
 import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
+import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
 import com.jpoltramari.library_api.application.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ class AuthControllerWebMvcTest {
     @Test
     void shouldLoginThroughPublicEndpoint() throws Exception {
         when(service.login("user@library.com", "User123!"))
-                .thenReturn(new LoginResponse("access-token", "refresh-token", 3600L));
+                .thenReturn(new AuthenticationResult("access-token", "refresh-token", 3600L));
 
         mockMvc.perform(post("/auth/login")
                         .contentType("application/json")
