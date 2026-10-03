@@ -14,19 +14,20 @@ The main capabilities are:
 - Author and book management
 - Physical book-copy management
 - Loan creation, approval, return and cancellation
-- Pagination and dynamic book filtering
+- Pagination, sorting and dynamic book filtering
 - OpenAPI/Swagger documentation
 - PostgreSQL persistence with Flyway migrations
 - Automated tests with a minimum JaCoCo line-coverage gate of 80%
 - SonarCloud code-quality analysis
-- Docker support
+- Docker and Docker Compose support
 - Render-compatible production configuration
+- Environment-specific CORS configuration
 
 ## Stack
 
 | Technology | Purpose |
 |---|---|
-| Java 17 | Application language |
+| Java 17 | Application language and runtime target |
 | Spring Boot 3.2.5 | Backend framework |
 | Spring Web | REST API |
 | Spring Security | Authentication and authorization |
@@ -43,7 +44,7 @@ The main capabilities are:
 
 ## Architecture
 
-The project uses a layered architecture with a clear distinction between the API, application, domain and infrastructure responsibilities.
+The project uses a layered architecture with a clear distinction between API, application, domain and infrastructure responsibilities.
 
 ```text
 src/main/java/com/jpoltramari/library_api/
@@ -72,7 +73,7 @@ src/main/java/com/jpoltramari/library_api/
 ### Responsibility boundaries
 
 - **API** handles HTTP, request validation, response models, OpenAPI documentation and API/entity mapping.
-- **Application** contains the use cases and coordinates repositories, domain objects and required infrastructure services.
+- **Application** contains use cases and coordinates repositories, domain objects and required infrastructure services.
 - **Domain** contains entities, business exceptions, enums and query-related domain structures.
 - **Infrastructure** contains technical implementations such as JWT authentication, token management and security integrations.
 
@@ -155,13 +156,27 @@ Never commit real credentials, JWT secrets or database credentials. Use environm
 
 PostgreSQL is the primary database.
 
-Flyway migrations are stored under:
+Production Flyway migrations are stored under:
 
 ```text
 src/main/resources/db/migration
 ```
 
+The current production migration chain includes:
+
+```text
+V1  V2  V3  V4  V5  V6  V7  V8  V9  V10
+```
+
+Development-only seed/backfill migrations are stored under:
+
+```text
+src/main/resources/db/dev
+```
+
 **Never modify an already executed migration.** Create the next migration version for schema changes.
+
+Development uses both `db/migration` and `db/dev`; production uses only `db/migration`.
 
 ## Configuration
 
@@ -170,24 +185,33 @@ The application uses Spring profiles for environment-specific configuration:
 - `dev` — local development
 - `prod` — production deployment
 
-Important configuration is supplied through environment variables rather than committed secrets.
+Configuration is supplied through environment variables rather than committed secrets.
 
-Typical production variables include:
+### Environment variables
+
+The repository provides `.env.example` with the main local configuration:
 
 ```text
-SPRING_PROFILES_ACTIVE=prod
-DB_URL=<JDBC PostgreSQL URL>
-DB_USER=<database user>
-DB_PASS=<database password>
-JWT_SECRET=<strong secret>
-JWT_EXPIRATION=<access-token lifetime>
-JWT_REFRESH_EXPIRATION=<refresh-token lifetime>
-JWT_ISSUER=<issuer>
-JWT_AUDIENCE=<audience>
-CORS_ALLOWED_ORIGINS=<frontend origins>
+DB_URL=jdbc:postgresql://localhost:5432/library
+DB_USER=postgres
+DB_PASS=postgres
+SPRING_PROFILES_ACTIVE=dev
+
+JWT_SECRET=<strong-base64-secret>
+JWT_EXPIRATION=3600000
+JWT_REFRESH_EXPIRATION=86400000
+JWT_ISSUER=library-api
+JWT_AUDIENCE=library-api-clients
 ```
 
-For local development, use the project's `.env.example`/environment configuration and never commit real credentials.
+Production additionally supports:
+
+```text
+PORT=8080
+CORS_ALLOWED_ORIGINS=<frontend-origins>
+```
+
+Never commit real credentials or secrets.
 
 ## Running locally
 
@@ -195,14 +219,15 @@ For local development, use the project's `.env.example`/environment configuratio
 
 - JDK 17+
 - Maven Wrapper included in the repository
-- PostgreSQL, unless using the provided container setup
-- Docker, if running the application/database through containers
+- PostgreSQL, or Docker/Docker Compose
+- A valid `JWT_SECRET`
 
-### Run the application
+### Run with a local PostgreSQL instance
 
 ```bash
 git clone https://github.com/JoaoPauloOlt/library-api.git
 cd library-api
+cp .env.example .env
 ./mvnw spring-boot:run
 ```
 
@@ -212,7 +237,15 @@ The API runs on:
 http://localhost:8080
 ```
 
-The active Spring profile and database configuration can be supplied through environment variables.
+### Run with Docker Compose
+
+Set `JWT_SECRET` in the environment and run:
+
+```bash
+docker compose up --build
+```
+
+The API and PostgreSQL services are started together. The API remains available at `http://localhost:8080`.
 
 ## Testing and quality
 
@@ -224,7 +257,7 @@ Run the complete verification lifecycle with:
 
 This executes the automated test suite, generates the JaCoCo report and enforces the project coverage gate.
 
-The current Maven gate requires:
+The Maven gate requires:
 
 ```text
 Global LINE coverage >= 80%
@@ -232,6 +265,7 @@ Global LINE coverage >= 80%
 
 The CI workflow also:
 
+- runs against PostgreSQL 16;
 - publishes the JaCoCo report as a GitHub Actions artifact;
 - prints the global LINE coverage summary;
 - executes SonarCloud analysis;
@@ -245,19 +279,21 @@ target/site/jacoco/
 
 ## API documentation
 
-When running locally, Swagger UI is available at:
+When running locally:
+
+**Swagger UI**
 
 ```text
 http://localhost:8080/swagger-ui/index.html
 ```
 
-OpenAPI JSON is available at:
+**OpenAPI JSON**
 
 ```text
 http://localhost:8080/v3/api-docs
 ```
 
-Authentication flow:
+### Authentication in Swagger
 
 1. Call `POST /auth/login`.
 2. Obtain the JWT access token from the response.
@@ -269,7 +305,7 @@ Protected endpoints require authentication and, where applicable, the required R
 
 ## Production
 
-The API is configured for cloud deployment and can run on Render using the production Spring profile.
+The API is configured for cloud deployment and can run on Render using the `prod` Spring profile.
 
 Production configuration includes:
 
@@ -278,6 +314,7 @@ Production configuration includes:
 - Flyway migrations on startup
 - Environment-specific CORS configuration
 - JWT configuration through environment variables
+- Correlation ID logging
 
 The frontend integration is maintained separately in the `library-web` project.
 
