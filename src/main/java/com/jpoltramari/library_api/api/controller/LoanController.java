@@ -7,7 +7,7 @@ import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.application.service.LoanService;
-import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,7 +23,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -58,9 +58,9 @@ public class LoanController {
     })
     public PageResponse<LoanModel> myLoans(
             @ParameterObject @PageableDefault(size = 20) Pageable pageable,
-            @AuthenticationPrincipal AuthenticatedUser principal) {
+            Authentication authentication) {
         return PageResponse.from(
-                service.findByUserId(principal.getUserId(), pageable),
+                service.findByUserId(authenticatedPrincipal(authentication).getUserId(), pageable),
                 mapper::toModel
         );
     }
@@ -87,8 +87,12 @@ public class LoanController {
             @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Referenced book or resource not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public LoanModel create(@RequestBody @Valid LoanInput input, @AuthenticationPrincipal AuthenticatedUser principal) {
-        return mapper.toModel(service.create(new CreateLoanCommand(input.bookId()), principal.getUserId()));
+    public LoanModel create(@RequestBody @Valid LoanInput input, Authentication authentication) {
+        return mapper.toModel(service.create(new CreateLoanCommand(input.bookId()), authenticatedPrincipal(authentication).getUserId()));
+    }
+
+    private AuthenticatedPrincipal authenticatedPrincipal(Authentication authentication) {
+        return (AuthenticatedPrincipal) authentication.getPrincipal();
     }
 
     @PutMapping("/{id}/approve")

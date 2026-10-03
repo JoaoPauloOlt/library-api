@@ -5,8 +5,12 @@ import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.application.service.LoanService;
-import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
-import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,7 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +27,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -50,10 +55,10 @@ class LoanControllerWebMvcTest {
 
     @Test
     void shouldAllowAuthenticatedUserToListOwnLoans() throws Exception {
-        AuthenticatedUser principal = principal(42L);
+        TestPrincipal principal = principal(42L);
         when(service.findByUserId(eq(42L), any())).thenReturn(new PageImpl<>(List.of()));
 
-        mockMvc.perform(get("/loans/my").with(user(principal)))
+        mockMvc.perform(get("/loans/my").with(authentication(authenticate(principal))))
                 .andExpect(status().isOk());
 
         verify(service).findByUserId(eq(42L), any());
@@ -139,7 +144,7 @@ class LoanControllerWebMvcTest {
         when(mapper.toModel(loan)).thenReturn(model);
 
         mockMvc.perform(post("/loans")
-                        .with(user(principal(42L, "LOAN_CREATE")))
+                        .with(authentication(authenticate(principal(42L, "LOAN_CREATE"))))
                         .contentType(APPLICATION_JSON)
                         .content("{\"bookId\": 10}"))
                 .andExpect(status().isCreated());
@@ -189,20 +194,69 @@ class LoanControllerWebMvcTest {
                 .andExpect(status().isBadRequest());
     }
 
-    private AuthenticatedUser principal(Long userId, String... permissions) {
-        JwtClaims claims = new JwtClaims(
-                "jti-1",
-                userId,
-                "user@library.com",
-                "Library User",
-                List.of("USER"),
-                List.of(permissions),
-                0,
-                Instant.now(),
-                Instant.now().plusSeconds(3600),
-                "library-api",
-                "library-api"
+    private TestPrincipal principal(Long userId, String... permissions) {
+        return new TestPrincipal(userId, permissions);
+    }
+
+    private Authentication authenticate(TestPrincipal principal) {
+        return UsernamePasswordAuthenticationToken.authenticated(
+                principal,
+                null,
+                principal.getAuthorities()
         );
-        return AuthenticatedUser.fromClaims(claims);
+    }
+
+    private static final class TestPrincipal implements UserDetails, AuthenticatedPrincipal {
+
+        private final Long userId;
+        private final List<GrantedAuthority> authorities;
+
+        private TestPrincipal(Long userId, String... permissions) {
+            this.userId = userId;
+            this.authorities = List.of(permissions).stream()
+                    .map(SimpleGrantedAuthority::new)
+                    .map(authority -> (GrantedAuthority) authority)
+                    .toList();
+        }
+
+        @Override
+        public Long getUserId() {
+            return userId;
+        }
+
+        @Override
+        public Collection<? extends GrantedAuthority> getAuthorities() {
+            return authorities;
+        }
+
+        @Override
+        public String getPassword() {
+            return null;
+        }
+
+        @Override
+        public String getUsername() {
+            return "user@library.com";
+        }
+
+        @Override
+        public boolean isAccountNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isAccountNonLocked() {
+            return true;
+        }
+
+        @Override
+        public boolean isCredentialsNonExpired() {
+            return true;
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return true;
+        }
     }
 }
