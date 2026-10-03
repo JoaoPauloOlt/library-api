@@ -7,4 +7,8 @@ public record UserSecuritySnapshot(
         Integer tokenVersion,
         UserStatus status
 ) {
+
+    public boolean isActive() {
+        return status == UserStatus.ACTIVE;
+    }
 }
