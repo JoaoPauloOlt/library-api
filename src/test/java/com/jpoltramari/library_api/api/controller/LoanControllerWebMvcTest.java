@@ -144,7 +144,7 @@ class LoanControllerWebMvcTest {
         when(mapper.toModel(loan)).thenReturn(model);
 
         mockMvc.perform(post("/loans")
-                        .with(user(principal(42L, "LOAN_CREATE")))
+                        .with(authentication(authenticate(principal(42L, "LOAN_CREATE"))))
                         .contentType(APPLICATION_JSON)
                         .content("{\"bookId\": 10}"))
                 .andExpect(status().isCreated());
