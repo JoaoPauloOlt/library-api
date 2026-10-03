@@ -6,6 +6,8 @@ import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.application.service.LoanService;
 import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -56,7 +58,7 @@ class LoanControllerWebMvcTest {
         TestPrincipal principal = principal(42L);
         when(service.findByUserId(eq(42L), any())).thenReturn(new PageImpl<>(List.of()));
 
-        mockMvc.perform(get("/loans/my").with(user(principal)))
+        mockMvc.perform(get("/loans/my").with(authentication(authenticate(principal))))
                 .andExpect(status().isOk());
 
         verify(service).findByUserId(eq(42L), any());
@@ -194,6 +196,14 @@ class LoanControllerWebMvcTest {
 
     private TestPrincipal principal(Long userId, String... permissions) {
         return new TestPrincipal(userId, permissions);
+    }
+
+    private Authentication authenticate(TestPrincipal principal) {
+        return UsernamePasswordAuthenticationToken.authenticated(
+                principal,
+                null,
+                principal.getAuthorities()
+        );
     }
 
     private static final class TestPrincipal implements UserDetails, AuthenticatedPrincipal {
