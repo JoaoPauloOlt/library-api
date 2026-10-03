@@ -5,6 +5,7 @@ import com.jpoltramari.library_api.api.dto.PageResponse;
 import com.jpoltramari.library_api.api.dto.loan.LoanInput;
 import com.jpoltramari.library_api.api.dto.loan.LoanModel;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
+import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.application.service.LoanService;
 import com.jpoltramari.library_api.infrastructure.security.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -87,7 +88,7 @@ public class LoanController {
             @ApiResponse(responseCode = "404", description = "Referenced book or resource not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public LoanModel create(@RequestBody @Valid LoanInput input, @AuthenticationPrincipal AuthenticatedUser principal) {
-        return mapper.toModel(service.create(input, principal.getUserId()));
+        return mapper.toModel(service.create(new CreateLoanCommand(input.bookId()), principal.getUserId()));
     }
 
     @PutMapping("/{id}/approve")
