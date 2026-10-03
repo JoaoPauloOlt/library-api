@@ -9,7 +9,8 @@ import com.jpoltramari.library_api.infrastructure.security.JwtService;
 import com.jpoltramari.library_api.application.service.TokenVersionService;
 import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
 import com.jpoltramari.library_api.infrastructure.security.snapshot.CachedUserSecuritySnapshotAdapter;
-import com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshot;
+import com.jpoltramari.library_api.application.port.security.UserSecuritySnapshotPort;
+import com.jpoltramari.library_api.application.result.auth.UserSecuritySnapshot;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import io.jsonwebtoken.Jwts;
@@ -210,7 +211,7 @@ class JwtInfrastructureCoverageTest {
 
     @Test
     void shouldValidateTokenVersionAgainstSecuritySnapshot() {
-        var port = mock(com.jpoltramari.library_api.infrastructure.security.snapshot.UserSecuritySnapshotPort.class);
+        var port = mock(UserSecuritySnapshotPort.class);
         var validator = new com.jpoltramari.library_api.infrastructure.security.TokenVersionValidator(port);
 
         var validClaims = new com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims(
