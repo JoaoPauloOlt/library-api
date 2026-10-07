@@ -98,9 +98,10 @@ class RefreshTokenRepositoryConcurrencyTest {
                 )
         );
 
-        assertThat(second.get(500, TimeUnit.MILLISECONDS).getRevokedAt())
+        Thread.sleep(300);
+        assertThat(second.isDone())
                 .as("the second transaction must remain blocked while the first transaction holds the row lock")
-                .isNull();
+                .isFalse();
 
         releaseFirstTransaction.countDown();
 
