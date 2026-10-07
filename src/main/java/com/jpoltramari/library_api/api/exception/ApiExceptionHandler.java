@@ -4,12 +4,11 @@ import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityInUseException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.api.config.ErrorProperties;
-import com.jpoltramari.library_api.infrastructure.security.filter.CorrelationIdFilter;
+import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
@@ -34,6 +33,7 @@ import java.util.stream.Collectors;
 public class ApiExceptionHandler {
 
     private final ErrorProperties errorProperties;
+    private final CorrelationIdPort correlationIdPort;
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleJsonError(
@@ -299,7 +299,7 @@ public class ApiExceptionHandler {
         return ResponseEntity.status(status).body(builder.build());
     }
 
-    private static String correlationId() {
-        return MDC.get(CorrelationIdFilter.MDC_KEY);
+    private String correlationId() {
+        return correlationIdPort.getCorrelationId().orElse(null);
     }
 }
