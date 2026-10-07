@@ -2,6 +2,7 @@ package com.jpoltramari.library_api.api.exception;
 
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
+import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import com.jpoltramari.library_api.api.config.ErrorProperties;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -12,20 +13,26 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ApiExceptionHandlerTest {
 
     private ApiExceptionHandler handler;
     private MockHttpServletRequest request;
+    private CorrelationIdPort correlationIdPort;
 
     @BeforeEach
     void setUp() {
         ErrorProperties properties = new ErrorProperties();
         properties.setExposeDetails(false);
-        handler = new ApiExceptionHandler(properties);
+        correlationIdPort = mock(CorrelationIdPort.class);
+        when(correlationIdPort.getCorrelationId()).thenReturn(Optional.of("test-correlation-id"));
+        handler = new ApiExceptionHandler(properties, correlationIdPort);
 
         request = new MockHttpServletRequest();
         request.setRequestURI("/books/999");
@@ -98,7 +105,7 @@ class ApiExceptionHandlerTest {
     void shouldExposeDetailsOnlyWhenExplicitlyEnabled() {
         ErrorProperties properties = new ErrorProperties();
         properties.setExposeDetails(true);
-        ApiExceptionHandler configuredHandler = new ApiExceptionHandler(properties);
+        ApiExceptionHandler configuredHandler = new ApiExceptionHandler(properties, correlationIdPort);
         IllegalStateException exception = new IllegalStateException("Expected diagnostic detail");
 
         ResponseEntity<ErrorResponse> response = configuredHandler.handleUncaught(exception, request);
