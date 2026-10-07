@@ -1,11 +1,8 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Component
 public class InMemoryTokenBlacklist implements TokenBlacklist {
 
     private final ConcurrentHashMap<String, Instant> blacklisted = new ConcurrentHashMap<>();
