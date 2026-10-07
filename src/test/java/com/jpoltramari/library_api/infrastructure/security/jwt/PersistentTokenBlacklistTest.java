@@ -1,49 +1,48 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
+import com.jpoltramari.library_api.domain.model.RevokedAccessToken;
+import com.jpoltramari.library_api.domain.repository.RevokedAccessTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class PersistentTokenBlacklistTest {
 
-    private JdbcTemplate jdbcTemplate;
+    private RevokedAccessTokenRepository repository;
     private PersistentTokenBlacklist blacklist;
 
     @BeforeEach
     void setUp() {
-        jdbcTemplate = mock(JdbcTemplate.class);
-        blacklist = new PersistentTokenBlacklist(jdbcTemplate);
+        repository = mock(RevokedAccessTokenRepository.class);
+        blacklist = new PersistentTokenBlacklist(repository);
     }
 
     @Test
     void shouldReturnFalseForNullJti() {
         assertThat(blacklist.isBlacklisted(null)).isFalse();
-        verifyNoInteractions(jdbcTemplate);
+        verifyNoInteractions(repository);
     }
 
     @Test
     void shouldReturnTrueWhenJtiExistsAndHasNotExpired() {
-        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq("jti-1")))
-                .thenReturn(1);
+        when(repository.existsByJtiAndExpiresAtAfter(eq("jti-1"), any(Instant.class)))
+                .thenReturn(true);
 
         assertThat(blacklist.isBlacklisted("jti-1")).isTrue();
 
-        verify(jdbcTemplate).update(
-                "delete from revoked_access_tokens where expires_at <= current_timestamp"
-        );
+        verify(repository).deleteByExpiresAtLessThanEqual(any(Instant.class));
     }
 
     @Test
     void shouldReturnFalseWhenJtiDoesNotExist() {
-        when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), eq("jti-2")))
-                .thenReturn(0);
+        when(repository.existsByJtiAndExpiresAtAfter(eq("jti-2"), any(Instant.class)))
+                .thenReturn(false);
 
         assertThat(blacklist.isBlacklisted("jti-2")).isFalse();
     }
@@ -54,7 +53,7 @@ class PersistentTokenBlacklistTest {
 
         blacklist.blacklist("jti-3", expiresAt);
 
-        verify(jdbcTemplate).update(anyString(), eq("jti-3"), eq(expiresAt));
+        verify(repository).save(new RevokedAccessToken("jti-3", expiresAt));
     }
 
     @Test
@@ -62,6 +61,6 @@ class PersistentTokenBlacklistTest {
         blacklist.blacklist(null, Instant.now());
         blacklist.blacklist("jti-4", null);
 
-        verifyNoInteractions(jdbcTemplate);
+        verifyNoInteractions(repository);
     }
 }
