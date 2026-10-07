@@ -20,8 +20,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DataJpaTest
 @ActiveProfiles("dev")
@@ -98,10 +100,9 @@ class RefreshTokenRepositoryConcurrencyTest {
                 )
         );
 
-        Thread.sleep(300);
-        assertThat(second.isDone())
-                .as("the second transaction must remain blocked while the first transaction holds the row lock")
-                .isFalse();
+        assertThatThrownBy(() -> second.get(300, TimeUnit.MILLISECONDS))
+                .isInstanceOf(TimeoutException.class)
+                .as("the second transaction must remain blocked while the first transaction holds the row lock");
 
         releaseFirstTransaction.countDown();
 
