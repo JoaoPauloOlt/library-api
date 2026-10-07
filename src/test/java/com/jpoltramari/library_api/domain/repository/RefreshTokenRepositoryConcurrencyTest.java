@@ -58,7 +58,7 @@ class RefreshTokenRepositoryConcurrencyTest {
                 "insert into refresh_tokens (id, user_id, jti, token_hash, expires_at) " +
                 "values (?, ?, ?, ?, ?)",
                 USER_ID, USER_ID, "lock-test-jti", TOKEN_HASH,
-                java.sql.Timestamp.from(Instant.now().plusMinutes(10))
+                java.sql.Timestamp.from(Instant.now().plusSeconds(600))
         );
     }
 
