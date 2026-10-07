@@ -1,5 +1,5 @@
 -- DEV ONLY: deterministic demo data for local development and CI.
--- This migration is loaded only by the dev Flyway location.
+-- This script is loaded only when the dev profile is active.
 
 -- Keep the existing dev admin account usable with documented credentials.
 UPDATE users
@@ -8,10 +8,10 @@ SET password = '$2a$12$3HupHuNgkZwR9R/T0oP4mu/XT1yEDlc62BUzMnhshKYKXzCKE1ypS',
     token_version = 0
 WHERE email = 'admin@library.com';
 
-INSERT INTO users (name, email, password, telephone, status)
+INSERT INTO users (name, email, password, telephone, status, date_register)
 VALUES
-    ('Librarian', 'librarian@library.com', '$2a$12$J9Hz48x//9Ha2ZgxfIFTfezMhYQjkhR6JzOKQ1OmmwFiNOCyQaljS', '11999999998', 'ACTIVE'),
-    ('User', 'user@library.com', '$2a$12$kvxospXmZPhv7VrbkTUVHeIyHZF3TYru3McaoCPsV2Z3RAY2rkczS', '11999999997', 'ACTIVE')
+    ('Librarian', 'librarian@library.com', '$2a$12$J9Hz48x//9Ha2ZgxfIFTfezMhYQjkhR6JzOKQ1OmmwFiNOCyQaljS', '11999999998', 'ACTIVE', CURRENT_TIMESTAMP),
+    ('User', 'user@library.com', '$2a$12$kvxospXmZPhv7VrbkTUVHeIyHZF3TYru3McaoCPsV2Z3RAY2rkczS', '11999999997', 'ACTIVE', CURRENT_TIMESTAMP)
 ON CONFLICT (email) DO UPDATE
 SET password = EXCLUDED.password,
     status = EXCLUDED.status,
