@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
-import org.springframework.jdbc.core.JdbcTemplate;
+import com.jpoltramari.library_api.domain.model.RevokedAccessToken;
+import com.jpoltramari.library_api.domain.repository.RevokedAccessTokenRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -8,10 +9,10 @@ import java.time.Instant;
 @Component
 public class PersistentTokenBlacklist implements TokenBlacklist {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final RevokedAccessTokenRepository repository;
 
-    public PersistentTokenBlacklist(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public PersistentTokenBlacklist(RevokedAccessTokenRepository repository) {
+        this.repository = repository;
     }
 
     @Override
@@ -20,21 +21,8 @@ public class PersistentTokenBlacklist implements TokenBlacklist {
             return false;
         }
 
-        jdbcTemplate.update(
-                "delete from revoked_access_tokens where expires_at <= current_timestamp"
-        );
-
-        Integer count = jdbcTemplate.queryForObject(
-                """
-                select count(*)
-                from revoked_access_tokens
-                where jti = ? and expires_at > current_timestamp
-                """,
-                Integer.class,
-                jti
-        );
-
-        return count != null && count > 0;
+        repository.deleteByExpiresAtLessThanEqual(Instant.now());
+        return repository.existsByJtiAndExpiresAtAfter(jti, Instant.now());
     }
 
     @Override
@@ -43,16 +31,7 @@ public class PersistentTokenBlacklist implements TokenBlacklist {
             return;
         }
 
-        jdbcTemplate.update(
-                """
-                insert into revoked_access_tokens (jti, expires_at)
-                values (?, ?)
-                on conflict (jti)
-                do update set expires_at = excluded.expires_at
-                """,
-                jti,
-                expiresAt
-        );
+        repository.save(new RevokedAccessToken(jti, expiresAt));
     }
 
     @Override
