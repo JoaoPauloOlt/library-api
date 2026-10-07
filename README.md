@@ -16,7 +16,7 @@ The main capabilities are:
 - Loan creation, approval, return and cancellation
 - Pagination, sorting and dynamic book filtering
 - OpenAPI/Swagger documentation
-- PostgreSQL persistence with Flyway migrations
+- PostgreSQL persistence with Hibernate schema management
 - Automated tests with a minimum JaCoCo line-coverage gate of 80%
 - SonarCloud code-quality analysis
 - Docker and Docker Compose support
@@ -34,7 +34,6 @@ The main capabilities are:
 | JWT / JJWT | Access and refresh tokens |
 | Spring Data JPA / Hibernate | Persistence and ORM |
 | PostgreSQL | Relational database |
-| Flyway | Database versioning and migrations |
 | MapStruct | Entity/DTO mapping at the API boundary |
 | Springdoc OpenAPI | Swagger/OpenAPI documentation |
 | Maven | Build and dependency management |
@@ -152,31 +151,11 @@ Never commit real credentials, JWT secrets or database credentials. Use environm
 - Loan history
 - Validation of copy availability and loan business rules
 
-## Database and migrations
+## Database
 
-PostgreSQL is the primary database.
+PostgreSQL is the primary database. Hibernate manages the schema directly from the JPA entities. Development and production use `spring.jpa.hibernate.ddl-auto=update`, so schema changes are applied automatically when the application starts. Development demo data is loaded from `src/main/resources/data-dev.sql` only under the `dev` profile.
 
-Production Flyway migrations are stored under:
-
-```text
-src/main/resources/db/migration
-```
-
-The current production migration chain includes:
-
-```text
-V1  V2  V3  V4  V5  V6  V7  V8  V9  V10
-```
-
-Development-only seed/backfill migrations are stored under:
-
-```text
-src/main/resources/db/dev
-```
-
-**Never modify an already executed migration.** Create the next migration version for schema changes.
-
-Development uses both `db/migration` and `db/dev`; production uses only `db/migration`.
+There is no database migration history to maintain. For destructive or production-critical schema changes, back up the database and review the generated schema change before deployment.
 
 ## Configuration
 
@@ -311,7 +290,6 @@ Production configuration includes:
 
 - Dynamic `PORT` support
 - PostgreSQL through environment variables
-- Flyway migrations on startup
 - Environment-specific CORS configuration
 - JWT configuration through environment variables
 - Correlation ID logging
