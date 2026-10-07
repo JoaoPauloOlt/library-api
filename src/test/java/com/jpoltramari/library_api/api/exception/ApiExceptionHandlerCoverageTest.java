@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.api.exception;
 
 import com.jpoltramari.library_api.domain.exception.EntityInUseException;
+import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import java.util.Optional;
 
 class ApiExceptionHandlerCoverageTest {
 
@@ -103,7 +106,9 @@ class ApiExceptionHandlerCoverageTest {
         com.jpoltramari.library_api.api.config.ErrorProperties properties =
                 new com.jpoltramari.library_api.api.config.ErrorProperties();
         properties.setExposeDetails(exposeDetails);
-        return new ApiExceptionHandler(properties);
+        CorrelationIdPort correlationIdPort = mock(CorrelationIdPort.class);
+        when(correlationIdPort.getCorrelationId()).thenReturn(Optional.of("test-correlation-id"));
+        return new ApiExceptionHandler(properties, correlationIdPort);
     }
 
     private HttpServletRequest request() {
