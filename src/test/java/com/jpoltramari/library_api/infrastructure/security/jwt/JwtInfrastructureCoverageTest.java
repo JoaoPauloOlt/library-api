@@ -185,7 +185,7 @@ class JwtInfrastructureCoverageTest {
     }
 
     @Test
-    void shouldCacheAndEvictSecuritySnapshots() {
+    void shouldReadSecuritySnapshotsFromSharedDatabase() {
         UserRepository repository = mock(UserRepository.class);
         CachedUserSecuritySnapshotAdapter adapter = new CachedUserSecuritySnapshotAdapter(repository);
         UserSecuritySnapshotView view = mock(UserSecuritySnapshotView.class);
@@ -199,10 +199,9 @@ class JwtInfrastructureCoverageTest {
                 .contains(new UserSecuritySnapshot(10L, 3, UserStatus.ACTIVE));
         assertThat(adapter.findByUserId(10L))
                 .contains(new UserSecuritySnapshot(10L, 3, UserStatus.ACTIVE));
-        verify(repository, times(1)).findSecuritySnapshotById(10L);
+        verify(repository, times(2)).findSecuritySnapshotById(10L);
 
         adapter.evict(10L);
-        assertThat(adapter.findByUserId(10L)).isPresent();
         verify(repository, times(2)).findSecuritySnapshotById(10L);
 
         when(repository.findSecuritySnapshotById(99L)).thenReturn(Optional.empty());
