@@ -101,7 +101,7 @@ class ApiExceptionHandlerCoverageTest {
 
     private ApiExceptionHandler handler(boolean exposeDetails) {
         com.jpoltramari.library_api.api.config.ErrorProperties properties =
-                new com.jpoltramari.library_api.infrastructure.config.ErrorProperties();
+                new com.jpoltramari.library_api.api.config.ErrorProperties();
         properties.setExposeDetails(exposeDetails);
         return new ApiExceptionHandler(properties);
     }
