@@ -7,6 +7,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
@@ -17,6 +18,7 @@ import java.time.Instant;
         indexes = @Index(name = "idx_revoked_access_tokens_expires_at", columnList = "expires_at")
 )
 @Getter
+@EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
 public class RevokedAccessToken {
