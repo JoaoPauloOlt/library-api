@@ -2,7 +2,7 @@ package com.jpoltramari.library_api.api.exception;
 
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
-import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
+import com.jpoltramari.library_api.api.config.ErrorProperties;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Path;

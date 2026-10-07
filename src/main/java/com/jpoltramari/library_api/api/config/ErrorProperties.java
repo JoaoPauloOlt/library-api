@@ -1,4 +1,4 @@
-package com.jpoltramari.library_api.infrastructure.config;
+package com.jpoltramari.library_api.api.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

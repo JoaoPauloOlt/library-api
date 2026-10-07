@@ -3,7 +3,7 @@ package com.jpoltramari.library_api.api.exception;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityInUseException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
-import com.jpoltramari.library_api.infrastructure.config.ErrorProperties;
+import com.jpoltramari.library_api.api.config.ErrorProperties;
 import com.jpoltramari.library_api.infrastructure.security.filter.CorrelationIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
