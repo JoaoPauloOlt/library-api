@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.sql.init.mode=always",
         "spring.sql.init.schema-locations=classpath:schema.sql",
         "spring.sql.init.data-locations=classpath:data.sql",
-        "jwt.secret=${JWT_SECRET:bGlicmFyeS1hcGktc2VjcmV0LXRlc3QtMjAyNi0wOC0yNA==}",
+        "jwt.secret=${JWT_SECRET:library-api-prod-schema-test-secret-2026}",
         "jwt.expiration=${JWT_EXPIRATION:3600000}",
         "jwt.refresh-expiration=${JWT_REFRESH_EXPIRATION:86400000}",
         "jwt.issuer=${JWT_ISSUER:library-api}",
