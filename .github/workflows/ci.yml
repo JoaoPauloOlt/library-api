@@ -54,11 +54,11 @@ jobs:
             -c "CREATE DATABASE library_test;" \
             -c "CREATE DATABASE library_schema;"
 
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
           cache: maven
 
       - name: Run tests and coverage
