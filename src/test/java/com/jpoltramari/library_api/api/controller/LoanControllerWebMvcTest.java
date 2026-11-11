@@ -188,6 +188,25 @@ class LoanControllerWebMvcTest {
     }
 
     @Test
+    void shouldPassAuthenticatedUserIdWhenCancelingOwnLoan() throws Exception {
+        Loan loan = new Loan();
+        loan.setId(10L);
+        LoanModel model = new LoanModel(
+                10L, "CANCELED", "1984", null, List.of("George Orwell"),
+                "Library User", null, null, null, null, null
+        );
+
+        when(service.cancel(10L, 42L)).thenReturn(loan);
+        when(mapper.toModel(loan)).thenReturn(model);
+
+        mockMvc.perform(put("/loans/10/cancel")
+                        .with(user(principal(42L, "LOAN_CANCEL"))))
+                .andExpect(status().isOk());
+
+        verify(service).cancel(10L, 42L);
+    }
+
+    @Test
     void shouldRejectInvalidLoanIdBeforeCancelServiceCall() throws Exception {
         mockMvc.perform(put("/loans/0/cancel")
                         .with(user(principal(42L, "LOAN_CANCEL"))))
