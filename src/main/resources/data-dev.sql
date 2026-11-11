@@ -1,19 +1,18 @@
 -- DEV ONLY: deterministic demo data for local development and CI.
--- This script is loaded only when the dev profile is active.
+-- This script is loaded after data.sql and only with the dev profile.
 
--- Keep the existing dev admin account usable with documented credentials.
-UPDATE users
-SET password = '$2a$12$3HupHuNgkZwR9R/T0oP4mu/XT1yEDlc62BUzMnhshKYKXzCKE1ypS',
-    status = 'ACTIVE',
-    token_version = 0
-WHERE email = 'admin@library.com';
-
-INSERT INTO users (name, email, password, telephone, status, date_register)
+-- Keep development accounts available on both empty and reused databases.
+INSERT INTO users (
+    name, email, password, telephone, status, token_version, date_register
+)
 VALUES
-    ('Librarian', 'librarian@library.com', '$2a$12$J9Hz48x//9Ha2ZgxfIFTfezMhYQjkhR6JzOKQ1OmmwFiNOCyQaljS', '11999999998', 'ACTIVE', CURRENT_TIMESTAMP),
-    ('User', 'user@library.com', '$2a$12$kvxospXmZPhv7VrbkTUVHeIyHZF3TYru3McaoCPsV2Z3RAY2rkczS', '11999999997', 'ACTIVE', CURRENT_TIMESTAMP)
+    ('Admin', 'admin@library.com', '$2a$12$3HupHuNgkZwR9R/T0oP4mu/XT1yEDlc62BUzMnhshKYKXzCKE1ypS', '11999999999', 'ACTIVE', 0, CURRENT_TIMESTAMP),
+    ('Librarian', 'librarian@library.com', '$2a$12$J9Hz48x//9Ha2ZgxfIFTfezMhYQjkhR6JzOKQ1OmmwFiNOCyQaljS', '11999999998', 'ACTIVE', 0, CURRENT_TIMESTAMP),
+    ('User', 'user@library.com', '$2a$12$kvxospXmZPhv7VrbkTUVHeIyHZF3TYru3McaoCPsV2Z3RAY2rkczS', '11999999997', 'ACTIVE', 0, CURRENT_TIMESTAMP)
 ON CONFLICT (email) DO UPDATE
-SET password = EXCLUDED.password,
+SET name = EXCLUDED.name,
+    password = EXCLUDED.password,
+    telephone = EXCLUDED.telephone,
     status = EXCLUDED.status,
     token_version = 0;
 
@@ -38,21 +37,29 @@ JOIN groups g ON g.name = 'USER'
 WHERE u.email = 'user@library.com'
 ON CONFLICT DO NOTHING;
 
--- Real authors/books; ISBNs below refer to specific published editions.
+-- Insert authors only when they do not already exist.
 INSERT INTO authors (name, nationality)
-VALUES
-    ('George Orwell', 'British'),
-    ('Jane Austen', 'British'),
-    ('F. Scott Fitzgerald', 'American'),
-    ('J. D. Salinger', 'American')
-ON CONFLICT DO NOTHING;
+SELECT seed.name, seed.nationality
+FROM (
+    VALUES
+        ('George Orwell', 'British'),
+        ('Jane Austen', 'British'),
+        ('F. Scott Fitzgerald', 'American'),
+        ('J. D. Salinger', 'American')
+) AS seed(name, nationality)
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM authors a
+    WHERE LOWER(a.name) = LOWER(seed.name)
+);
 
+-- Demo books retain the Portuguese descriptions previously provided by V12.
 INSERT INTO books (isbn, title, genre, description)
 VALUES
-    ('9780451524935', '1984', 'SCIENCE_FICTION', 'A dystopian novel about surveillance, authoritarianism, and the manipulation of truth.'),
-    ('9780141439518', 'Pride and Prejudice', 'CLASSIC', 'A novel about social expectations, relationships, and the misunderstandings between Elizabeth Bennet and Mr. Darcy.'),
-    ('9780743273565', 'The Great Gatsby', 'CLASSIC', 'A novel set in the Jazz Age that explores wealth, ambition, identity, and the pursuit of an idealized past.'),
-    ('9780316769488', 'The Catcher in the Rye', 'DRAMA', 'A coming-of-age novel following Holden Caulfield as he navigates alienation, grief, and adolescence.')
+    ('9780451524935', '1984', 'SCIENCE_FICTION', 'Em uma sociedade totalitária onde o Estado controla a informação, Winston Smith trabalha alterando registros históricos. Ao questionar a realidade imposta pelo Partido, ele começa a buscar uma verdade que pode lhe custar tudo.'),
+    ('9780141439518', 'Pride and Prejudice', 'CLASSIC', 'Elizabeth Bennet enfrenta as expectativas sociais de sua época enquanto conhece o reservado e orgulhoso Mr. Darcy. A história explora relações, preconceitos, classe social e as consequências de julgar alguém pelas primeiras impressões.'),
+    ('9780743273565', 'The Great Gatsby', 'CLASSIC', 'No verão de 1922, Nick Carraway observa a vida extravagante de seu vizinho Jay Gatsby e seu círculo social em Long Island. Entre festas, riqueza e segredos, Gatsby tenta recuperar um amor do passado.'),
+    ('9780316769488', 'The Catcher in the Rye', 'DRAMA', 'Holden Caulfield narra alguns dias turbulentos após ser expulso de sua escola. Entre encontros em Nova York e reflexões sobre a vida adulta, ele procura sentido, autenticidade e um lugar onde se sinta pertencente.')
 ON CONFLICT (isbn) DO UPDATE
 SET title = EXCLUDED.title,
     genre = EXCLUDED.genre,
@@ -87,7 +94,7 @@ WHERE b.isbn = '9780316769488'
 ON CONFLICT DO NOTHING;
 
 INSERT INTO book_copies (book_id, barcode, status, location, active)
-SELECT b.id, data.barcode, data.status, data.location, TRUE
+SELECT b.id, seed.barcode, seed.status, seed.location, TRUE
 FROM books b
 JOIN (
     VALUES
@@ -99,11 +106,48 @@ JOIN (
         ('9780743273565', 'BC-GATSBY-002', 'AVAILABLE', 'B-01'),
         ('9780316769488', 'BC-CATCHER-001', 'MAINTENANCE', 'B-02'),
         ('9780316769488', 'BC-CATCHER-002', 'AVAILABLE', 'B-02')
-) AS data(isbn, barcode, status, location)
-ON b.isbn = data.isbn
+) AS seed(isbn, barcode, status, location)
+    ON b.isbn = seed.isbn
 ON CONFLICT (barcode) DO NOTHING;
 
--- Active loan for the USER account.
+-- Preserve the old V11 behavior for any development book without copies.
+INSERT INTO book_copies (book_id, barcode, status, location, active)
+SELECT
+    b.id,
+    'BK-DEV-' || b.id || '-00' || copy_number,
+    'AVAILABLE',
+    'DEV-ACERVO',
+    TRUE
+FROM books b
+CROSS JOIN generate_series(1, 3) AS copy_number
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM book_copies existing
+    WHERE existing.book_id = b.id
+)
+ON CONFLICT (barcode) DO NOTHING;
+
+-- Preserve the cover URLs previously populated by V8.
+UPDATE books
+SET cover_url = CASE isbn
+    WHEN '9780451524935' THEN 'https://books.google.com/books/content?vid=isbn9780451524935&printsec=frontcover&img=1&zoom=1&source=gbs_api'
+    WHEN '9780141439518' THEN 'https://books.google.com/books/content?vid=isbn9780141439518&printsec=frontcover&img=1&zoom=1&source=gbs_api'
+    WHEN '9780316769488' THEN 'https://books.google.com/books/content?vid=isbn9780316769488&printsec=frontcover&img=1&zoom=1&source=gbs_api'
+    WHEN '9780743273565' THEN 'https://books.google.com/books/content?vid=isbn9780743273565&printsec=frontcover&img=1&zoom=1&source=gbs_api'
+    ELSE cover_url
+END
+WHERE isbn IN (
+    '9780451524935',
+    '9780141439518',
+    '9780316769488',
+    '9780743273565'
+);
+
+UPDATE books
+SET cover_url = 'https://books.google.com/books/content?vid=isbn9781638494195&printsec=frontcover&img=1&zoom=1&source=gbs_api'
+WHERE LOWER(title) = 'shadow slave';
+
+-- Active loan scenario for the USER account.
 INSERT INTO loans (
     user_id, book_copy_id, status, request_date,
     approval_date, withdrawable_date, due_date, return_date
@@ -121,11 +165,13 @@ FROM users u
 JOIN book_copies bc ON bc.barcode = 'BC-1984-001'
 WHERE u.email = 'user@library.com'
   AND NOT EXISTS (
-      SELECT 1 FROM loans l
-      WHERE l.user_id = u.id AND l.book_copy_id = bc.id AND l.status = 'ACTIVE'
+      SELECT 1
+      FROM loans l
+      WHERE l.user_id = u.id
+        AND l.book_copy_id = bc.id
   );
 
--- Requested loan for the USER account; the copy remains available until approval.
+-- Requested loan scenario; the copy remains available until approval.
 INSERT INTO loans (
     user_id, book_copy_id, status, request_date,
     approval_date, withdrawable_date, due_date, return_date
@@ -143,11 +189,13 @@ FROM users u
 JOIN book_copies bc ON bc.barcode = 'BC-PP-001'
 WHERE u.email = 'user@library.com'
   AND NOT EXISTS (
-      SELECT 1 FROM loans l
-      WHERE l.user_id = u.id AND l.book_copy_id = bc.id AND l.status = 'REQUESTED'
+      SELECT 1
+      FROM loans l
+      WHERE l.user_id = u.id
+        AND l.book_copy_id = bc.id
   );
 
--- Returned loan to populate the general history view.
+-- Returned loan scenario for the general history view.
 INSERT INTO loans (
     user_id, book_copy_id, status, request_date,
     approval_date, withdrawable_date, due_date, return_date
@@ -165,6 +213,8 @@ FROM users u
 JOIN book_copies bc ON bc.barcode = 'BC-GATSBY-001'
 WHERE u.email = 'user@library.com'
   AND NOT EXISTS (
-      SELECT 1 FROM loans l
-      WHERE l.user_id = u.id AND l.book_copy_id = bc.id AND l.status = 'RETURNED'
+      SELECT 1
+      FROM loans l
+      WHERE l.user_id = u.id
+        AND l.book_copy_id = bc.id
   );

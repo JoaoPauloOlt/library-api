@@ -153,9 +153,16 @@ Never commit real credentials, JWT secrets or database credentials. Use environm
 
 ## Database
 
-PostgreSQL is the primary database. Hibernate manages the schema directly from the JPA entities. Development and production use `spring.jpa.hibernate.ddl-auto=update`, so schema changes are applied automatically when the application starts. Development demo data is loaded from `src/main/resources/data-dev.sql` only under the `dev` profile.
+PostgreSQL is the primary database. Hibernate manages the schema from the JPA entities, using `spring.jpa.hibernate.ddl-auto=update` in the `dev` and `prod` profiles.
 
-There is no database migration history to maintain. For destructive or production-critical schema changes, back up the database and review the generated schema change before deployment.
+Database initialization is split by responsibility:
+
+- `src/main/resources/data.sql` initializes the RBAC groups and permissions in every profile. It does not create demo users.
+- `src/main/resources/data-dev.sql` loads development-only accounts, catalog fixtures, physical copies and loan scenarios. It is executed only with the `dev` profile.
+- Hibernate creates or updates the schema before the SQL data scripts run.
+- The seed scripts are designed to be safe to execute on every application startup.
+
+Flyway and its migration history are not used. Hibernate schema update is not a versioned migration system and does not provide deterministic rollback. Back up production data and review schema changes before deployment, especially for destructive changes, renames or column type changes.
 
 ## Configuration
 
@@ -342,7 +349,7 @@ The project is being developed incrementally, prioritizing:
 - Automated testing
 - Measurable code coverage
 - Static code-quality analysis
-- Maintainable database migrations
+- Consistent Hibernate schema management and seed initialization
 - Controlled integration with the frontend
 - Production-ready configuration
 
