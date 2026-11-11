@@ -3,10 +3,10 @@ package com.jpoltramari.library_api.infrastructure.security.jwt;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Date;
@@ -23,7 +23,7 @@ public class JwtClaimsBuilder {
     public JwtClaimsBuilder(JwtProperties properties, RbacResolver rbacResolver) {
         this.properties = properties;
         this.rbacResolver = rbacResolver;
-        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(properties.getSecret()));
+        this.signingKey = Keys.hmacShaKeyFor(properties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
     public String buildAccessToken(User user) {

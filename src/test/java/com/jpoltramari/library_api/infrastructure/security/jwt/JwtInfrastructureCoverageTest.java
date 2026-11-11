@@ -14,7 +14,6 @@ import com.jpoltramari.library_api.application.result.auth.UserSecuritySnapshot;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.DecodingException;
 
 import java.util.Date;
 
@@ -27,7 +26,7 @@ import static org.mockito.Mockito.*;
 
 class JwtInfrastructureCoverageTest {
 
-    private static final String SECRET = "bGlicmFyeS1hcGktY2ktc2VjcmV0LXRlc3QtMjAyNi0wOC0yNA==";
+    private static final String SECRET = "library-api-test-secret-with-underscores-2026";
 
     @Test
     void shouldBuildAndParseJwtAndRejectBlacklistedToken() {
@@ -67,7 +66,7 @@ class JwtInfrastructureCoverageTest {
         assertThat(service.parseAndValidate("not-a-jwt")).isEmpty();
 
         JwtProperties otherProperties = properties();
-        otherProperties.setSecret("c2Vjb25kLXNlY3JldC1rZXktd2l0aC1hdC1sZWFzdC0zMi1ieXRlcw==");
+        otherProperties.setSecret("another-library-api-secret-with-underscores-2026");
         JwtClaimsBuilder otherBuilder = new JwtClaimsBuilder(otherProperties, new RbacResolver());
         String token = otherBuilder.buildAccessToken(user(UserStatus.ACTIVE));
 
@@ -171,17 +170,17 @@ class JwtInfrastructureCoverageTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("jwt.secret must be configured");
 
-        JwtProperties invalidBase64 = properties();
-        invalidBase64.setSecret("%%%");
-        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(invalidBase64), "validate"))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("jwt.secret must be a valid Base64-encoded key");
+        JwtProperties secretWithUnderscore = properties();
+        secretWithUnderscore.setSecret("library_api_local_dev_secret_2026");
+        org.springframework.test.util.ReflectionTestUtils.invokeMethod(
+                new JwtSecretValidator(secretWithUnderscore), "validate"
+        );
 
         JwtProperties shortKey = properties();
-        shortKey.setSecret("c2hvcnQ=");
+        shortKey.setSecret("short-secret");
         assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(shortKey), "validate"))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("at least 32 bytes");
+                .hasMessageContaining("at least 32 UTF-8 bytes");
     }
 
     @Test
