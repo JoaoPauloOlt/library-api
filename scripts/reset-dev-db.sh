@@ -13,7 +13,7 @@ DB_URL="${DB_URL:-jdbc:postgresql://localhost:5432/library}"
 DB_USER="${DB_USER:-postgres}"
 DB_PASS="${DB_PASS:-postgres}"
 
-if [[ ! "$DB_URL" =~ ^jdbc:postgresql://(localhost|127\\.0\\.0\\.1)(:([0-9]+))?/([^/?]+)(\\?.*)?$ ]]; then
+if [[ ! "$DB_URL" =~ ^jdbc:postgresql://(localhost|127[.]0[.]0[.]1)(:([0-9]+))?/([^/?]+)([?].*)?$ ]]; then
     echo "Refusing to reset: DB_URL must point to a local PostgreSQL database on localhost or 127.0.0.1." >&2
     echo "Current DB_URL: $DB_URL" >&2
     exit 1
