@@ -9,12 +9,7 @@ VALUES
     ('Admin', 'admin@library.com', '$2a$12$3HupHuNgkZwR9R/T0oP4mu/XT1yEDlc62BUzMnhshKYKXzCKE1ypS', '11999999999', 'ACTIVE', 0, CURRENT_TIMESTAMP),
     ('Librarian', 'librarian@library.com', '$2a$12$J9Hz48x//9Ha2ZgxfIFTfezMhYQjkhR6JzOKQ1OmmwFiNOCyQaljS', '11999999998', 'ACTIVE', 0, CURRENT_TIMESTAMP),
     ('User', 'user@library.com', '$2a$12$kvxospXmZPhv7VrbkTUVHeIyHZF3TYru3McaoCPsV2Z3RAY2rkczS', '11999999997', 'ACTIVE', 0, CURRENT_TIMESTAMP)
-ON CONFLICT (email) DO UPDATE
-SET name = EXCLUDED.name,
-    password = EXCLUDED.password,
-    telephone = EXCLUDED.telephone,
-    status = EXCLUDED.status,
-    token_version = 0;
+ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO user_groups (user_id, group_id)
 SELECT u.id, g.id
@@ -60,10 +55,7 @@ VALUES
     ('9780141439518', 'Pride and Prejudice', 'CLASSIC', 'Elizabeth Bennet enfrenta as expectativas sociais de sua época enquanto conhece o reservado e orgulhoso Mr. Darcy. A história explora relações, preconceitos, classe social e as consequências de julgar alguém pelas primeiras impressões.'),
     ('9780743273565', 'The Great Gatsby', 'CLASSIC', 'No verão de 1922, Nick Carraway observa a vida extravagante de seu vizinho Jay Gatsby e seu círculo social em Long Island. Entre festas, riqueza e segredos, Gatsby tenta recuperar um amor do passado.'),
     ('9780316769488', 'The Catcher in the Rye', 'DRAMA', 'Holden Caulfield narra alguns dias turbulentos após ser expulso de sua escola. Entre encontros em Nova York e reflexões sobre a vida adulta, ele procura sentido, autenticidade e um lugar onde se sinta pertencente.')
-ON CONFLICT (isbn) DO UPDATE
-SET title = EXCLUDED.title,
-    genre = EXCLUDED.genre,
-    description = EXCLUDED.description;
+ON CONFLICT (isbn) DO NOTHING;
 
 INSERT INTO book_authors (book_id, author_id)
 SELECT b.id, a.id
@@ -110,24 +102,7 @@ JOIN (
     ON b.isbn = seed.isbn
 ON CONFLICT (barcode) DO NOTHING;
 
--- Preserve the old V11 behavior for any development book without copies.
-INSERT INTO book_copies (book_id, barcode, status, location, active)
-SELECT
-    b.id,
-    'BK-DEV-' || b.id || '-00' || copy_number,
-    'AVAILABLE',
-    'DEV-ACERVO',
-    TRUE
-FROM books b
-CROSS JOIN generate_series(1, 3) AS copy_number
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM book_copies existing
-    WHERE existing.book_id = b.id
-)
-ON CONFLICT (barcode) DO NOTHING;
-
--- Preserve the cover URLs previously populated by V8.
+-- Add demo cover URLs only when a book does not already have a custom cover.
 UPDATE books
 SET cover_url = CASE isbn
     WHEN '9780451524935' THEN 'https://books.google.com/books/content?vid=isbn9780451524935&printsec=frontcover&img=1&zoom=1&source=gbs_api'
@@ -141,11 +116,13 @@ WHERE isbn IN (
     '9780141439518',
     '9780316769488',
     '9780743273565'
-);
+)
+  AND cover_url IS NULL;
 
 UPDATE books
 SET cover_url = 'https://books.google.com/books/content?vid=isbn9781638494195&printsec=frontcover&img=1&zoom=1&source=gbs_api'
-WHERE LOWER(title) = 'shadow slave';
+WHERE LOWER(title) = 'shadow slave'
+  AND cover_url IS NULL;
 
 -- Active loan scenario for the USER account.
 INSERT INTO loans (
