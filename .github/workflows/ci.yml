@@ -32,7 +32,7 @@ jobs:
       PROD_SCHEMA_TEST_DB_URL: jdbc:postgresql://localhost:5432/library_schema
       DB_USER: postgres
       DB_PASS: postgres
-      JWT_SECRET: bGlicmFyeS1hcGktc2VjcmV0LXRlc3QtMjAyNi0wOC0yNA==
+      JWT_SECRET: library-api-ci-secret-with-underscores-2026
       JWT_EXPIRATION: 3600000
       JWT_REFRESH_EXPIRATION: 86400000
 
