@@ -119,11 +119,6 @@ WHERE isbn IN (
 )
   AND cover_url IS NULL;
 
-UPDATE books
-SET cover_url = 'https://books.google.com/books/content?vid=isbn9781638494195&printsec=frontcover&img=1&zoom=1&source=gbs_api'
-WHERE LOWER(title) = 'shadow slave'
-  AND cover_url IS NULL;
-
 -- Active loan scenario for the USER account.
 INSERT INTO loans (
     user_id, book_copy_id, status, request_date,
