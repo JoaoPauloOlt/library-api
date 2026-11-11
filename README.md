@@ -16,7 +16,7 @@ The main capabilities are:
 - Loan creation, approval, return and cancellation
 - Pagination, sorting and dynamic book filtering
 - OpenAPI/Swagger documentation
-- PostgreSQL persistence with Flyway migrations
+- PostgreSQL persistence with Hibernate schema management
 - Automated tests with a minimum JaCoCo line-coverage gate of 80%
 - SonarCloud code-quality analysis
 - Docker and Docker Compose support
@@ -34,7 +34,6 @@ The main capabilities are:
 | JWT / JJWT | Access and refresh tokens |
 | Spring Data JPA / Hibernate | Persistence and ORM |
 | PostgreSQL | Relational database |
-| Flyway | Database versioning and migrations |
 | MapStruct | Entity/DTO mapping at the API boundary |
 | Springdoc OpenAPI | Swagger/OpenAPI documentation |
 | Maven | Build and dependency management |
@@ -162,31 +161,27 @@ Never commit real credentials, JWT secrets or database credentials. Use environm
 - Loan history
 - Validation of copy availability and loan business rules
 
-## Database and migrations
+## Database
 
-PostgreSQL is the primary database.
+PostgreSQL is the primary database. Schema initialization is profile-specific so that development convenience does not weaken production safety.
 
-Production Flyway migrations are stored under:
+Database initialization is split by responsibility:
 
-```text
-src/main/resources/db/migration
-```
+- `src/main/resources/schema.sql` contains the PostgreSQL DDL required to provision a new database. Its `CREATE TABLE/INDEX IF NOT EXISTS` statements leave existing tables and their data untouched.
+- `src/main/resources/data.sql` initializes the RBAC groups and permissions in every profile. It does not create demo accounts.
+- `src/main/resources/data-dev.sql` loads development-only accounts, catalog fixtures, physical copies and loan scenarios. It is executed only with the `dev` profile.
 
-The current production migration chain includes:
+Each environment uses a different schema strategy:
 
-```text
-V1  V2  V3  V4  V5  V6  V7  V8  V9  V10
-```
+| Profile | Hibernate | SQL initialization |
+|---|---|---|
+| `dev` | `ddl-auto=update` | Hibernate runs first, followed by `schema.sql`, `data.sql` and `data-dev.sql` |
+| `test` | `ddl-auto=create-drop` | Hibernate creates the isolated test schema, then the shared RBAC seed runs |
+| `prod` | `ddl-auto=validate` | `schema.sql` and `data.sql` run before Hibernate validates the schema |
 
-Development-only seed/backfill migrations are stored under:
+The production profile never asks Hibernate to create or update tables. On a new production database, `schema.sql` provisions the initial structure before JPA starts. On an existing database, the idempotent DDL skips existing tables and does not delete application data.
 
-```text
-src/main/resources/db/dev
-```
-
-**Never modify an already executed migration.** Create the next migration version for schema changes.
-
-Development uses both `db/migration` and `db/dev`; production uses only `db/migration`.
+Flyway and its migration history are not used. `schema.sql` is an initial bootstrap, not a versioned migration system. Future production schema changes must be delivered through reviewed, manually executed SQL scripts with an explicit execution record and backup/rollback plan. Do not use `ddl-auto=update` in production.
 
 ## Configuration
 
@@ -227,7 +222,7 @@ Never commit real credentials or secrets.
 
 ### Prerequisites
 
-- JDK 17
+- JDK 17+
 - Maven Wrapper included in the repository
 - PostgreSQL, or Docker/Docker Compose
 - A valid `JWT_SECRET`
@@ -261,11 +256,24 @@ The API and PostgreSQL services are started together. The API remains available 
 
 All automated tests are maintained under `src/test/java/com/jpoltramari/library_api/`, organized by API, application, domain and infrastructure responsibility. Test sources are not stored at the repository root.
 
+
 Run the complete verification lifecycle with:
 
 ```bash
 ./mvnw verify
 ```
+
+Maven Surefire activates the `test` profile for tests by default. The profile uses `ddl-auto=create-drop` and the isolated `library_test` database (`TEST_DB_URL`). Tests that specifically verify development fixtures use the `dev` profile and `DB_URL`.
+
+The production bootstrap integration test uses a separate, initially empty `library_schema` database (`PROD_SCHEMA_TEST_DB_URL`). For a local PostgreSQL instance, create the three databases before running the full suite:
+
+```sql
+CREATE DATABASE library;
+CREATE DATABASE library_test;
+CREATE DATABASE library_schema;
+```
+
+The CI workflow provisions these isolated databases automatically and runs against PostgreSQL 16.
 
 This executes the automated test suite, generates the JaCoCo report and enforces the project coverage gate.
 
@@ -277,7 +285,7 @@ Global LINE coverage >= 80%
 
 The CI workflow also:
 
-- runs with JDK 17 against PostgreSQL 16;
+- runs against PostgreSQL 16;
 - publishes the JaCoCo report as a GitHub Actions artifact;
 - prints the global LINE coverage summary;
 - executes SonarCloud analysis;
@@ -323,7 +331,6 @@ Production configuration includes:
 
 - Dynamic `PORT` support
 - PostgreSQL through environment variables
-- Flyway migrations on startup
 - Environment-specific CORS configuration
 - JWT configuration through environment variables
 - Correlation ID logging
@@ -376,7 +383,7 @@ The project is being developed incrementally, prioritizing:
 - Automated testing
 - Measurable code coverage
 - Static code-quality analysis
-- Maintainable database migrations
+- Consistent Hibernate schema management and seed initialization
 - Controlled integration with the frontend
 - Production-ready configuration
 

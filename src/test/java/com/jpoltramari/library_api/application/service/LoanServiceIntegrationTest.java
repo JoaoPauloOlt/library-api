@@ -2,28 +2,36 @@ package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
+import com.jpoltramari.library_api.domain.enums.Genre;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
+import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.domain.model.Book;
+import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
+import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
-@ActiveProfiles("dev")
+@ActiveProfiles("test")
 @Transactional
 class LoanServiceIntegrationTest {
 
-    private static final String USER_EMAIL = "user@library.com";
     @Autowired
     private LoanService loanService;
 
@@ -31,22 +39,48 @@ class LoanServiceIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private BookRepository bookRepository;
+
+    @Autowired
     private LoanRepository loanRepository;
 
     @Autowired
     private BookCopyRepository bookCopyRepository;
 
+    private Long userId;
+    private Long bookId;
+    private Long bookCopyId;
+
+    @BeforeEach
+    void setUp() {
+        User user = new User();
+        user.setName("Loan Integration User");
+        user.setEmail("loan-integration@example.com");
+        user.setPassword("test-password");
+        user.setTelephone("11999999999");
+        user.setStatus(UserStatus.ACTIVE);
+        user.setTokenVersion(0);
+        userId = userRepository.save(user).getId();
+
+        Book book = new Book();
+        book.setIsbn("9780000000001");
+        book.setTitle("Loan Integration Book");
+        book.setGenre(Genre.CLASSIC);
+        bookId = bookRepository.save(book).getId();
+
+        BookCopy copy = new BookCopy();
+        copy.setBook(bookRepository.findById(bookId).orElseThrow());
+        copy.setBarcode("IT-LOAN-001");
+        copy.setStatus(CopyStatus.AVAILABLE);
+        copy.setActive(true);
+        bookCopyId = bookCopyRepository.save(copy).getId();
+    }
+
     @Test
     void shouldCreateApproveAndReturnLoanThroughDatabase() {
-        User user = userRepository.findByEmail(USER_EMAIL).orElseThrow();
-        Long bookId = bookCopyRepository.findByBarcode("BC-GATSBY-001")
-                .orElseThrow()
-                .getBook()
-                .getId();
-
         Loan created = loanService.create(
                 new CreateLoanCommand(bookId),
-                user.getId()
+                userId
         );
 
         assertThat(created.getId()).isNotNull();
@@ -75,15 +109,24 @@ class LoanServiceIntegrationTest {
 
     @Test
     void shouldRejectNewLoanWhenUserAlreadyHasActiveLoanForBook() {
-        User user = userRepository.findByEmail(USER_EMAIL).orElseThrow();
-        Long bookId = bookCopyRepository.findByBarcode("BC-1984-001")
-                .orElseThrow()
-                .getBook()
-                .getId();
+        BookCopy copy = bookCopyRepository.findById(bookCopyId).orElseThrow();
+        copy.setStatus(CopyStatus.LOANED);
+        bookCopyRepository.save(copy);
+
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        Loan activeLoan = new Loan();
+        activeLoan.setUser(userRepository.findById(userId).orElseThrow());
+        activeLoan.setBookCopy(copy);
+        activeLoan.setStatus(LoanStatus.ACTIVE);
+        activeLoan.setRequestDate(now.minusDays(2));
+        activeLoan.setApprovalDate(now.minusDays(1));
+        activeLoan.setWithdrawableDate(now.minusDays(1));
+        activeLoan.setDueDate(now.plusDays(6));
+        loanRepository.save(activeLoan);
 
         assertThatThrownBy(() -> loanService.create(
                 new CreateLoanCommand(bookId),
-                user.getId()
+                userId
         ))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("already has an active loan");

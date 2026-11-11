@@ -40,6 +40,24 @@ class DevSeedIntegrationTest {
     }
 
     @Test
+    void shouldLoadSharedPermissionsForEachGroup() {
+        Set<String> adminPermissions = permissionNames("admin@library.com");
+        Set<String> librarianPermissions = permissionNames("librarian@library.com");
+        Set<String> userPermissions = permissionNames("user@library.com");
+
+        assertThat(adminPermissions)
+                .contains("USER_ADMIN", "BOOK_DELETE", "LOAN_RETURN")
+                .doesNotContain("LOAN_WITHDRAW");
+
+        assertThat(librarianPermissions)
+                .contains("BOOK_CREATE", "BOOK_COPY_UPDATE", "LOAN_APPROVE", "LOAN_RETURN")
+                .doesNotContain("USER_ADMIN", "LOAN_WITHDRAW");
+
+        assertThat(userPermissions)
+                .containsExactlyInAnyOrder("BOOK_READ", "AUTHOR_READ", "LOAN_CREATE", "LOAN_CANCEL");
+    }
+
+    @Test
     void shouldLoadDevLibraryCatalogAndCopies() {
         assertThat(bookRepository.findByIsbn("9780451524935")).isPresent();
         assertThat(bookRepository.findByIsbn("9780141439518")).isPresent();
@@ -51,15 +69,11 @@ class DevSeedIntegrationTest {
     }
 
     @Test
-    void shouldLoadDevBookDescriptions() {
-        assertThat(bookRepository.findByIsbn("9780451524935").orElseThrow().getDescription())
-                .isNotBlank();
-        assertThat(bookRepository.findByIsbn("9780141439518").orElseThrow().getDescription())
-                .isNotBlank();
-        assertThat(bookRepository.findByIsbn("9780743273565").orElseThrow().getDescription())
-                .isNotBlank();
-        assertThat(bookRepository.findByIsbn("9780316769488").orElseThrow().getDescription())
-                .isNotBlank();
+    void shouldLoadDevBookDescriptionsAndCovers() {
+        assertBookHasDescriptionAndCover("9780451524935");
+        assertBookHasDescriptionAndCover("9780141439518");
+        assertBookHasDescriptionAndCover("9780743273565");
+        assertBookHasDescriptionAndCover("9780316769488");
     }
 
     @Test
@@ -79,5 +93,21 @@ class DevSeedIntegrationTest {
                 .collect(Collectors.toSet());
 
         assertThat(groups).contains(expectedGroup);
+    }
+
+    private Set<String> permissionNames(String email) {
+        User user = userRepository.findByEmailWithGroupsAndPermissions(email).orElseThrow();
+
+        return user.getGroups().stream()
+                .flatMap(group -> group.getPermissions().stream())
+                .map(permission -> permission.getName())
+                .collect(Collectors.toSet());
+    }
+
+    private void assertBookHasDescriptionAndCover(String isbn) {
+        var book = bookRepository.findByIsbn(isbn).orElseThrow();
+
+        assertThat(book.getDescription()).isNotBlank();
+        assertThat(book.getCoverUrl()).isNotBlank();
     }
 }

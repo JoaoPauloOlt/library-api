@@ -21,10 +21,10 @@ public class Author {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(nullable = false, length = 40)
+    @Column(nullable = false, length = 100)
     private String nationality;
 
     @JsonIgnore
