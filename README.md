@@ -109,7 +109,7 @@ Security also includes:
 - Permission-based access control
 - Security snapshots for authorization-related state
 
-Never commit real credentials, JWT secrets or database credentials. Use environment variables.
+The JWT secret is interpreted as literal UTF-8 text, not Base64, and must contain at least 32 bytes (256 bits) for HS256. The `dev` profile provides a local-only fallback; `prod` still requires `JWT_SECRET` through the environment. Use a cryptographically random, environment-specific secret in production. Never commit real credentials or secrets.
 
 ## Catalog
 
@@ -202,7 +202,7 @@ DB_USER=postgres
 DB_PASS=postgres
 SPRING_PROFILES_ACTIVE=dev
 
-JWT_SECRET=<strong-base64-secret>
+JWT_SECRET=library-api-local-dev-secret-2026-change-me
 JWT_EXPIRATION=3600000
 JWT_REFRESH_EXPIRATION=86400000
 JWT_ISSUER=library-api
@@ -225,7 +225,7 @@ Never commit real credentials or secrets.
 - JDK 17+
 - Maven Wrapper included in the repository
 - PostgreSQL, or Docker/Docker Compose
-- A valid `JWT_SECRET`
+- PostgreSQL credentials configured through environment variables
 
 ### Run with a local PostgreSQL instance
 
@@ -244,7 +244,7 @@ http://localhost:8080
 
 ### Run with Docker Compose
 
-Copy `.env.example` to `.env`, replace the placeholder `JWT_SECRET` with a valid strong Base64-encoded secret, and run:
+Copy `.env.example` to `.env` and run. The sample secret is for local development only; production must use a strong, random UTF-8 secret of at least 32 bytes. Do not Base64-encode it.
 
 ```bash
 docker compose up --build
