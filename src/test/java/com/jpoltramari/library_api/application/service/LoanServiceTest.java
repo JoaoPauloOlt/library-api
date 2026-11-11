@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.domain.exception.LoanNotFoundException;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -128,15 +130,28 @@ class LoanServiceTest {
     }
 
     @Test
-    void shouldCancelRequestedLoan() {
+    void shouldCancelRequestedLoanOwnedByAuthenticatedUser() {
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(loanRepository.save(loan)).thenReturn(loan);
 
-        Loan result = loanService.cancel(1L);
+        Loan result = loanService.cancel(1L, 42L);
 
         assertEquals(LoanStatus.CANCELED, result.getStatus());
         verify(loanRepository).save(loan);
+    }
+
+    @Test
+    void shouldNotExposeOrCancelLoanOwnedByAnotherUser() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        User otherOwner = new User();
+        otherOwner.setId(99L);
+        loan.setUser(otherOwner);
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+
+        assertThrows(LoanNotFoundException.class, () -> loanService.cancel(1L, 42L));
+        verify(loanRepository, never()).save(any(Loan.class));
     }
 
     @Test
@@ -144,13 +159,18 @@ class LoanServiceTest {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
 
-        assertThrows(BusinessException.class, () -> loanService.cancel(1L));
+        assertThrows(BusinessException.class, () -> loanService.cancel(1L, 42L));
     }
 
     private Loan loanWithStatus(LoanStatus status) {
         Loan loan = new Loan();
         loan.setId(1L);
         loan.setStatus(status);
+
+        User owner = new User();
+        owner.setId(42L);
+        loan.setUser(owner);
+
         return loan;
     }
 
