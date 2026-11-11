@@ -1,9 +1,9 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.io.DecodingException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Component;
+
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class JwtSecretValidator {
@@ -23,16 +23,10 @@ public class JwtSecretValidator {
             throw new IllegalStateException("jwt.secret must be configured");
         }
 
-        byte[] keyBytes;
-        try {
-            keyBytes = Decoders.BASE64.decode(secret);
-        } catch (IllegalArgumentException | DecodingException ex) {
-            throw new IllegalStateException("jwt.secret must be a valid Base64-encoded key", ex);
-        }
-
+        byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
         if (keyBytes.length < MIN_KEY_BYTES) {
             throw new IllegalStateException(
-                    "jwt.secret must decode to at least " + MIN_KEY_BYTES + " bytes (256 bits) for HS256"
+                    "jwt.secret must contain at least " + MIN_KEY_BYTES + " UTF-8 bytes (256 bits) for HS256"
             );
         }
     }
