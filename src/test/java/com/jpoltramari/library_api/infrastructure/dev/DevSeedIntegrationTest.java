@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
@@ -165,6 +166,41 @@ class DevSeedIntegrationTest {
                 Long.class,
                 "9780000000001"
         )).isZero();
+    }
+
+    @Test
+    @Transactional
+    void shouldRestoreDevelopmentFixturesAfterDatabaseReset() {
+        jdbcTemplate.update(
+                "UPDATE users SET name = ? WHERE email = ?",
+                "Admin personalizado",
+                "admin@library.com"
+        );
+        jdbcTemplate.update(
+                "INSERT INTO books (isbn, title, genre, description) VALUES (?, ?, ?, ?)",
+                "9780000000001",
+                "Livro temporário",
+                "DRAMA",
+                "Este registro deve ser removido pelo reset."
+        );
+
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator(
+                new ClassPathResource("schema.sql"),
+                new FileSystemResource("scripts/reset-dev-db.sql"),
+                new ClassPathResource("data.sql"),
+                new ClassPathResource("data-dev.sql")
+        );
+        DatabasePopulatorUtils.execute(populator, dataSource);
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT name FROM users WHERE email = ?",
+                String.class,
+                "admin@library.com"
+        )).isEqualTo("Admin");
+
+        assertThat(bookRepository.findByIsbn("9780000000001")).isEmpty();
+        assertThat(bookRepository.findByIsbn("9780451524935")).isPresent();
+        assertThat(bookCopyRepository.findByBarcode("BC-1984-001")).isPresent();
     }
 
     @Test
