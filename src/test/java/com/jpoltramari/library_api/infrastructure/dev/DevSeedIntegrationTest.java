@@ -9,7 +9,14 @@ import com.jpoltramari.library_api.domain.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import javax.sql.DataSource;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,6 +38,12 @@ class DevSeedIntegrationTest {
 
     @Autowired
     private LoanRepository loanRepository;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Test
     void shouldLoadDevUsersWithExpectedGroups() {
@@ -74,6 +87,84 @@ class DevSeedIntegrationTest {
         assertBookHasDescriptionAndCover("9780141439518");
         assertBookHasDescriptionAndCover("9780743273565");
         assertBookHasDescriptionAndCover("9780316769488");
+    }
+
+    @Test
+    @Transactional
+    void shouldPreserveCustomDataWhenDevSeedsRunAgain() {
+        jdbcTemplate.update(
+                "UPDATE users SET name = ? WHERE email = ?",
+                "Admin personalizado",
+                "admin@library.com"
+        );
+        jdbcTemplate.update(
+                "UPDATE books SET title = ?, cover_url = ? WHERE isbn = ?",
+                "Título personalizado",
+                "https://example.com/custom-cover.jpg",
+                "9780451524935"
+        );
+        jdbcTemplate.update(
+                "UPDATE groups SET description = ? WHERE name = ?",
+                "Descrição personalizada",
+                "ADMIN"
+        );
+        jdbcTemplate.update(
+                "UPDATE book_copies SET status = 'MAINTENANCE' WHERE barcode = ?",
+                "BC-1984-002"
+        );
+        jdbcTemplate.update(
+                "INSERT INTO books (isbn, title, genre, description) VALUES (?, ?, ?, ?)",
+                "9780000000001",
+                "Livro criado durante o desenvolvimento",
+                "DRAMA",
+                "Este livro não deve receber exemplares automaticamente."
+        );
+
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator(
+                new ClassPathResource("data.sql"),
+                new ClassPathResource("data-dev.sql")
+        );
+        DatabasePopulatorUtils.execute(populator, dataSource);
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT name FROM users WHERE email = ?",
+                String.class,
+                "admin@library.com"
+        )).isEqualTo("Admin personalizado");
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT title FROM books WHERE isbn = ?",
+                String.class,
+                "9780451524935"
+        )).isEqualTo("Título personalizado");
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT cover_url FROM books WHERE isbn = ?",
+                String.class,
+                "9780451524935"
+        )).isEqualTo("https://example.com/custom-cover.jpg");
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT description FROM groups WHERE name = ?",
+                String.class,
+                "ADMIN"
+        )).isEqualTo("Descrição personalizada");
+
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT status FROM book_copies WHERE barcode = ?",
+                String.class,
+                "BC-1984-002"
+        )).isEqualTo("MAINTENANCE");
+
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM book_copies
+                WHERE book_id = (SELECT id FROM books WHERE isbn = ?)
+                """,
+                Long.class,
+                "9780000000001"
+        )).isZero();
     }
 
     @Test

@@ -28,8 +28,7 @@ VALUES
     ('ADMIN', 'Full access'),
     ('LIBRARIAN', 'Library management'),
     ('USER', 'Basic user')
-ON CONFLICT (name) DO UPDATE
-SET description = EXCLUDED.description;
+ON CONFLICT (name) DO NOTHING;
 
 -- Remove the permission retired by the former V7 migration.
 DELETE FROM group_permissions

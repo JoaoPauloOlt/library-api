@@ -242,6 +242,18 @@ The API runs on:
 http://localhost:8080
 ```
 
+### Reset the development database
+
+To discard local test changes and restore the initial development fixtures, run:
+
+```bash
+bash scripts/reset-dev-db.sh
+```
+
+The script requires the PostgreSQL client (`psql`) and uses `DB_URL`, `DB_USER` and `DB_PASS` from the current shell. If they are not set, it uses the same local defaults as the `dev` profile.
+
+For safety, it refuses to run unless the active profile is `dev` and the database host is `localhost` or `127.0.0.1`. It also asks you to type the database name before proceeding. **The reset deletes all data in the target database's `public` schema**, then recreates the schema and loads `data.sql` and `data-dev.sql` in one transaction. Start the API normally after the reset.
+
 ### Run with Docker Compose
 
 Copy `.env.example` to `.env`, replace the placeholder `JWT_SECRET` with a valid strong Base64-encoded secret, and run:
