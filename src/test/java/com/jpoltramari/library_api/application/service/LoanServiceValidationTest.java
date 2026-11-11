@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
+import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
@@ -55,7 +56,7 @@ class LoanServiceValidationTest {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
 
-        assertThrows(BusinessException.class, () -> service.cancel(1L));
+        assertThrows(BusinessException.class, () -> service.cancel(1L, 42L));
     }
 
     @Test
@@ -63,13 +64,18 @@ class LoanServiceValidationTest {
         Loan loan = loanWithStatus(LoanStatus.RETURNED);
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
 
-        assertThrows(BusinessException.class, () -> service.cancel(1L));
+        assertThrows(BusinessException.class, () -> service.cancel(1L, 42L));
     }
 
     private Loan loanWithStatus(LoanStatus status) {
         Loan loan = new Loan();
         loan.setStatus(status);
         loan.setBookCopy(new BookCopy());
+
+        User owner = new User();
+        owner.setId(42L);
+        loan.setUser(owner);
+
         return loan;
     }
 }
