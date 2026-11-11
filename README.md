@@ -50,34 +50,44 @@ The project uses a layered architecture with a clear distinction between API, ap
 src/main/java/com/jpoltramari/library_api/
 
 ├── api/
-│   ├── controller/     # HTTP endpoints
+│   ├── config/         # API configuration properties
+│   ├── controller/     # REST endpoints
 │   ├── dto/            # Request/response models
-│   ├── exception/      # HTTP error representation
-│   └── mapper/         # API/entity mapping
+│   ├── exception/      # API exception handling and error responses
+│   └── mapper/         # Entity/DTO mapping
 │
 ├── application/
+│   ├── command/        # Input models for application use cases
+│   ├── port/           # Contracts for infrastructure integrations
+│   ├── result/         # Application result models
 │   └── service/        # Application use cases and orchestration
 │
 ├── domain/
-│   ├── model/          # Domain entities
 │   ├── enums/          # Domain enumerations
 │   ├── exception/      # Business/domain exceptions
-│   ├── repository/     # Persistence contracts used by the application
 │   ├── filter/         # Domain query/filter objects
-│   └── specification/  # Dynamic query specifications
+│   ├── model/          # Domain entities
+│   ├── repository/     # Spring Data repository interfaces
+│   └── spec/           # Dynamic query specifications
 │
 └── infrastructure/
-    └── security/       # JWT, RBAC and security infrastructure
+    ├── config/         # Technical configuration
+    ├── security/       # Authentication, JWT and authorization
+    │   ├── filter/
+    │   ├── jwt/
+    │   ├── rbac/
+    │   └── snapshot/
+    └── web/            # Web infrastructure adapters
 ```
 
 ### Responsibility boundaries
 
-- **API** handles HTTP, request validation, response models, OpenAPI documentation and API/entity mapping.
-- **Application** contains use cases and coordinates repositories, domain objects and required infrastructure services.
-- **Domain** contains entities, business exceptions, enums and query-related domain structures.
-- **Infrastructure** contains technical implementations such as JWT authentication, token management and security integrations.
+- **API** handles HTTP endpoints, request validation, response DTOs, OpenAPI documentation, mapping and HTTP error representation.
+- **Application** organizes use cases through commands and services, exposes integration contracts through ports, and defines application result models.
+- **Domain** contains entities, enums, business exceptions, Spring Data repository interfaces, filters and query specifications.
+- **Infrastructure** provides technical configuration and implementations for security, JWT, RBAC, token management, correlation IDs and web integration.
 
-The current architecture intentionally avoids unnecessary abstractions such as interfaces, ports or duplicated application DTOs when they do not provide a concrete benefit.
+Ports are used where an application use case needs to depend on an external technical capability without coupling directly to its implementation. Other components remain concrete when an abstraction does not provide a practical benefit.
 
 ## Security and RBAC
 
@@ -217,7 +227,7 @@ Never commit real credentials or secrets.
 
 ### Prerequisites
 
-- JDK 17+
+- JDK 17
 - Maven Wrapper included in the repository
 - PostgreSQL, or Docker/Docker Compose
 - A valid `JWT_SECRET`
@@ -239,7 +249,7 @@ http://localhost:8080
 
 ### Run with Docker Compose
 
-Set `JWT_SECRET` in the environment and run:
+Copy `.env.example` to `.env`, replace the placeholder `JWT_SECRET` with a valid strong Base64-encoded secret, and run:
 
 ```bash
 docker compose up --build
@@ -248,6 +258,8 @@ docker compose up --build
 The API and PostgreSQL services are started together. The API remains available at `http://localhost:8080`.
 
 ## Testing and quality
+
+All automated tests are maintained under `src/test/java/com/jpoltramari/library_api/`, organized by API, application, domain and infrastructure responsibility. Test sources are not stored at the repository root.
 
 Run the complete verification lifecycle with:
 
@@ -265,7 +277,7 @@ Global LINE coverage >= 80%
 
 The CI workflow also:
 
-- runs against PostgreSQL 16;
+- runs with JDK 17 against PostgreSQL 16;
 - publishes the JaCoCo report as a GitHub Actions artifact;
 - prints the global LINE coverage summary;
 - executes SonarCloud analysis;
