@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -118,8 +119,9 @@ public class LoanService {
     }
 
     @Transactional
-    public Loan cancel(Long id) {
+    public Loan cancel(Long id, Long authenticatedUserId) {
         Loan loan = findOrFail(id);
+        validateLoanOwnership(loan, id, authenticatedUserId);
 
         if (loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.RETURNED) {
             throw new BusinessException("Only requested loans can be cancelled.");
@@ -132,6 +134,13 @@ public class LoanService {
     public Loan findOrFail(Long id) {
         return loanRepository.findById(id)
                 .orElseThrow(() -> new LoanNotFoundException(id));
+    }
+
+    private void validateLoanOwnership(Loan loan, Long loanId, Long authenticatedUserId) {
+        if (loan.getUser() == null || !Objects.equals(loan.getUser().getId(), authenticatedUserId)) {
+            // Return the same response as a missing loan to avoid exposing another user's resources.
+            throw new LoanNotFoundException(loanId);
+        }
     }
 
     private void validateStatus(Loan loan, LoanStatus expectedStatus) {
