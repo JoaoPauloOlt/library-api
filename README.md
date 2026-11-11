@@ -249,9 +249,13 @@ To discard local test changes and restore the initial development fixtures, run:
 bash scripts/reset-dev-db.sh
 ```
 
-The script requires the PostgreSQL client (`psql`) and uses `DB_URL`, `DB_USER` and `DB_PASS` from the current shell. If they are not set, it uses the same local defaults as the `dev` profile.
+The helper requires the PostgreSQL client (`psql`). It reads `DB_URL`, `DB_USER`, `DB_PASS` and `SPRING_PROFILES_ACTIVE` from exported environment variables first, then from the repository's `.env` file. Only these four keys are read; the file is parsed as configuration and is never executed as shell code.
 
-For safety, it refuses to run unless the active profile is `dev` and the database host is `localhost` or `127.0.0.1`. It also asks you to type the database name before proceeding. **The reset deletes all data in the target database's `public` schema**, then recreates the schema and loads `data.sql` and `data-dev.sql` in one transaction. Start the API normally after the reset.
+For safety, it refuses to run outside the `dev` profile, against a non-local database host, or against protected databases such as `library_test` and `library_schema`. It also refuses to run while the `library-postgres` Docker Compose container is active. Before proceeding, it asks you to type `RESET <database-name>`.
+
+The reset runs in one database transaction: it ensures the initial schema exists, truncates the application's tables, resets generated identities, and reloads `data.sql` and `data-dev.sql`. It preserves schema objects instead of dropping the entire `public` schema. Keep `scripts/reset-dev-db.sql` aligned with the application tables in `schema.sql`.
+
+**This operation permanently deletes application data from the selected local database. It is manual, is not part of normal API startup, and must never target production.**
 
 ### Run with Docker Compose
 
