@@ -122,7 +122,7 @@ public class LoanController {
     }
 
     @PutMapping("/{id}/cancel")
-    @Operation(summary = "Cancel a loan", description = "Cancels a pending loan belonging to the authenticated user.")
+    @Operation(summary = "Cancel a loan", description = "Cancels a loan owned by the authenticated user when its lifecycle state permits cancellation.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Loan cancelled successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid loan ID or invalid lifecycle transition", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
