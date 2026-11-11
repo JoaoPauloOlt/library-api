@@ -153,16 +153,25 @@ Never commit real credentials, JWT secrets or database credentials. Use environm
 
 ## Database
 
-PostgreSQL is the primary database. Hibernate manages the schema from the JPA entities, using `spring.jpa.hibernate.ddl-auto=update` in the `dev` and `prod` profiles.
+PostgreSQL is the primary database. Schema initialization is profile-specific so that development convenience does not weaken production safety.
 
 Database initialization is split by responsibility:
 
-- `src/main/resources/data.sql` initializes the RBAC groups and permissions in every profile. It does not create demo users.
+- `src/main/resources/schema.sql` contains the PostgreSQL DDL required to provision a new database. Its `CREATE TABLE/INDEX IF NOT EXISTS` statements leave existing tables and their data untouched.
+- `src/main/resources/data.sql` initializes the RBAC groups and permissions in every profile. It does not create demo accounts.
 - `src/main/resources/data-dev.sql` loads development-only accounts, catalog fixtures, physical copies and loan scenarios. It is executed only with the `dev` profile.
-- Hibernate creates or updates the schema before the SQL data scripts run.
-- The seed scripts are designed to be safe to execute on every application startup.
 
-Flyway and its migration history are not used. Hibernate schema update is not a versioned migration system and does not provide deterministic rollback. Back up production data and review schema changes before deployment, especially for destructive changes, renames or column type changes.
+Each environment uses a different schema strategy:
+
+| Profile | Hibernate | SQL initialization |
+|---|---|---|
+| `dev` | `ddl-auto=update` | Hibernate runs first, followed by `schema.sql`, `data.sql` and `data-dev.sql` |
+| `test` | `ddl-auto=create-drop` | Hibernate creates the isolated test schema, then the shared RBAC seed runs |
+| `prod` | `ddl-auto=validate` | `schema.sql` and `data.sql` run before Hibernate validates the schema |
+
+The production profile never asks Hibernate to create or update tables. On a new production database, `schema.sql` provisions the initial structure before JPA starts. On an existing database, the idempotent DDL skips existing tables and does not delete application data.
+
+Flyway and its migration history are not used. `schema.sql` is an initial bootstrap, not a versioned migration system. Future production schema changes must be delivered through reviewed, manually executed SQL scripts with an explicit execution record and backup/rollback plan. Do not use `ddl-auto=update` in production.
 
 ## Configuration
 
@@ -240,6 +249,18 @@ Run the complete verification lifecycle with:
 ```bash
 ./mvnw verify
 ```
+
+Maven Surefire activates the `test` profile for tests by default. The profile uses `ddl-auto=create-drop` and the isolated `library_test` database (`TEST_DB_URL`). Tests that specifically verify development fixtures use the `dev` profile and `DB_URL`.
+
+The production bootstrap integration test uses a separate, initially empty `library_schema` database (`PROD_SCHEMA_TEST_DB_URL`). For a local PostgreSQL instance, create the three databases before running the full suite:
+
+```sql
+CREATE DATABASE library;
+CREATE DATABASE library_test;
+CREATE DATABASE library_schema;
+```
+
+The CI workflow provisions these isolated databases automatically and runs against PostgreSQL 16.
 
 This executes the automated test suite, generates the JaCoCo report and enforces the project coverage gate.
 
