@@ -190,7 +190,7 @@ The application uses Spring profiles for environment-specific configuration:
 - `dev` — local development
 - `prod` — production deployment
 
-Configuration is supplied through environment variables rather than committed secrets.
+Environment variables override profile defaults. The `dev` profile includes local-only defaults; the `prod` profile still requires `JWT_SECRET` from the environment.
 
 ### Environment variables
 
@@ -225,7 +225,6 @@ Never commit real credentials or secrets.
 - JDK 17+
 - Maven Wrapper included in the repository
 - PostgreSQL, or Docker/Docker Compose
-- PostgreSQL credentials configured through environment variables
 
 ### Run with a local PostgreSQL instance
 
