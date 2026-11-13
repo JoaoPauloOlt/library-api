@@ -1,9 +1,11 @@
 package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.domain.exception.LoanNotFoundException;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
@@ -17,12 +19,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -128,12 +132,41 @@ class LoanServiceTest {
     }
 
     @Test
-    void shouldCancelRequestedLoan() {
+    void shouldCancelRequestedLoanOwnedByAuthenticatedUser() {
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(loanRepository.save(loan)).thenReturn(loan);
 
-        Loan result = loanService.cancel(1L);
+        Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL"));
+
+        assertEquals(LoanStatus.CANCELED, result.getStatus());
+        verify(loanRepository).save(loan);
+    }
+
+    @Test
+    void shouldNotExposeOrCancelLoanOwnedByAnotherUser() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        User otherOwner = new User();
+        otherOwner.setId(99L);
+        loan.setUser(otherOwner);
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+
+        assertThrows(LoanNotFoundException.class, () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        verify(loanRepository, never()).save(any(Loan.class));
+    }
+
+    @Test
+    void shouldAllowStaffWithCancelAnyPermissionToCancelAnotherUsersLoan() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        User otherOwner = new User();
+        otherOwner.setId(99L);
+        loan.setUser(otherOwner);
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.save(loan)).thenReturn(loan);
+
+        Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL_ANY"));
 
         assertEquals(LoanStatus.CANCELED, result.getStatus());
         verify(loanRepository).save(loan);
@@ -144,13 +177,33 @@ class LoanServiceTest {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
 
-        assertThrows(BusinessException.class, () -> loanService.cancel(1L));
+        assertThrows(BusinessException.class, () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+    }
+
+    private AuthenticatedPrincipal principal(Long userId, String... permissions) {
+        List<String> grantedPermissions = List.of(permissions);
+        return new AuthenticatedPrincipal() {
+            @Override
+            public Long getUserId() {
+                return userId;
+            }
+
+            @Override
+            public boolean hasPermission(String permission) {
+                return grantedPermissions.contains(permission);
+            }
+        };
     }
 
     private Loan loanWithStatus(LoanStatus status) {
         Loan loan = new Loan();
         loan.setId(1L);
         loan.setStatus(status);
+
+        User owner = new User();
+        owner.setId(42L);
+        loan.setUser(owner);
+
         return loan;
     }
 

@@ -18,6 +18,7 @@ VALUES
     ('LOAN_CREATE'),
     ('LOAN_APPROVE'),
     ('LOAN_CANCEL'),
+    ('LOAN_CANCEL_ANY'),
     ('LOAN_RETURN'),
     ('LOAN_READ_ALL'),
     ('USER_ADMIN')
@@ -40,6 +41,11 @@ WHERE permission_id IN (
 
 DELETE FROM permissions
 WHERE name = 'LOAN_WITHDRAW';
+
+-- Librarians receive cross-user cancellation, while USER retains own-loan cancellation only.
+DELETE FROM group_permissions
+WHERE group_id = (SELECT id FROM groups WHERE name = 'LIBRARIAN')
+  AND permission_id = (SELECT id FROM permissions WHERE name = 'LOAN_CANCEL');
 
 -- ADMIN receives every permission currently defined by the application.
 INSERT INTO group_permissions (group_id, permission_id)
@@ -69,7 +75,7 @@ JOIN permissions p
         'BOOK_COPY_DELETE',
         'LOAN_CREATE',
         'LOAN_APPROVE',
-        'LOAN_CANCEL',
+        'LOAN_CANCEL_ANY',
         'LOAN_RETURN',
         'LOAN_READ_ALL'
     )

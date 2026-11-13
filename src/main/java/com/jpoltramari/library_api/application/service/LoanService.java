@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -118,8 +120,11 @@ public class LoanService {
     }
 
     @Transactional
-    public Loan cancel(Long id) {
+    public Loan cancel(Long id, AuthenticatedPrincipal authenticatedPrincipal) {
         Loan loan = findOrFail(id);
+        if (!authenticatedPrincipal.hasPermission("LOAN_CANCEL_ANY")) {
+            validateLoanOwnership(loan, id, authenticatedPrincipal.getUserId());
+        }
 
         if (loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.RETURNED) {
             throw new BusinessException("Only requested loans can be cancelled.");
@@ -132,6 +137,13 @@ public class LoanService {
     public Loan findOrFail(Long id) {
         return loanRepository.findById(id)
                 .orElseThrow(() -> new LoanNotFoundException(id));
+    }
+
+    private void validateLoanOwnership(Loan loan, Long loanId, Long authenticatedUserId) {
+        if (loan.getUser() == null || !Objects.equals(loan.getUser().getId(), authenticatedUserId)) {
+            // Return the same response as a missing loan to avoid exposing another user's resources.
+            throw new LoanNotFoundException(loanId);
+        }
     }
 
     private void validateStatus(Loan loan, LoanStatus expectedStatus) {
