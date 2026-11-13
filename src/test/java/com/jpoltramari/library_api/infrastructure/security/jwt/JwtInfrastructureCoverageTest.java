@@ -41,6 +41,7 @@ class JwtInfrastructureCoverageTest {
 
         assertThat(token).isNotBlank();
         assertThat(service.getExpiration()).isEqualTo(properties.getExpiration());
+        assertThat(properties.getRefreshExpiration()).isEqualTo(86_400_000L);
         assertThat(service.parseAndValidate(token))
                 .get()
                 .satisfies(claims -> {
@@ -136,6 +137,40 @@ class JwtInfrastructureCoverageTest {
         assertThat(service.parseAndValidate(token))
                 .get()
                 .satisfies(claims -> assertThat(claims.userId()).isNull());
+    }
+
+    @Test
+    void shouldResolveUserIdFromExplicitJwtClaim() {
+        JwtProperties properties = properties();
+        JwtClaimsBuilder builder = new JwtClaimsBuilder(properties, new RbacResolver());
+        JwtService service = new JwtService(properties, builder, new InMemoryTokenBlacklist());
+
+        String token = Jwts.builder()
+                .setId("jti-explicit-user")
+                .setSubject("not-the-user-id")
+                .claim("userId", 10L)
+                .setIssuer(properties.getIssuer())
+                .setAudience(properties.getAudience())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 60_000L))
+                .signWith(builder.signingKey())
+                .compact();
+
+        assertThat(service.parseAndValidate(token))
+                .get()
+                .satisfies(claims -> assertThat(claims.userId()).isEqualTo(10L));
+    }
+
+    @Test
+    void shouldRejectTokenWithTamperedSignature() {
+        JwtProperties properties = properties();
+        JwtClaimsBuilder builder = new JwtClaimsBuilder(properties, new RbacResolver());
+        JwtService service = new JwtService(properties, builder, new InMemoryTokenBlacklist());
+
+        String[] segments = service.generateToken(user(UserStatus.ACTIVE)).split("\\.");
+        String tamperedToken = segments[0] + "." + segments[1] + ".AA";
+
+        assertThat(service.parseAndValidate(tamperedToken)).isEmpty();
     }
 
     @Test
