@@ -52,6 +52,7 @@ class LoanCreationConcurrencyIntegrationTest {
     private final List<Long> userIds = new ArrayList<>();
     private Long bookId;
     private Long copyId;
+    private Long secondCopyId;
     private TransactionTemplate transactionTemplate;
 
     @BeforeEach
@@ -90,6 +91,9 @@ class LoanCreationConcurrencyIntegrationTest {
             if (copyId != null) {
                 bookCopyRepository.deleteById(copyId);
             }
+            if (secondCopyId != null) {
+                bookCopyRepository.deleteById(secondCopyId);
+            }
             bookRepository.deleteById(bookId);
         }
         if (!userIds.isEmpty()) {
@@ -109,6 +113,28 @@ class LoanCreationConcurrencyIntegrationTest {
         assertThat(loanRepository.findByBookCopyBookId(bookId)).hasSize(1);
         assertThat(bookCopyRepository.findById(copyId).orElseThrow().getStatus())
                 .isEqualTo(CopyStatus.RESERVED);
+    }
+
+    @Test
+    void shouldPreventSameUserFromRequestingTwoDifferentCopiesOfTheSameBookConcurrently() throws Exception {
+        BookCopy secondCopy = new BookCopy();
+        secondCopy.setBook(bookRepository.findById(bookId).orElseThrow());
+        secondCopy.setBarcode("IT-CONCURRENT-SAME-USER-" + UUID.randomUUID());
+        secondCopy.setStatus(CopyStatus.AVAILABLE);
+        secondCopy.setActive(true);
+        secondCopyId = bookCopyRepository.save(secondCopy).getId();
+
+        List<OperationResult> results = executeWhileUserIsLocked(
+                () -> loanService.create(new CreateLoanCommand(bookId), userIds.get(0)),
+                () -> loanService.create(new CreateLoanCommand(bookId), userIds.get(0))
+        );
+
+        assertSingleSuccessAndBusinessFailure(results);
+        assertThat(loanRepository.findByBookCopyBookId(bookId)).hasSize(1);
+        assertThat(bookCopyRepository.findById(copyId).orElseThrow().getStatus())
+                .isEqualTo(CopyStatus.RESERVED);
+        assertThat(bookCopyRepository.findById(secondCopyId).orElseThrow().getStatus())
+                .isEqualTo(CopyStatus.AVAILABLE);
     }
 
     private List<OperationResult> executeWhileCopyIsLocked(
@@ -162,6 +188,60 @@ class LoanCreationConcurrencyIntegrationTest {
                       AND state = 'active'
                       AND wait_event_type = 'Lock'
                       AND query ILIKE '%book_copies%'
+                    """, Integer.class);
+            assertThat(waitingOperations).isEqualTo(2);
+        });
+    }
+
+    private List<OperationResult> executeWhileUserIsLocked(
+            Supplier<Loan> firstOperation,
+            Supplier<Loan> secondOperation
+    ) throws Exception {
+        ExecutorService lockExecutor = Executors.newSingleThreadExecutor();
+        ExecutorService operationExecutor = Executors.newFixedThreadPool(2);
+        CountDownLatch lockAcquired = new CountDownLatch(1);
+        CountDownLatch releaseLock = new CountDownLatch(1);
+
+        try {
+            Future<?> lockHolder = lockExecutor.submit(() ->
+                    transactionTemplate.executeWithoutResult(status -> {
+                        userRepository.findByIdForUpdate(userIds.get(0)).orElseThrow();
+                        lockAcquired.countDown();
+                        awaitRelease(releaseLock);
+                    })
+            );
+
+            assertThat(lockAcquired.await(5, TimeUnit.SECONDS)).isTrue();
+            Future<OperationResult> first = operationExecutor.submit(
+                    () -> executeOperation(firstOperation));
+            Future<OperationResult> second = operationExecutor.submit(
+                    () -> executeOperation(secondOperation));
+
+            awaitForBothOperationsToWaitForUserLock();
+            releaseLock.countDown();
+
+            List<OperationResult> results = List.of(
+                    first.get(15, TimeUnit.SECONDS),
+                    second.get(15, TimeUnit.SECONDS)
+            );
+            lockHolder.get(15, TimeUnit.SECONDS);
+            return results;
+        } finally {
+            releaseLock.countDown();
+            lockExecutor.shutdownNow();
+            operationExecutor.shutdownNow();
+        }
+    }
+
+    private void awaitForBothOperationsToWaitForUserLock() {
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            Integer waitingOperations = jdbcTemplate.queryForObject("""
+                    SELECT COUNT(*)
+                    FROM pg_stat_activity
+                    WHERE datname = current_database()
+                      AND state = 'active'
+                      AND wait_event_type = 'Lock'
+                      AND query ILIKE '%users%'
                     """, Integer.class);
             assertThat(waitingOperations).isEqualTo(2);
         });
