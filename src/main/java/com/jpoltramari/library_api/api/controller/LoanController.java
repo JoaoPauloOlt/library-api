@@ -1,13 +1,16 @@
 package com.jpoltramari.library_api.api.controller;
 
-import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.api.dto.PageResponse;
+import com.jpoltramari.library_api.api.dto.loan.LoanForUserInput;
 import com.jpoltramari.library_api.api.dto.loan.LoanInput;
 import com.jpoltramari.library_api.api.dto.loan.LoanModel;
+import com.jpoltramari.library_api.api.dto.loan.LoanUserModel;
+import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
-import com.jpoltramari.library_api.application.service.LoanService;
 import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
+import com.jpoltramari.library_api.application.service.LoanService;
+import com.jpoltramari.library_api.application.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -23,6 +26,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +40,7 @@ import org.springframework.web.bind.annotation.*;
 public class LoanController {
 
     private final LoanService service;
+    private final UserService userService;
     private final LoanMapper mapper;
 
     @GetMapping
@@ -65,6 +70,25 @@ public class LoanController {
         );
     }
 
+    @PreAuthorize("hasAuthority('LOAN_CREATE_FOR_USER')")
+    @GetMapping("/users")
+    @Operation(
+            summary = "List active users eligible for staff circulation",
+            description = "Returns a minimal, paginated list of active users. Requires LOAN_CREATE_FOR_USER."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Active users returned successfully"),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public PageResponse<LoanUserModel> listEligibleUsers(
+            @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable) {
+        return PageResponse.from(
+                userService.findActiveBorrowers(pageable),
+                user -> new LoanUserModel(user.getId(), user.getName(), user.getEmail())
+        );
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get loan by ID")
     @ApiResponses({
@@ -88,7 +112,31 @@ public class LoanController {
             @ApiResponse(responseCode = "404", description = "Referenced book or resource not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public LoanModel create(@RequestBody @Valid LoanInput input, Authentication authentication) {
-        return mapper.toModel(service.create(new CreateLoanCommand(input.bookId()), authenticatedPrincipal(authentication).getUserId()));
+        return mapper.toModel(service.create(
+                new CreateLoanCommand(input.bookId()),
+                authenticatedPrincipal(authentication).getUserId()
+        ));
+    }
+
+    @PreAuthorize("hasAuthority('LOAN_CREATE_FOR_USER')")
+    @PostMapping("/for-user")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(
+            summary = "Create a loan for another user",
+            description = "Allows an authorized librarian or administrator to create a loan request for an active user."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Loan request created successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid request or inactive borrower", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Referenced book or user not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public LoanModel createForUser(@RequestBody @Valid LoanForUserInput input) {
+        return mapper.toModel(service.createForUser(
+                new CreateLoanCommand(input.bookId()),
+                input.userId()
+        ));
     }
 
     private AuthenticatedPrincipal authenticatedPrincipal(Authentication authentication) {

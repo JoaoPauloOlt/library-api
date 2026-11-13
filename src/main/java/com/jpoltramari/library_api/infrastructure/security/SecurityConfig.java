@@ -7,6 +7,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -18,6 +19,7 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private static final String BOOK_COPIES_PATH = "/books/*/copies/**";
@@ -35,6 +37,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, ApiSecurityExceptionHandler handler) throws Exception {
         return http
+                // Safe for this stateless API: JWTs are accepted only from the Authorization header.
+                // Authentication tokens are returned in response bodies; no auth cookies or HTTP sessions are used.
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .headers(headers -> headers
@@ -64,9 +68,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, AUTHORS_PATH).hasAuthority("AUTHOR_UPDATE")
                         .requestMatchers(HttpMethod.DELETE, AUTHORS_PATH).hasAuthority("AUTHOR_DELETE")
 
+                        .requestMatchers(HttpMethod.GET, "/loans/users").hasAuthority("LOAN_CREATE_FOR_USER")
                         .requestMatchers(HttpMethod.GET, "/loans").hasAuthority("LOAN_READ_ALL")
                         .requestMatchers(HttpMethod.GET, "/loans/my").authenticated()
                         .requestMatchers(HttpMethod.GET, "/loans/*").hasAuthority("LOAN_READ_ALL")
+                        .requestMatchers(HttpMethod.POST, "/loans/for-user").hasAuthority("LOAN_CREATE_FOR_USER")
                         .requestMatchers(HttpMethod.POST, "/loans").hasAuthority("LOAN_CREATE")
                         .requestMatchers(HttpMethod.PUT, "/loans/*/approve").hasAuthority("LOAN_APPROVE")
                         .requestMatchers(HttpMethod.PUT, "/loans/*/return").hasAuthority("LOAN_RETURN")

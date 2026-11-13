@@ -70,9 +70,9 @@ class ApiExceptionHandlerTest {
     @Test
     void shouldReturnBadRequestForControllerConstraintViolation() {
         @SuppressWarnings("unchecked")
-        ConstraintViolation<Object> violation = org.mockito.Mockito.mock(ConstraintViolation.class);
-        Path propertyPath = org.mockito.Mockito.mock(Path.class);
-        org.mockito.Mockito.when(propertyPath.toString()).thenReturn("findById.id");
+        ConstraintViolation<Object> violation = mock(ConstraintViolation.class);
+        Path propertyPath = mock(Path.class);
+        when(propertyPath.toString()).thenReturn("findById.id");
         org.mockito.Mockito.when(violation.getPropertyPath()).thenReturn(propertyPath);
         org.mockito.Mockito.when(violation.getMessage()).thenReturn("must be greater than 0");
 
@@ -99,6 +99,20 @@ class ApiExceptionHandlerTest {
         assertThat(response.getBody().getDetail()).isEqualTo("An unexpected error occurred");
         assertThat(response.getBody().getErrorCode()).isEqualTo("INTERNAL_ERROR");
         assertThat(response.getBody().getExceptionType()).isNull();
+    }
+
+    @Test
+    void shouldExposeRootCauseWhenDetailsAreEnabled() {
+        ErrorProperties properties = new ErrorProperties();
+        properties.setExposeDetails(true);
+        ApiExceptionHandler configuredHandler = new ApiExceptionHandler(properties, correlationIdPort);
+        IllegalArgumentException rootCause = new IllegalArgumentException("root diagnostic");
+        IllegalStateException exception = new IllegalStateException("wrapper", rootCause);
+
+        ResponseEntity<ErrorResponse> response = configuredHandler.handleUncaught(exception, request);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("root diagnostic");
     }
 
     @Test

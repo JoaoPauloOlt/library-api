@@ -238,6 +238,32 @@ class LoanControllerWebMvcTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void shouldApproveLoanWithDedicatedPermission() throws Exception {
+        Loan loan = new Loan();
+        when(service.approve(10L)).thenReturn(loan);
+        when(mapper.toModel(loan)).thenReturn(null);
+
+        mockMvc.perform(put("/loans/10/approve")
+                        .with(user(principal(7L, "LOAN_APPROVE"))))
+                .andExpect(status().isOk());
+
+        verify(service).approve(10L);
+    }
+
+    @Test
+    void shouldReturnLoanWithDedicatedPermission() throws Exception {
+        Loan loan = new Loan();
+        when(service.returnBook(10L)).thenReturn(loan);
+        when(mapper.toModel(loan)).thenReturn(null);
+
+        mockMvc.perform(put("/loans/10/return")
+                        .with(user(principal(7L, "LOAN_RETURN"))))
+                .andExpect(status().isOk());
+
+        verify(service).returnBook(10L);
+    }
+
     private TestPrincipal principal(Long userId, String... permissions) {
         return new TestPrincipal(userId, permissions);
     }
