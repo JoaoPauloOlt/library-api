@@ -59,6 +59,26 @@ class AuthControllerWebMvcTest {
     }
 
     @Test
+    void shouldRefreshTokensThroughPublicEndpoint() throws Exception {
+        when(service.refresh("refresh-token"))
+                .thenReturn(new AuthenticationResult("new-access-token", "new-refresh-token", 1800L));
+
+        mockMvc.perform(post("/auth/refresh")
+                        .contentType("application/json")
+                        .content("""
+                                {
+                                  "refreshToken": "refresh-token"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("new-access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"))
+                .andExpect(jsonPath("$.expiresIn").value(1800));
+
+        verify(service).refresh("refresh-token");
+    }
+
+    @Test
     void shouldLogoutAndReturnNoContent() throws Exception {
         mockMvc.perform(post("/auth/logout")
                         .contentType("application/json")
