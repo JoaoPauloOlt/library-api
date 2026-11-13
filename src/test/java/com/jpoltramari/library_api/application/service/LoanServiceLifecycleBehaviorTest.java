@@ -44,7 +44,7 @@ class LoanServiceLifecycleBehaviorTest {
         loan.setStatus(LoanStatus.REQUESTED);
 
         BookCopy copy = new BookCopy();
-        copy.setStatus(CopyStatus.AVAILABLE);
+        copy.setStatus(CopyStatus.RESERVED);
         copy.setActive(true);
         loan.setBookCopy(copy);
 

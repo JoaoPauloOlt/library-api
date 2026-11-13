@@ -86,6 +86,8 @@ class LoanServiceIntegrationTest {
         assertThat(created.getId()).isNotNull();
         assertThat(created.getStatus()).isEqualTo(LoanStatus.REQUESTED);
         assertThat(created.getRequestDate()).isNotNull();
+        assertThat(bookCopyRepository.findById(bookCopyId).orElseThrow().getStatus())
+                .isEqualTo(CopyStatus.RESERVED);
 
         Loan approved = loanService.approve(created.getId());
 

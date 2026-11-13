@@ -66,6 +66,10 @@ public class LoanService {
             throw new BusinessException("Copy no longer available.");
         }
 
+        // Reserve the physical copy atomically with the loan request.
+        copy.setStatus(CopyStatus.RESERVED);
+        bookCopyRepository.save(copy);
+
         Loan loan = new Loan();
         loan.setUser(user);
         loan.setBookCopy(copy);
@@ -84,8 +88,8 @@ public class LoanService {
         if (copy == null || !copy.isActive()) {
             throw new BusinessException("The copy is inactive.");
         }
-        if (copy.getStatus() != CopyStatus.AVAILABLE) {
-            throw new BusinessException("Copy is not available.");
+        if (copy.getStatus() != CopyStatus.RESERVED) {
+            throw new BusinessException("Copy is not reserved for this loan.");
         }
 
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
