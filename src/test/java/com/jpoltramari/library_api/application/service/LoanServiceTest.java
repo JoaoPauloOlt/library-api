@@ -123,6 +123,63 @@ class LoanServiceTest {
     }
 
     @Test
+    void shouldThrowNotFoundWhenApprovalLoanDoesNotExist() {
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.empty());
+
+        assertThrows(LoanNotFoundException.class, () -> loanService.approve(1L));
+    }
+
+    @Test
+    void shouldRejectApprovalWhenLoanHasNoAssociatedCopy() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        loan.setBookCopy(null);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+
+        assertThrows(BusinessException.class, () -> loanService.approve(1L));
+        verify(bookCopyRepository, never()).findByIdForUpdate(any());
+    }
+
+    @Test
+    void shouldRejectApprovalWhenAssociatedCopyHasNoId() {
+        BookCopy copy = availableCopy();
+        copy.setStatus(CopyStatus.RESERVED);
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        loan.setBookCopy(copy);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+
+        assertThrows(BusinessException.class, () -> loanService.approve(1L));
+        verify(bookCopyRepository, never()).findByIdForUpdate(any());
+    }
+
+    @Test
+    void shouldRejectApprovalWhenAssociatedCopyDoesNotExist() {
+        BookCopy copy = availableCopy();
+        copy.setId(10L);
+        copy.setStatus(CopyStatus.RESERVED);
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        loan.setBookCopy(copy);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class, () -> loanService.approve(1L));
+    }
+
+    @Test
+    void shouldRejectApprovalWhenCopyIsInactive() {
+        BookCopy copy = availableCopy();
+        copy.setId(10L);
+        copy.setStatus(CopyStatus.RESERVED);
+        copy.setActive(false);
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        loan.setBookCopy(copy);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+
+        assertThrows(BusinessException.class, () -> loanService.approve(1L));
+        verify(loanRepository, never()).save(any(Loan.class));
+    }
+
+    @Test
     void shouldRejectApprovalWhenLoanIsNotRequested() {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
