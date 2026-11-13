@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
@@ -119,9 +120,11 @@ public class LoanService {
     }
 
     @Transactional
-    public Loan cancel(Long id, Long authenticatedUserId) {
+    public Loan cancel(Long id, AuthenticatedPrincipal authenticatedPrincipal) {
         Loan loan = findOrFail(id);
-        validateLoanOwnership(loan, id, authenticatedUserId);
+        if (!authenticatedPrincipal.hasPermission("LOAN_CANCEL_ANY")) {
+            validateLoanOwnership(loan, id, authenticatedPrincipal.getUserId());
+        }
 
         if (loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.RETURNED) {
             throw new BusinessException("Only requested loans can be cancelled.");
