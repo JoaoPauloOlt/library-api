@@ -162,6 +162,10 @@ The JWT secret is interpreted as literal UTF-8 text, not Base64, and must contai
 - Own-loan and all-loan views
 - Loan history
 - Validation of copy availability and loan business rules
+- Serialization of loan requests per user to prevent concurrent duplicate requests for the same book
+- Automatic transition from `ACTIVE` to `LATE` when the due date is reached; the scheduler checks every five minutes in UTC
+- Return processing accepts both `ACTIVE` and `LATE` loans
+- Late-fee calculation is intentionally outside the base API
 
 ## Database
 
