@@ -167,6 +167,17 @@ WHERE u.email = 'user@library.com'
         AND l.book_copy_id = bc.id
   );
 
+-- Keep the development fixture consistent when the request is added to an existing copy row.
+UPDATE book_copies copy
+SET status = 'RESERVED'
+WHERE copy.barcode = 'BC-PP-001'
+  AND EXISTS (
+      SELECT 1
+      FROM loans loan
+      WHERE loan.book_copy_id = copy.id
+        AND loan.status = 'REQUESTED'
+  );
+
 -- Returned loan scenario for the general history view.
 INSERT INTO loans (
     user_id, book_copy_id, status, request_date,
