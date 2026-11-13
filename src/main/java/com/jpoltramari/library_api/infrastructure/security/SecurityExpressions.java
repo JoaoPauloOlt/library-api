@@ -25,6 +25,7 @@ public final class SecurityExpressions {
     public static final String LOAN_APPROVE = "hasAuthority('LOAN_APPROVE')";
     public static final String LOAN_RETURN = "hasAuthority('LOAN_RETURN')";
     public static final String LOAN_CANCEL = "hasAuthority('LOAN_CANCEL')";
+    public static final String LOAN_CANCEL_ANY = "hasAuthority('LOAN_CANCEL_ANY')";
     public static final String LOAN_READ_ALL = "hasAuthority('LOAN_READ_ALL')";
 
     public static final String USER_ADMIN = "hasAuthority('USER_ADMIN')";
