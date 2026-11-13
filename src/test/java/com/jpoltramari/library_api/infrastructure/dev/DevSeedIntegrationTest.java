@@ -114,6 +114,16 @@ class DevSeedIntegrationTest {
                 "BC-1984-002"
         );
         jdbcTemplate.update(
+                """
+                INSERT INTO group_permissions (group_id, permission_id)
+                SELECT g.id, p.id
+                FROM groups g
+                CROSS JOIN permissions p
+                WHERE g.name = 'LIBRARIAN' AND p.name = 'LOAN_CANCEL'
+                ON CONFLICT DO NOTHING
+                """
+        );
+        jdbcTemplate.update(
                 "INSERT INTO books (isbn, title, genre, description) VALUES (?, ?, ?, ?)",
                 "9780000000001",
                 "Livro criado durante o desenvolvimento",
@@ -126,6 +136,28 @@ class DevSeedIntegrationTest {
                 new ClassPathResource("data-dev.sql")
         );
         DatabasePopulatorUtils.execute(populator, dataSource);
+
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM group_permissions gp
+                JOIN groups g ON g.id = gp.group_id
+                JOIN permissions p ON p.id = gp.permission_id
+                WHERE g.name = 'LIBRARIAN' AND p.name = 'LOAN_CANCEL'
+                """,
+                Long.class
+        )).isZero();
+
+        assertThat(jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM group_permissions gp
+                JOIN groups g ON g.id = gp.group_id
+                JOIN permissions p ON p.id = gp.permission_id
+                WHERE g.name = 'LIBRARIAN' AND p.name = 'LOAN_CANCEL_ANY'
+                """,
+                Long.class
+        )).isEqualTo(1L);
 
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT name FROM users WHERE email = ?",
