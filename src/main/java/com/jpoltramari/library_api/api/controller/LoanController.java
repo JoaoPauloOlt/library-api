@@ -122,7 +122,7 @@ public class LoanController {
     }
 
     @PutMapping("/{id}/cancel")
-    @Operation(summary = "Cancel a loan", description = "Cancels a loan owned by the authenticated user when its lifecycle state permits cancellation.")
+    @Operation(summary = "Cancel a loan", description = "Cancels the authenticated user's loan, or any loan when the caller has LOAN_CANCEL_ANY permission.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Loan cancelled successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid loan ID or invalid lifecycle transition", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
@@ -133,6 +133,6 @@ public class LoanController {
     public LoanModel cancel(
             @Parameter(description = "Loan identifier", example = "1") @PathVariable @Positive Long id,
             Authentication authentication) {
-        return mapper.toModel(service.cancel(id, authenticatedPrincipal(authentication).getUserId()));
+        return mapper.toModel(service.cancel(id, authenticatedPrincipal(authentication)));
     }
 }
