@@ -102,9 +102,16 @@ jobs:
           print(f"JaCoCo report: {report}")
           PY
 
+      # The Maven scanner uses the compiled bytecode and JaCoCo report from the test step.
+      # sonar.qualitygate.wait makes this job fail when the Quality Gate is red.
       - name: SonarCloud analysis
-        if: always()
-        uses: SonarSource/sonarqube-scan-action@v6
+        if: success()
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+        run: >
+          mvn -B
+          org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar
+          -Dsonar.qualitygate.wait=true
+          -Dsonar.qualitygate.timeout=300
