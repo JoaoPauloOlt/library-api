@@ -102,6 +102,7 @@ public final class AuthenticatedUser implements UserDetails, AuthenticatedPrinci
         return tokenVersion;
     }
 
+    @Override
     public boolean hasPermission(String permission) {
         return permissions.contains(permission);
     }
