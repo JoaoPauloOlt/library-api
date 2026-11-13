@@ -21,6 +21,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BookCopyService {
 
+    private static final String BOOK_COPY_NOT_FOUND_MESSAGE = "Book copy not found.";
+
     private final BookRepository bookRepository;
     private final BookCopyRepository repository;
 
@@ -31,7 +33,7 @@ public class BookCopyService {
 
     public BookCopy findOrFail(Long id){
         return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Book copy not found."));
+                .orElseThrow(() -> new EntityNotFoundException(BOOK_COPY_NOT_FOUND_MESSAGE));
     }
 
     @Transactional
@@ -105,13 +107,13 @@ public class BookCopyService {
     public BookCopy findOrFailForBook(Long bookId, Long id) {
         validateBookExists(bookId);
         return repository.findByIdAndBookId(id, bookId)
-                .orElseThrow(() -> new EntityNotFoundException("Book copy not found."));
+                .orElseThrow(() -> new EntityNotFoundException(BOOK_COPY_NOT_FOUND_MESSAGE));
     }
 
     private BookCopy findOrFailForBookForUpdate(Long bookId, Long id) {
         validateBookExists(bookId);
         return repository.findByIdAndBookIdForUpdate(id, bookId)
-                .orElseThrow(() -> new EntityNotFoundException("Book copy not found."));
+                .orElseThrow(() -> new EntityNotFoundException(BOOK_COPY_NOT_FOUND_MESSAGE));
     }
 
     private void validateManualStatusChange(BookCopy copy, CopyStatus targetStatus) {

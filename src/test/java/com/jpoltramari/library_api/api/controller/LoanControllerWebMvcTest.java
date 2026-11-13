@@ -259,7 +259,7 @@ class LoanControllerWebMvcTest {
             this.userId = userId;
             this.authorities = List.of(permissions).stream()
                     .map(SimpleGrantedAuthority::new)
-                    .map(authority -> (GrantedAuthority) authority)
+                    .map(GrantedAuthority.class::cast)
                     .toList();
         }
 
