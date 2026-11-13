@@ -70,9 +70,9 @@ class ApiExceptionHandlerTest {
     @Test
     void shouldReturnBadRequestForControllerConstraintViolation() {
         @SuppressWarnings("unchecked")
-        ConstraintViolation<Object> violation = org.mockito.Mockito.mock(ConstraintViolation.class);
-        Path propertyPath = org.mockito.Mockito.mock(Path.class);
-        org.mockito.Mockito.when(propertyPath.toString()).thenReturn("findById.id");
+        ConstraintViolation<Object> violation = mock(ConstraintViolation.class);
+        Path propertyPath = mock(Path.class);
+        when(propertyPath.toString()).thenReturn("findById.id");
         org.mockito.Mockito.when(violation.getPropertyPath()).thenReturn(propertyPath);
         org.mockito.Mockito.when(violation.getMessage()).thenReturn("must be greater than 0");
 
