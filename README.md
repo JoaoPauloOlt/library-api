@@ -346,7 +346,7 @@ The CI workflow also:
 - publishes the JaCoCo report as a GitHub Actions artifact;
 - prints the global LINE coverage summary;
 - executes SonarCloud analysis with the pinned Maven scanner;
-- waits for the SonarCloud Quality Gate and fails the CI job if it does not pass;
+- waits for the SonarCloud GitHub check on pull requests and fails the CI job if the Quality Gate does not pass;
 - validates changes before they are merged into `develop`.
 
 The generated JaCoCo report is available at:
