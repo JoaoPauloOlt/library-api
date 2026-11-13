@@ -19,11 +19,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +36,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
+import static org.awaitility.Awaitility.await;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -46,6 +49,7 @@ class LoanApprovalConcurrencyIntegrationTest {
     @Autowired private BookCopyRepository bookCopyRepository;
     @Autowired private LoanRepository loanRepository;
     @Autowired private PlatformTransactionManager transactionManager;
+    @Autowired private JdbcTemplate jdbcTemplate;
 
     private final List<Long> userIds = new ArrayList<>();
     private Long bookId;
@@ -132,7 +136,6 @@ class LoanApprovalConcurrencyIntegrationTest {
         ExecutorService operationExecutor = Executors.newFixedThreadPool(2);
         CountDownLatch lockAcquired = new CountDownLatch(1);
         CountDownLatch releaseLock = new CountDownLatch(1);
-        CountDownLatch operationsReady = new CountDownLatch(2);
 
         try {
             Future<?> lockHolder = lockExecutor.submit(() ->
@@ -145,12 +148,11 @@ class LoanApprovalConcurrencyIntegrationTest {
 
             assertThat(lockAcquired.await(5, TimeUnit.SECONDS)).isTrue();
             Future<OperationResult> first = operationExecutor.submit(
-                    () -> executeOperation(firstOperation, operationsReady));
+                    () -> executeOperation(firstOperation));
             Future<OperationResult> second = operationExecutor.submit(
-                    () -> executeOperation(secondOperation, operationsReady));
+                    () -> executeOperation(secondOperation));
 
-            assertThat(operationsReady.await(5, TimeUnit.SECONDS)).isTrue();
-            Thread.sleep(200);
+            awaitForBothOperationsToWaitForCopyLock();
             releaseLock.countDown();
 
             List<OperationResult> results = List.of(
@@ -166,8 +168,21 @@ class LoanApprovalConcurrencyIntegrationTest {
         }
     }
 
-    private OperationResult executeOperation(Supplier<Loan> operation, CountDownLatch ready) {
-        ready.countDown();
+    private void awaitForBothOperationsToWaitForCopyLock() {
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            Integer waitingOperations = jdbcTemplate.queryForObject("""
+                    SELECT COUNT(*)
+                    FROM pg_stat_activity
+                    WHERE datname = current_database()
+                      AND state = 'active'
+                      AND wait_event_type = 'Lock'
+                      AND query ILIKE '%book_copies%'
+                    """, Integer.class);
+            assertThat(waitingOperations).isEqualTo(2);
+        });
+    }
+
+    private OperationResult executeOperation(Supplier<Loan> operation) {
         try {
             return new OperationResult(operation.get(), null);
         } catch (RuntimeException exception) {

@@ -2,6 +2,7 @@ package com.jpoltramari.library_api.infrastructure.security.jwt;
 
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -9,7 +10,6 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,8 +40,8 @@ public class JwtClaimsBuilder {
                 .setSubject(String.valueOf(user.getId()))
                 .setIssuer(properties.getIssuer())
                 .setAudience(properties.getAudience())
-                .setIssuedAt(Date.from(now)) // NOSONAR - JJWT 0.11.5 requires java.util.Date
-                .setExpiration(Date.from(expiresAt)) // NOSONAR - JJWT 0.11.5 requires java.util.Date
+                .claim(Claims.ISSUED_AT, now.getEpochSecond())
+                .claim(Claims.EXPIRATION, expiresAt.getEpochSecond())
                 .claim("email", user.getEmail())
                 .claim("name", user.getName())
                 .claim("groups", groups)
