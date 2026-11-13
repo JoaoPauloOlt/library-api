@@ -58,7 +58,7 @@ class LoanServiceTest {
     }
 
     @Test
-    void shouldCreateRequestedLoanWhenUserAndCopyAreAvailable() {
+    void shouldCreateRequestedLoanAndReserveSelectedCopy() {
         User user = new User();
         user.setId(1L);
 
@@ -70,6 +70,7 @@ class LoanServiceTest {
                 .thenReturn(false);
         when(bookCopyRepository.findFirstByBookIdAndActiveTrueAndStatusOrderByIdAsc(10L, CopyStatus.AVAILABLE))
                 .thenReturn(Optional.of(copy));
+        when(bookCopyRepository.save(copy)).thenReturn(copy);
         when(loanRepository.save(any(Loan.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -79,12 +80,15 @@ class LoanServiceTest {
         assertEquals(user, result.getUser());
         assertEquals(copy, result.getBookCopy());
         assertEquals(LoanStatus.REQUESTED, result.getStatus());
+        assertEquals(CopyStatus.RESERVED, copy.getStatus());
         assertNotNull(result.getRequestDate());
+        verify(bookCopyRepository).save(copy);
     }
 
     @Test
     void shouldApproveRequestedLoanAndActivateItImmediately() {
         BookCopy copy = availableCopy();
+        copy.setStatus(CopyStatus.RESERVED);
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
         loan.setBookCopy(copy);
 
@@ -101,6 +105,17 @@ class LoanServiceTest {
         assertNotNull(result.getDueDate());
         verify(bookCopyRepository).save(copy);
         verify(loanRepository).save(loan);
+    }
+
+    @Test
+    void shouldRejectApprovalWhenCopyIsNotReserved() {
+        BookCopy copy = availableCopy();
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        loan.setBookCopy(copy);
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+
+        assertThrows(BusinessException.class, () -> loanService.approve(1L));
+        verify(loanRepository, never()).save(any(Loan.class));
     }
 
     @Test
