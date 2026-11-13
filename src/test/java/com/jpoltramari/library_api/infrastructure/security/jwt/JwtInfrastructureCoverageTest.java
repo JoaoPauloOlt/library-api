@@ -13,6 +13,7 @@ import com.jpoltramari.library_api.application.port.security.UserSecuritySnapsho
 import com.jpoltramari.library_api.application.result.auth.UserSecuritySnapshot;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.mock.env.MockEnvironment;
 import io.jsonwebtoken.Jwts;
 
 import java.util.Date;
@@ -162,23 +163,23 @@ class JwtInfrastructureCoverageTest {
     @Test
     void shouldValidateJwtSecretConfiguration() {
         JwtProperties valid = properties();
-        org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(valid), "validate");
+        org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(valid, new MockEnvironment()), "validate");
 
         JwtProperties blank = properties();
         blank.setSecret(" ");
-        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(blank), "validate"))
+        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(blank, new MockEnvironment()), "validate"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("jwt.secret must be configured");
 
         JwtProperties secretWithUnderscore = properties();
         secretWithUnderscore.setSecret("library_api_local_dev_secret_2026");
         org.springframework.test.util.ReflectionTestUtils.invokeMethod(
-                new JwtSecretValidator(secretWithUnderscore), "validate"
+                new JwtSecretValidator(secretWithUnderscore, new MockEnvironment()), "validate"
         );
 
         JwtProperties shortKey = properties();
         shortKey.setSecret("short-secret");
-        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(shortKey), "validate"))
+        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(shortKey, new MockEnvironment()), "validate"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("at least 32 UTF-8 bytes");
     }
