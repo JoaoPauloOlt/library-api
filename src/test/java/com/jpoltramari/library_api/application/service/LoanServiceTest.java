@@ -19,6 +19,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +36,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LoanServiceTest {
+
+    private static final Clock FIXED_CLOCK =
+            Clock.fixed(Instant.parse("2026-11-13T10:00:00Z"), ZoneOffset.UTC);
 
     @Mock
     private LoanRepository loanRepository;
@@ -53,7 +60,8 @@ class LoanServiceTest {
                 loanRepository,
                 bookRepository,
                 bookCopyRepository,
-                userRepository
+                userRepository,
+                FIXED_CLOCK
         );
     }
 
@@ -64,7 +72,7 @@ class LoanServiceTest {
 
         BookCopy copy = availableCopy();
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(user));
         when(bookRepository.existsById(10L)).thenReturn(true);
         when(loanRepository.existsByUserIdAndBookCopyBookIdAndStatusIn(any(), any(), any()))
                 .thenReturn(false);
@@ -82,7 +90,17 @@ class LoanServiceTest {
         assertEquals(LoanStatus.REQUESTED, result.getStatus());
         assertEquals(CopyStatus.RESERVED, copy.getStatus());
         assertNotNull(result.getRequestDate());
+        verify(userRepository).findByIdForUpdate(1L);
         verify(bookCopyRepository).save(copy);
+    }
+
+    @Test
+    void shouldMarkOverdueLoansUsingTheInjectedClock() {
+        LocalDateTime now = LocalDateTime.of(2026, 11, 13, 10, 0);
+        when(loanRepository.markOverdueLoans(now, LoanStatus.ACTIVE, LoanStatus.LATE)).thenReturn(2);
+
+        assertEquals(2, loanService.markOverdueLoans());
+        verify(loanRepository).markOverdueLoans(now, LoanStatus.ACTIVE, LoanStatus.LATE);
     }
 
     @Test
@@ -193,6 +211,28 @@ class LoanServiceTest {
         copy.setId(10L);
         copy.setStatus(CopyStatus.LOANED);
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
+        loan.setBookCopy(copy);
+
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+        when(loanRepository.save(loan)).thenReturn(loan);
+        when(bookCopyRepository.save(copy)).thenReturn(copy);
+
+        Loan result = loanService.returnBook(1L);
+
+        assertEquals(LoanStatus.RETURNED, result.getStatus());
+        assertEquals(CopyStatus.AVAILABLE, copy.getStatus());
+        assertNotNull(result.getReturnDate());
+        verify(bookCopyRepository).save(copy);
+        verify(loanRepository).save(loan);
+    }
+
+    @Test
+    void shouldReturnLateLoanAndMakeItsCopyAvailable() {
+        BookCopy copy = availableCopy();
+        copy.setId(10L);
+        copy.setStatus(CopyStatus.LOANED);
+        Loan loan = loanWithStatus(LoanStatus.LATE);
         loan.setBookCopy(copy);
 
         when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
