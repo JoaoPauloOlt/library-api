@@ -70,7 +70,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/loans").hasAuthority("LOAN_CREATE")
                         .requestMatchers(HttpMethod.PUT, "/loans/*/approve").hasAuthority("LOAN_APPROVE")
                         .requestMatchers(HttpMethod.PUT, "/loans/*/return").hasAuthority("LOAN_RETURN")
-                        .requestMatchers(HttpMethod.PUT, "/loans/*/cancel").hasAuthority("LOAN_CANCEL")
+                        .requestMatchers(HttpMethod.PUT, "/loans/*/cancel").hasAnyAuthority("LOAN_CANCEL", "LOAN_CANCEL_ANY")
 
                         .requestMatchers(HttpMethod.GET, "/users", "/users/**").hasAuthority("USER_ADMIN")
                         .anyRequest().authenticated())
