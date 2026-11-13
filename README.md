@@ -109,7 +109,7 @@ Security also includes:
 - Permission-based access control
 - Security snapshots for authorization-related state
 
-The JWT secret is interpreted as literal UTF-8 text, not Base64, and must contain at least 32 bytes (256 bits) for HS256. The `dev` profile provides a local-only fallback; `prod` still requires `JWT_SECRET` through the environment. Use a cryptographically random, environment-specific secret in production. Never commit real credentials or secrets.
+The JWT secret is interpreted as literal UTF-8 text, not Base64, and must contain at least 32 bytes (256 bits) for HS256. The `dev` profile provides a local-only fallback, and `JwtSecretValidator` rejects that known fallback whenever `prod` is active. The `prod` profile requires `JWT_SECRET` through the environment; use a cryptographically random, environment-specific value. Generate one with `openssl rand -hex 32` (the resulting hexadecimal text is used as UTF-8, not Base64). Never commit real credentials or secrets.
 
 ## Catalog
 
@@ -189,38 +189,63 @@ The copy-reservation change adds `RESERVED` to the `book_copies.status` constrai
 
 ## Configuration
 
-The application uses Spring profiles for environment-specific configuration:
+The application requires an explicit Spring profile. There is no implicit `dev` fallback: set `SPRING_PROFILES_ACTIVE` to exactly one of the supported profiles.
 
-- `dev` — local development
-- `prod` — production deployment
+- `dev` — local development; local-only database and JWT defaults are allowed.
+- `test` — automated tests; Maven Surefire and CI activate this profile explicitly.
+- `prod` — production deployment; production credentials are mandatory and the known development JWT secret is rejected.
 
-Environment variables override profile defaults. The `dev` profile includes local-only defaults; the `prod` profile still requires `JWT_SECRET` from the environment.
+The repository's `.env.example` is only for local development. It deliberately does not contain a JWT secret. The development profile supplies a local-only fallback when `JWT_SECRET` is absent.
 
-### Environment variables
+### Local environment variables
 
-The repository provides `.env.example` with the main local configuration:
+Copy `.env.example` to `.env` and adjust the database values if necessary:
 
 ```text
 DB_URL=jdbc:postgresql://localhost:5432/library
+DB_NAME=library
 DB_USER=postgres
 DB_PASS=postgres
 SPRING_PROFILES_ACTIVE=dev
 
-JWT_SECRET=library-api-local-dev-secret-2026-change-me
 JWT_EXPIRATION=3600000
 JWT_REFRESH_EXPIRATION=86400000
 JWT_ISSUER=library-api
 JWT_AUDIENCE=library-api-clients
 ```
 
+`DB_URL` is used when the API connects from the host. Docker Compose builds the container-side URL from `DB_NAME` and uses the same `DB_USER` and `DB_PASS` values for PostgreSQL and the API.
+
+### Production environment
+
+Production uses a separate Compose file and a separate environment file. Never use the local `.env.example` as production configuration.
+
+Create the production environment file:
+
+```bash
+cp production.env.example .env.prod
+openssl rand -hex 32
+```
+
+Set the generated hexadecimal value as `JWT_SECRET` in `.env.prod`. Also set a unique, strong `DB_PASS`, and configure `CORS_ALLOWED_ORIGINS` for the production frontend. The JWT secret must be at least 32 UTF-8 bytes; do not Base64-encode the generated hexadecimal text.
+
+Start the production stack with:
+
+```bash
+docker compose --env-file .env.prod -f docker-compose.prod.yml config
+docker compose --env-file .env.prod -f docker-compose.prod.yml up --build -d
+```
+
+The production Compose configuration requires `DB_NAME`, `DB_USER`, `DB_PASS` and `JWT_SECRET`. PostgreSQL is not published on a host port. The API runs with the `prod` profile, and startup fails if the known development JWT secret is supplied.
+
 Production additionally supports:
 
 ```text
-PORT=8080
+API_PORT=8080
 CORS_ALLOWED_ORIGINS=<frontend-origins>
 ```
 
-Never commit real credentials or secrets.
+Never commit `.env`, `.env.prod`, or any real credentials.
 
 ## Running locally
 
@@ -236,8 +261,13 @@ Never commit real credentials or secrets.
 git clone https://github.com/JoaoPauloOlt/library-api.git
 cd library-api
 cp .env.example .env
+set -a
+. ./.env
+set +a
 ./mvnw spring-boot:run
 ```
+
+Spring Boot does not load a plain `.env` file automatically. Export its values before starting the application so `SPRING_PROFILES_ACTIVE=dev` and the database credentials are available to the process.
 
 The API runs on:
 
@@ -263,13 +293,15 @@ The reset runs in one database transaction: it ensures the initial schema exists
 
 ### Run with Docker Compose
 
-Copy `.env.example` to `.env` and run. The sample secret is for local development only; production must use a strong, random UTF-8 secret of at least 32 bytes. Do not Base64-encode it.
+Copy `.env.example` to `.env` and run:
 
 ```bash
 docker compose up --build
 ```
 
-The API and PostgreSQL services are started together. The API remains available at `http://localhost:8080`.
+The default `docker-compose.yml` is development-only: it explicitly activates the `dev` profile, uses local database credentials, and binds the API and PostgreSQL ports to localhost. It does not inject a JWT secret, so the development-only fallback is used. The API remains available at `http://localhost:8080`.
+
+For production, use only the separate `docker-compose.prod.yml` and `.env.prod` instructions in [Production environment](#production-environment).
 
 ## Testing and quality
 
