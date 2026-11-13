@@ -102,6 +102,20 @@ class ApiExceptionHandlerTest {
     }
 
     @Test
+    void shouldExposeRootCauseWhenDetailsAreEnabled() {
+        ErrorProperties properties = new ErrorProperties();
+        properties.setExposeDetails(true);
+        ApiExceptionHandler configuredHandler = new ApiExceptionHandler(properties, correlationIdPort);
+        IllegalArgumentException rootCause = new IllegalArgumentException("root diagnostic");
+        IllegalStateException exception = new IllegalStateException("wrapper", rootCause);
+
+        ResponseEntity<ErrorResponse> response = configuredHandler.handleUncaught(exception, request);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().getDetail()).isEqualTo("root diagnostic");
+    }
+
+    @Test
     void shouldExposeDetailsOnlyWhenExplicitlyEnabled() {
         ErrorProperties properties = new ErrorProperties();
         properties.setExposeDetails(true);
