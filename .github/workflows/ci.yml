@@ -2,9 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [ develop, 'feature/**', 'fix/**', 'refactor/**', 'quality/**' ]
+    branches: [ main, develop, 'feature/**', 'fix/**', 'refactor/**', 'quality/**' ]
   pull_request:
     branches: [ develop, main ]
+
+permissions:
+  contents: read
+  checks: read
+  pull-requests: read
 
 jobs:
   test:
@@ -102,9 +107,58 @@ jobs:
           print(f"JaCoCo report: {report}")
           PY
 
+      # SonarCloud's organization plan does not expose branch Quality Gate polling
+      # through the scanner API. PRs are gated by the SonarCloud GitHub check below.
       - name: SonarCloud analysis
-        if: always()
-        uses: SonarSource/sonarqube-scan-action@v6
+        if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "push" && "$GITHUB_REF" == "refs/heads/main" ]]; then
+            mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar \
+              -Dsonar.qualitygate.wait=true -Dsonar.qualitygate.timeout=300
+          else
+            mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:5.8.0.7211:sonar
+          fi
+
+      - name: Wait for SonarCloud Quality Gate
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const headSha = context.payload.pull_request.head.sha;
+            const deadline = Date.now() + 300000;
+
+            while (Date.now() < deadline) {
+              const { data } = await github.rest.checks.listForRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: headSha,
+                per_page: 100
+              });
+
+              const sonarChecks = data.check_runs
+                .filter(check => check.name === "SonarCloud Code Analysis")
+                .sort((a, b) =>
+                  Date.parse(b.started_at || b.created_at) -
+                  Date.parse(a.started_at || a.created_at)
+                );
+
+              const latest = sonarChecks[0];
+              if (latest?.status === "completed") {
+                if (latest.conclusion === "success") {
+                  core.info("SonarCloud Quality Gate passed.");
+                  return;
+                }
+
+                core.setFailed(`SonarCloud Quality Gate did not pass: ${latest.conclusion}`);
+                return;
+              }
+
+              core.info("Waiting for SonarCloud Code Analysis check...");
+              await new Promise(resolve => setTimeout(resolve, 5000));
+            }
+
+            core.setFailed("Timed out waiting for SonarCloud Code Analysis after 300 seconds.");
