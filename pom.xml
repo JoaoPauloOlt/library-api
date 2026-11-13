@@ -16,6 +16,16 @@
 		<java.version>17</java.version>
 		<mapstruct.version>1.5.5.Final</mapstruct.version>
 		<jacoco.version>0.8.12</jacoco.version>
+		<sonar.projectKey>JoaoPauloOlt_library-api</sonar.projectKey>
+		<sonar.organization>jpoltramari</sonar.organization>
+		<sonar.sources>src/main/java</sonar.sources>
+		<sonar.tests>src/test/java</sonar.tests>
+		<sonar.java.source>${java.version}</sonar.java.source>
+		<sonar.java.binaries>${project.build.outputDirectory}</sonar.java.binaries>
+		<sonar.java.test.binaries>${project.build.testOutputDirectory}</sonar.java.test.binaries>
+		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<sonar.qualitygate.wait>true</sonar.qualitygate.wait>
+		<sonar.qualitygate.timeout>300</sonar.qualitygate.timeout>
 	</properties>
 	<dependencies>
 		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
