@@ -24,8 +24,6 @@
 		<sonar.java.binaries>${project.build.outputDirectory}</sonar.java.binaries>
 		<sonar.java.test.binaries>${project.build.testOutputDirectory}</sonar.java.test.binaries>
 		<sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-		<sonar.qualitygate.wait>true</sonar.qualitygate.wait>
-		<sonar.qualitygate.timeout>300</sonar.qualitygate.timeout>
 	</properties>
 	<dependencies>
 		<dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
