@@ -106,7 +106,7 @@ class BookCopyServiceTest {
         copy.setLocation("A-01");
         copy.setActive(true);
         when(bookRepository.existsById(10L)).thenReturn(true);
-        when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.of(copy));
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
         BookCopy result = service.update(10L, 1L, new UpdateBookCopyCommand(CopyStatus.MAINTENANCE, null, null));
@@ -121,7 +121,7 @@ class BookCopyServiceTest {
         BookCopy copy = new BookCopy();
         copy.setStatus(CopyStatus.AVAILABLE);
         when(bookRepository.existsById(10L)).thenReturn(true);
-        when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.of(copy));
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
         BookCopy result = service.changeStatus(10L, 1L, CopyStatus.MAINTENANCE);
