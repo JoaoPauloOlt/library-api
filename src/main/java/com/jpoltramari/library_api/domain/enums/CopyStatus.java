@@ -4,5 +4,7 @@ public enum CopyStatus {
     AVAILABLE,
     RESERVED,
     LOANED,
-    MAINTENANCE
+    MAINTENANCE,
+    LOST,
+    DISCARDED
 }

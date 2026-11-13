@@ -197,6 +197,96 @@ class BookCopyServiceTest {
     }
 
     @Test
+    void shouldMarkLostCopyInactiveWhenChangingStatus() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.AVAILABLE);
+        copy.setActive(true);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+        when(repository.save(copy)).thenReturn(copy);
+
+        BookCopy result = service.changeStatus(10L, 1L, CopyStatus.LOST);
+
+        assertEquals(CopyStatus.LOST, result.getStatus());
+        assertFalse(result.isActive());
+    }
+
+    @Test
+    void shouldMarkDiscardedCopyInactiveWhenChangingStatus() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.AVAILABLE);
+        copy.setActive(true);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+        when(repository.save(copy)).thenReturn(copy);
+
+        BookCopy result = service.changeStatus(10L, 1L, CopyStatus.DISCARDED);
+
+        assertEquals(CopyStatus.DISCARDED, result.getStatus());
+        assertFalse(result.isActive());
+    }
+
+    @Test
+    void shouldRejectActivatingLostCopyWithoutRestoringItsStatus() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.LOST);
+        copy.setActive(false);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+
+        assertThrows(BusinessException.class,
+                () -> service.update(10L, 1L, new UpdateBookCopyCommand(null, null, true)));
+        verify(repository, never()).save(copy);
+    }
+
+    @Test
+    void shouldAllowRestoringLostCopyAsAvailableAndActive() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.LOST);
+        copy.setActive(false);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+        when(repository.save(copy)).thenReturn(copy);
+
+        BookCopy result = service.update(
+                10L, 1L, new UpdateBookCopyCommand(CopyStatus.AVAILABLE, null, true)
+        );
+
+        assertEquals(CopyStatus.AVAILABLE, result.getStatus());
+        assertTrue(result.isActive());
+    }
+
+    @Test
+    void shouldRejectReturningDiscardedCopyToCirculation() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.DISCARDED);
+        copy.setActive(false);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+
+        assertThrows(BusinessException.class,
+                () -> service.update(
+                        10L, 1L, new UpdateBookCopyCommand(CopyStatus.AVAILABLE, null, true)
+                ));
+        verify(repository, never()).save(copy);
+    }
+
+    @Test
+    void shouldRejectSettingRetiredStatusAsActiveInOneUpdate() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.AVAILABLE);
+        copy.setActive(true);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+
+        assertThrows(BusinessException.class,
+                () -> service.update(
+                        10L, 1L, new UpdateBookCopyCommand(CopyStatus.LOST, null, true)
+                ));
+        verify(repository, never()).save(copy);
+    }
+
+    @Test
     void shouldReturnTotalQuantity() {
         when(bookRepository.existsById(10L)).thenReturn(true);
         when(repository.countByBookId(10L)).thenReturn(5L);
@@ -207,7 +297,7 @@ class BookCopyServiceTest {
     @Test
     void shouldReturnAvailableQuantity() {
         when(bookRepository.existsById(10L)).thenReturn(true);
-        when(repository.countByBookIdAndStatus(10L, CopyStatus.AVAILABLE)).thenReturn(3L);
+        when(repository.countByBookIdAndStatusAndActiveTrue(10L, CopyStatus.AVAILABLE)).thenReturn(3L);
 
         assertEquals(3L, service.availableQuantity(10L));
     }

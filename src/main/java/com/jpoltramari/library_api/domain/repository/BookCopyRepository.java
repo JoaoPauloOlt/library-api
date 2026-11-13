@@ -15,6 +15,7 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
     Optional<BookCopy> findByBarcode(String barcode);
     Long countByBookId(Long bookId);
     Long countByBookIdAndStatus(Long bookId, CopyStatus status);
+    Long countByBookIdAndStatusAndActiveTrue(Long bookId, CopyStatus status);
     List<BookCopy> findAllByBookId(Long bookId);
     Optional<BookCopy> findByIdAndBookId(Long id, Long bookId);
     boolean existsByBarcode(String barcode);

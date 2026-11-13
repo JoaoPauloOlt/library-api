@@ -60,9 +60,16 @@ public class BookCopyService {
     public BookCopy update(Long bookId, Long id, UpdateBookCopyCommand command) {
         BookCopy copy = findOrFailForBookForUpdate(bookId, id);
 
+        CopyStatus resultingStatus = command.status() != null ? command.status() : copy.getStatus();
+        if (Boolean.TRUE.equals(command.active()) && isRetiredStatus(resultingStatus)) {
+            throw new BusinessException("A lost or discarded copy cannot be active.");
+        }
         if (command.status() != null) {
             validateManualStatusChange(copy, command.status());
             copy.setStatus(command.status());
+        }
+        if (isRetiredStatus(copy.getStatus())) {
+            copy.setActive(false);
         }
         if (Boolean.FALSE.equals(command.active()) && isManagedByLoanLifecycle(copy.getStatus())) {
             throw new BusinessException("A reserved or loaned copy cannot be deactivated manually.");
@@ -91,6 +98,9 @@ public class BookCopyService {
         BookCopy copy = findOrFailForBookForUpdate(bookId, id);
         validateManualStatusChange(copy, status);
         copy.setStatus(status);
+        if (isRetiredStatus(status)) {
+            copy.setActive(false);
+        }
         return repository.save(copy);
     }
 
@@ -101,7 +111,7 @@ public class BookCopyService {
 
     public long availableQuantity(Long bookId) {
         validateBookExists(bookId);
-        return repository.countByBookIdAndStatus(bookId, CopyStatus.AVAILABLE);
+        return repository.countByBookIdAndStatusAndActiveTrue(bookId, CopyStatus.AVAILABLE);
     }
 
     public BookCopy findOrFailForBook(Long bookId, Long id) {
@@ -117,9 +127,16 @@ public class BookCopyService {
     }
 
     private void validateManualStatusChange(BookCopy copy, CopyStatus targetStatus) {
+        if (copy.getStatus() == CopyStatus.DISCARDED && targetStatus != CopyStatus.DISCARDED) {
+            throw new BusinessException("A discarded copy cannot return to circulation.");
+        }
         if (isManagedByLoanLifecycle(copy.getStatus()) || isManagedByLoanLifecycle(targetStatus)) {
             throw new BusinessException("RESERVED and LOANED statuses are managed by the loan lifecycle.");
         }
+    }
+
+    private boolean isRetiredStatus(CopyStatus status) {
+        return status == CopyStatus.LOST || status == CopyStatus.DISCARDED;
     }
 
     private boolean isManagedByLoanLifecycle(CopyStatus status) {
