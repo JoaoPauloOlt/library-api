@@ -345,7 +345,8 @@ The CI workflow also:
 - runs against PostgreSQL 16;
 - publishes the JaCoCo report as a GitHub Actions artifact;
 - prints the global LINE coverage summary;
-- executes SonarCloud analysis;
+- executes SonarCloud analysis with the pinned Maven scanner;
+- waits for the SonarCloud Quality Gate and fails the CI job if it does not pass;
 - validates changes before they are merged into `develop`.
 
 The generated JaCoCo report is available at:
@@ -354,7 +355,6 @@ The generated JaCoCo report is available at:
 target/site/jacoco/
 ```
 
-- SonarCloud analysis uses the Maven scanner and blocks CI until the Quality Gate passes.
 
 ## API documentation
 
