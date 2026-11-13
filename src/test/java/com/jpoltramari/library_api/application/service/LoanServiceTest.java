@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -135,7 +137,7 @@ class LoanServiceTest {
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
         when(loanRepository.save(loan)).thenReturn(loan);
 
-        Loan result = loanService.cancel(1L, 42L);
+        Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL"));
 
         assertEquals(LoanStatus.CANCELED, result.getStatus());
         verify(loanRepository).save(loan);
@@ -155,11 +157,42 @@ class LoanServiceTest {
     }
 
     @Test
+    void shouldAllowStaffWithCancelAnyPermissionToCancelAnotherUsersLoan() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        User otherOwner = new User();
+        otherOwner.setId(99L);
+        loan.setUser(otherOwner);
+
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.save(loan)).thenReturn(loan);
+
+        Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL_ANY"));
+
+        assertEquals(LoanStatus.CANCELED, result.getStatus());
+        verify(loanRepository).save(loan);
+    }
+
+    @Test
     void shouldRejectCancellationOfActiveLoan() {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(BusinessException.class, () -> loanService.cancel(1L, 42L));
+    }
+
+    private AuthenticatedPrincipal principal(Long userId, String... permissions) {
+        List<String> grantedPermissions = List.of(permissions);
+        return new AuthenticatedPrincipal() {
+            @Override
+            public Long getUserId() {
+                return userId;
+            }
+
+            @Override
+            public boolean hasPermission(String permission) {
+                return grantedPermissions.contains(permission);
+            }
+        };
     }
 
     private Loan loanWithStatus(LoanStatus status) {
