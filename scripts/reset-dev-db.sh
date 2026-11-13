@@ -49,9 +49,9 @@ load_dotenv() {
 
 load_dotenv "$ROOT_DIR/.env"
 
-PROFILE="${SPRING_PROFILES_ACTIVE:-dev}"
+PROFILE="${SPRING_PROFILES_ACTIVE:-}"
 if [[ "$PROFILE" != "dev" ]]; then
-    echo "Refusing to reset: SPRING_PROFILES_ACTIVE must be exactly 'dev' (received: '$PROFILE')." >&2
+    echo "Refusing to reset: SPRING_PROFILES_ACTIVE must be explicitly set to 'dev' (received: '$PROFILE')." >&2
     exit 1
 fi
 
@@ -77,8 +77,8 @@ case "$DB_NAME_LOWER" in
         ;;
 esac
 
-# docker-compose.yml names its PostgreSQL container library-postgres and runs
-# the API with the prod profile. Never reset that database through localhost.
+# docker-compose.yml manages the development database in library-postgres.
+# Never reset a Compose-managed database through this host helper.
 if command -v docker >/dev/null 2>&1; then
     running_containers="$(docker ps --format '{{.Names}}' 2>/dev/null || true)"
     if grep -Fxq 'library-postgres' <<< "$running_containers"; then
