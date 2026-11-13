@@ -2,13 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [ develop, 'feature/**', 'fix/**', 'refactor/**', 'quality/**' ]
+    branches: [ main, develop, 'feature/**', 'fix/**', 'refactor/**', 'quality/**' ]
   pull_request:
     branches: [ develop, main ]
 
 permissions:
   contents: read
   checks: read
+  pull-requests: read
 
 jobs:
   test:
