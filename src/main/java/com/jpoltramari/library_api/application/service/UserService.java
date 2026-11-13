@@ -32,6 +32,10 @@ public class UserService {
         return repository.findAll(pageable);
     }
 
+    public Page<User> findActiveBorrowers(Pageable pageable) {
+        return repository.findByStatus(UserStatus.ACTIVE, pageable);
+    }
+
     public User findOrFail(Long id) {
         return repository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException(id));

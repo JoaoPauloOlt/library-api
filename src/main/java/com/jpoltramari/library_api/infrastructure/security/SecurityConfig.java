@@ -64,9 +64,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, AUTHORS_PATH).hasAuthority("AUTHOR_UPDATE")
                         .requestMatchers(HttpMethod.DELETE, AUTHORS_PATH).hasAuthority("AUTHOR_DELETE")
 
+                        .requestMatchers(HttpMethod.GET, "/loans/users").hasAuthority("LOAN_CREATE_FOR_USER")
                         .requestMatchers(HttpMethod.GET, "/loans").hasAuthority("LOAN_READ_ALL")
                         .requestMatchers(HttpMethod.GET, "/loans/my").authenticated()
                         .requestMatchers(HttpMethod.GET, "/loans/*").hasAuthority("LOAN_READ_ALL")
+                        .requestMatchers(HttpMethod.POST, "/loans/for-user").hasAuthority("LOAN_CREATE_FOR_USER")
                         .requestMatchers(HttpMethod.POST, "/loans").hasAuthority("LOAN_CREATE")
                         .requestMatchers(HttpMethod.PUT, "/loans/*/approve").hasAuthority("LOAN_APPROVE")
                         .requestMatchers(HttpMethod.PUT, "/loans/*/return").hasAuthority("LOAN_RETURN")

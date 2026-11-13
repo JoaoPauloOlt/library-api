@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
+import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.LoanNotFoundException;
@@ -48,10 +49,25 @@ public class LoanService {
 
     @Transactional
     public Loan create(CreateLoanCommand command, Long userId) {
-        // Serialize requests from the same user before checking existing active loans.
-        User user = userRepository.findByIdForUpdate(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+        User user = findUserForUpdate(userId);
+        return createLoan(command, user);
+    }
 
+    @Transactional
+    public Loan createForUser(CreateLoanCommand command, Long userId) {
+        User user = findUserForUpdate(userId);
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new BusinessException("User is not active.");
+        }
+        return createLoan(command, user);
+    }
+
+    private User findUserForUpdate(Long userId) {
+        return userRepository.findByIdForUpdate(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    private Loan createLoan(CreateLoanCommand command, User user) {
         Long bookId = command.bookId();
 
         if (!bookRepository.existsById(bookId)) {
