@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.Genre;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
@@ -107,6 +108,29 @@ class LoanServiceIntegrationTest {
         Loan persisted = loanRepository.findById(created.getId()).orElseThrow();
         assertThat(persisted.getStatus()).isEqualTo(LoanStatus.RETURNED);
         assertThat(persisted.getReturnDate()).isNotNull();
+    }
+
+    @Test
+    void shouldReleaseReservedCopyWhenRequestedLoanIsCancelled() {
+        Loan created = loanService.create(new CreateLoanCommand(bookId), userId);
+
+        AuthenticatedPrincipal principal = new AuthenticatedPrincipal() {
+            @Override
+            public Long getUserId() {
+                return userId;
+            }
+
+            @Override
+            public boolean hasPermission(String permission) {
+                return false;
+            }
+        };
+
+        Loan cancelled = loanService.cancel(created.getId(), principal);
+
+        assertThat(cancelled.getStatus()).isEqualTo(LoanStatus.CANCELED);
+        assertThat(bookCopyRepository.findById(bookCopyId).orElseThrow().getStatus())
+                .isEqualTo(CopyStatus.AVAILABLE);
     }
 
     @Test

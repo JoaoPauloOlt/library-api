@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.application.command.bookcopy.CreateBookCopyCo
 import com.jpoltramari.library_api.application.command.bookcopy.UpdateBookCopyCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
+import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
@@ -19,6 +20,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -73,7 +75,7 @@ class BookCopyServiceTest {
         copy.setLocation("A-01");
         copy.setActive(true);
         when(bookRepository.existsById(10L)).thenReturn(true);
-        when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.of(copy));
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
         BookCopy result = service.update(10L, 1L,
@@ -104,7 +106,7 @@ class BookCopyServiceTest {
         copy.setLocation("A-01");
         copy.setActive(true);
         when(bookRepository.existsById(10L)).thenReturn(true);
-        when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.of(copy));
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
         BookCopy result = service.update(10L, 1L, new UpdateBookCopyCommand(CopyStatus.MAINTENANCE, null, null));
@@ -119,13 +121,67 @@ class BookCopyServiceTest {
         BookCopy copy = new BookCopy();
         copy.setStatus(CopyStatus.AVAILABLE);
         when(bookRepository.existsById(10L)).thenReturn(true);
-        when(repository.findByIdAndBookId(1L, 10L)).thenReturn(Optional.of(copy));
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
         when(repository.save(copy)).thenReturn(copy);
 
         BookCopy result = service.changeStatus(10L, 1L, CopyStatus.MAINTENANCE);
 
         assertEquals(CopyStatus.MAINTENANCE, result.getStatus());
         verify(repository).save(copy);
+    }
+
+    @Test
+    void shouldRejectManualStatusChangeOfLoanedCopy() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.LOANED);
+        copy.setActive(true);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+
+        assertThrows(BusinessException.class,
+                () -> service.changeStatus(10L, 1L, CopyStatus.MAINTENANCE));
+        verify(repository, never()).save(copy);
+    }
+
+    @Test
+    void shouldRejectDeactivatingLoanedCopy() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.LOANED);
+        copy.setActive(true);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+
+        assertThrows(BusinessException.class,
+                () -> service.update(10L, 1L, new UpdateBookCopyCommand(null, null, false)));
+        verify(repository, never()).save(copy);
+    }
+
+    @Test
+    void shouldRejectDeletingReservedAndLoanedCopies() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.RESERVED);
+        copy.setActive(true);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+
+        assertThrows(BusinessException.class, () -> service.delete(10L, 1L));
+
+        copy.setStatus(CopyStatus.LOANED);
+        assertThrows(BusinessException.class, () -> service.delete(10L, 1L));
+        verify(repository, never()).delete(copy);
+    }
+
+    @Test
+    void shouldDeleteAvailableCopy() {
+        BookCopy copy = new BookCopy();
+        copy.setStatus(CopyStatus.AVAILABLE);
+        copy.setActive(true);
+        when(bookRepository.existsById(10L)).thenReturn(true);
+        when(repository.findByIdAndBookIdForUpdate(1L, 10L)).thenReturn(Optional.of(copy));
+
+        service.delete(10L, 1L);
+
+        verify(repository).delete(copy);
     }
 
     @Test

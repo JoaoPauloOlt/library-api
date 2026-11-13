@@ -148,6 +148,7 @@ The JWT secret is interpreted as literal UTF-8 text, not Base64, and must contai
 - Unique copy barcodes
 - Copy statuses such as `AVAILABLE`, `RESERVED`, `LOANED` and `MAINTENANCE`
 - `RESERVED` is assigned when a loan request is created; `LOANED` is assigned only when the request is approved
+- `RESERVED` and `LOANED` are managed by the circulation lifecycle and cannot be assigned, released, deactivated or deleted through manual copy-management operations
 - Quantity creation during book registration
 - Total and available quantity calculation
 - Copy location and active-state management

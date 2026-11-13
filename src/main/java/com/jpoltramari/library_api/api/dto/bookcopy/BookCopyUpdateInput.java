@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 
 @Schema(name = "BookCopyUpdateInput", description = "Fields that can be changed on a physical book copy. All fields are optional.")
 public record BookCopyUpdateInput(
-        @Schema(description = "Physical copy status.", example = "AVAILABLE")
+        @Schema(description = "Physical copy status. RESERVED and LOANED are managed by the loan lifecycle and cannot be assigned manually.", example = "AVAILABLE")
         CopyStatus status,
 
         @Schema(description = "Physical location of the copy.", example = "Shelf A-03", maxLength = 100)

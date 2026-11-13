@@ -190,11 +190,13 @@ class LoanServiceTest {
     @Test
     void shouldReturnActiveLoanAndMakeCopyAvailable() {
         BookCopy copy = availableCopy();
+        copy.setId(10L);
         copy.setStatus(CopyStatus.LOANED);
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         loan.setBookCopy(copy);
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
         when(loanRepository.save(loan)).thenReturn(loan);
         when(bookCopyRepository.save(copy)).thenReturn(copy);
 
@@ -210,12 +212,20 @@ class LoanServiceTest {
     @Test
     void shouldCancelRequestedLoanOwnedByAuthenticatedUser() {
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        BookCopy copy = availableCopy();
+        copy.setId(10L);
+        copy.setStatus(CopyStatus.RESERVED);
+        loan.setBookCopy(copy);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+        when(bookCopyRepository.save(copy)).thenReturn(copy);
         when(loanRepository.save(loan)).thenReturn(loan);
 
         Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL"));
 
         assertEquals(LoanStatus.CANCELED, result.getStatus());
+        assertEquals(CopyStatus.AVAILABLE, copy.getStatus());
+        verify(bookCopyRepository).save(copy);
         verify(loanRepository).save(loan);
     }
 
@@ -226,9 +236,10 @@ class LoanServiceTest {
         otherOwner.setId(99L);
         loan.setUser(otherOwner);
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(LoanNotFoundException.class, () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        verify(bookCopyRepository, never()).findByIdForUpdate(any());
         verify(loanRepository, never()).save(any(Loan.class));
     }
 
@@ -238,20 +249,77 @@ class LoanServiceTest {
         User otherOwner = new User();
         otherOwner.setId(99L);
         loan.setUser(otherOwner);
+        BookCopy copy = availableCopy();
+        copy.setId(10L);
+        copy.setStatus(CopyStatus.RESERVED);
+        loan.setBookCopy(copy);
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+        when(bookCopyRepository.save(copy)).thenReturn(copy);
         when(loanRepository.save(loan)).thenReturn(loan);
 
         Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL_ANY"));
 
         assertEquals(LoanStatus.CANCELED, result.getStatus());
+        assertEquals(CopyStatus.AVAILABLE, copy.getStatus());
         verify(loanRepository).save(loan);
+    }
+
+    @Test
+    void shouldCancelStaleRequestWithoutReleasingCopyAlreadyLoanedByAnotherLoan() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        BookCopy copy = availableCopy();
+        copy.setId(10L);
+        copy.setStatus(CopyStatus.LOANED);
+        loan.setBookCopy(copy);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+        when(loanRepository.save(loan)).thenReturn(loan);
+
+        Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL"));
+
+        assertEquals(LoanStatus.CANCELED, result.getStatus());
+        assertEquals(CopyStatus.LOANED, copy.getStatus());
+        verify(bookCopyRepository, never()).save(any(BookCopy.class));
+    }
+
+    @Test
+    void shouldCancelLegacyRequestWhenCopyIsAlreadyAvailable() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        BookCopy copy = availableCopy();
+        copy.setId(10L);
+        loan.setBookCopy(copy);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+        when(loanRepository.save(loan)).thenReturn(loan);
+
+        Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL"));
+
+        assertEquals(LoanStatus.CANCELED, result.getStatus());
+        assertEquals(CopyStatus.AVAILABLE, copy.getStatus());
+        verify(bookCopyRepository, never()).save(any(BookCopy.class));
+    }
+
+    @Test
+    void shouldRejectCancellationWhenCopyCannotBeReleased() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        BookCopy copy = availableCopy();
+        copy.setId(10L);
+        copy.setStatus(CopyStatus.MAINTENANCE);
+        loan.setBookCopy(copy);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+
+        assertThrows(BusinessException.class,
+                () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        verify(loanRepository, never()).save(any(Loan.class));
     }
 
     @Test
     void shouldRejectCancellationOfActiveLoan() {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(BusinessException.class, () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
     }
