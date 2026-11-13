@@ -6,6 +6,7 @@ import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.application.service.LoanService;
 import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
+import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -23,6 +24,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -196,14 +198,37 @@ class LoanControllerWebMvcTest {
                 "Library User", null, null, null, null, null
         );
 
-        when(service.cancel(10L, 42L)).thenReturn(loan);
+        when(service.cancel(eq(10L), any(AuthenticatedPrincipal.class))).thenReturn(loan);
         when(mapper.toModel(loan)).thenReturn(model);
 
         mockMvc.perform(put("/loans/10/cancel")
                         .with(user(principal(42L, "LOAN_CANCEL"))))
                 .andExpect(status().isOk());
 
-        verify(service).cancel(10L, 42L);
+        verify(service).cancel(eq(10L), argThat(principal ->
+                principal.getUserId().equals(42L) && !principal.hasPermission("LOAN_CANCEL_ANY")
+        ));
+    }
+
+    @Test
+    void shouldAllowStaffToCancelAnyLoanWithExplicitPermission() throws Exception {
+        Loan loan = new Loan();
+        loan.setId(10L);
+        LoanModel model = new LoanModel(
+                10L, "CANCELED", "1984", null, List.of("George Orwell"),
+                "Library User", null, null, null, null, null
+        );
+
+        when(service.cancel(eq(10L), any(AuthenticatedPrincipal.class))).thenReturn(loan);
+        when(mapper.toModel(loan)).thenReturn(model);
+
+        mockMvc.perform(put("/loans/10/cancel")
+                        .with(user(principal(7L, "LOAN_CANCEL_ANY"))))
+                .andExpect(status().isOk());
+
+        verify(service).cancel(eq(10L), argThat(principal ->
+                principal.getUserId().equals(7L) && principal.hasPermission("LOAN_CANCEL_ANY")
+        ));
     }
 
     @Test
@@ -241,6 +266,12 @@ class LoanControllerWebMvcTest {
         @Override
         public Long getUserId() {
             return userId;
+        }
+
+        @Override
+        public boolean hasPermission(String permission) {
+            return authorities.stream()
+                    .anyMatch(authority -> permission.equals(authority.getAuthority()));
         }
 
         @Override
