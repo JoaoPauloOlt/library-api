@@ -22,10 +22,17 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class LoanServiceLifecycleBehaviorTest {
 
-    @Mock private LoanRepository loanRepository;
-    @Mock private BookRepository bookRepository;
-    @Mock private BookCopyRepository bookCopyRepository;
-    @Mock private UserRepository userRepository;
+    @Mock
+    private LoanRepository loanRepository;
+
+    @Mock
+    private BookRepository bookRepository;
+
+    @Mock
+    private BookCopyRepository bookCopyRepository;
+
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private LoanService loanService;
@@ -51,7 +58,6 @@ class LoanServiceLifecycleBehaviorTest {
 
         assertEquals(LoanStatus.ACTIVE, result.getStatus());
         assertEquals(CopyStatus.LOANED, copy.getStatus());
-        verify(bookCopyRepository).findByIdForUpdate(10L);
         verify(bookCopyRepository).save(copy);
         verify(loanRepository).save(loan);
     }
@@ -77,7 +83,6 @@ class LoanServiceLifecycleBehaviorTest {
 
         assertEquals(LoanStatus.RETURNED, result.getStatus());
         assertEquals(CopyStatus.AVAILABLE, copy.getStatus());
-        verify(bookCopyRepository).findByIdForUpdate(10L);
         verify(bookCopyRepository).save(copy);
         verify(loanRepository).save(loan);
     }

@@ -33,11 +33,20 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @Transactional
 class LoanServiceIntegrationTest {
 
-    @Autowired private LoanService loanService;
-    @Autowired private UserRepository userRepository;
-    @Autowired private BookRepository bookRepository;
-    @Autowired private LoanRepository loanRepository;
-    @Autowired private BookCopyRepository bookCopyRepository;
+    @Autowired
+    private LoanService loanService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private BookRepository bookRepository;
+
+    @Autowired
+    private LoanRepository loanRepository;
+
+    @Autowired
+    private BookCopyRepository bookCopyRepository;
 
     private Long userId;
     private Long bookId;
@@ -70,12 +79,16 @@ class LoanServiceIntegrationTest {
 
     @Test
     void shouldCreateApproveAndReturnLoanThroughDatabase() {
-        Loan created = loanService.create(new CreateLoanCommand(bookId), userId);
+        Loan created = loanService.create(
+                new CreateLoanCommand(bookId),
+                userId
+        );
 
         assertThat(created.getId()).isNotNull();
         assertThat(created.getStatus()).isEqualTo(LoanStatus.REQUESTED);
         assertThat(created.getRequestDate()).isNotNull();
-        assertThat(created.getBookCopy().getStatus()).isEqualTo(CopyStatus.RESERVED);
+        assertThat(bookCopyRepository.findById(bookCopyId).orElseThrow().getStatus())
+                .isEqualTo(CopyStatus.RESERVED);
 
         Loan approved = loanService.approve(created.getId());
 
@@ -101,7 +114,7 @@ class LoanServiceIntegrationTest {
     void shouldReleaseReservedCopyWhenRequestedLoanIsCancelled() {
         Loan created = loanService.create(new CreateLoanCommand(bookId), userId);
 
-        Loan cancelled = loanService.cancel(created.getId(), new AuthenticatedPrincipal() {
+        AuthenticatedPrincipal principal = new AuthenticatedPrincipal() {
             @Override
             public Long getUserId() {
                 return userId;
@@ -111,7 +124,9 @@ class LoanServiceIntegrationTest {
             public boolean hasPermission(String permission) {
                 return false;
             }
-        });
+        };
+
+        Loan cancelled = loanService.cancel(created.getId(), principal);
 
         assertThat(cancelled.getStatus()).isEqualTo(LoanStatus.CANCELED);
         assertThat(bookCopyRepository.findById(bookCopyId).orElseThrow().getStatus())
@@ -135,7 +150,10 @@ class LoanServiceIntegrationTest {
         activeLoan.setDueDate(now.plusDays(6));
         loanRepository.save(activeLoan);
 
-        assertThatThrownBy(() -> loanService.create(new CreateLoanCommand(bookId), userId))
+        assertThatThrownBy(() -> loanService.create(
+                new CreateLoanCommand(bookId),
+                userId
+        ))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("already has an active loan");
     }
