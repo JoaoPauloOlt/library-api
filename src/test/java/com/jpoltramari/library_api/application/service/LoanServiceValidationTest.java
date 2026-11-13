@@ -48,7 +48,7 @@ class LoanServiceValidationTest {
     @Test
     void shouldRejectReturnWhenLoanIsNotActive() {
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(BusinessException.class, () -> service.returnBook(1L));
     }
@@ -56,7 +56,7 @@ class LoanServiceValidationTest {
     @Test
     void shouldRejectCancellationWhenLoanIsActive() {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(BusinessException.class, () -> service.cancel(1L, principal(42L, "LOAN_CANCEL")));
     }
@@ -64,7 +64,7 @@ class LoanServiceValidationTest {
     @Test
     void shouldRejectCancellationWhenLoanIsReturned() {
         Loan loan = loanWithStatus(LoanStatus.RETURNED);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(BusinessException.class, () -> service.cancel(1L, principal(42L, "LOAN_CANCEL")));
     }
@@ -72,15 +72,8 @@ class LoanServiceValidationTest {
     private AuthenticatedPrincipal principal(Long userId, String... permissions) {
         List<String> grantedPermissions = List.of(permissions);
         return new AuthenticatedPrincipal() {
-            @Override
-            public Long getUserId() {
-                return userId;
-            }
-
-            @Override
-            public boolean hasPermission(String permission) {
-                return grantedPermissions.contains(permission);
-            }
+            @Override public Long getUserId() { return userId; }
+            @Override public boolean hasPermission(String permission) { return grantedPermissions.contains(permission); }
         };
     }
 
@@ -88,11 +81,9 @@ class LoanServiceValidationTest {
         Loan loan = new Loan();
         loan.setStatus(status);
         loan.setBookCopy(new BookCopy());
-
         User owner = new User();
         owner.setId(42L);
         loan.setUser(owner);
-
         return loan;
     }
 }

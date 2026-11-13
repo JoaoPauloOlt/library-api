@@ -66,7 +66,7 @@ public class LoanService {
             throw new BusinessException("Copy no longer available.");
         }
 
-        // Reserve the physical copy atomically with the loan request.
+        // The reservation is persisted in the same transaction as the request.
         copy.setStatus(CopyStatus.RESERVED);
         bookCopyRepository.save(copy);
 
@@ -84,7 +84,7 @@ public class LoanService {
         Loan loan = findForUpdateOrFail(id);
         validateStatus(loan, LoanStatus.REQUESTED);
 
-        // Lock the physical copy as well: distinct legacy loan rows can reference the same copy.
+        // Different loan rows may reference the same physical copy, so lock the copy too.
         BookCopy copy = findCopyForUpdate(loan);
         if (!copy.isActive()) {
             throw new BusinessException("The copy is inactive.");
@@ -107,10 +107,10 @@ public class LoanService {
 
     @Transactional
     public Loan returnBook(Long id) {
-        Loan loan = findOrFail(id);
+        Loan loan = findForUpdateOrFail(id);
         validateStatus(loan, LoanStatus.ACTIVE);
 
-        BookCopy copy = loan.getBookCopy();
+        BookCopy copy = findCopyForUpdate(loan);
         if (copy.getStatus() != CopyStatus.LOANED) {
             throw new BusinessException("Copy is not currently loaned");
         }
@@ -126,15 +126,22 @@ public class LoanService {
 
     @Transactional
     public Loan cancel(Long id, AuthenticatedPrincipal authenticatedPrincipal) {
-        Loan loan = findOrFail(id);
+        Loan loan = findForUpdateOrFail(id);
         if (!authenticatedPrincipal.hasPermission("LOAN_CANCEL_ANY")) {
             validateLoanOwnership(loan, id, authenticatedPrincipal.getUserId());
         }
+        validateStatus(loan, LoanStatus.REQUESTED);
 
-        if (loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.RETURNED) {
-            throw new BusinessException("Only requested loans can be cancelled.");
+        BookCopy copy = findCopyForUpdate(loan);
+        if (copy.getStatus() == CopyStatus.RESERVED) {
+            copy.setStatus(CopyStatus.AVAILABLE);
+            bookCopyRepository.save(copy);
+        } else if (copy.getStatus() != CopyStatus.AVAILABLE && copy.getStatus() != CopyStatus.LOANED) {
+            throw new BusinessException("Copy cannot be released from its current status.");
         }
 
+        // A legacy duplicate request may point to a copy already loaned through another request.
+        // Cancel that stale request without making the other active loan's copy available.
         loan.setStatus(LoanStatus.CANCELED);
         return loanRepository.save(loan);
     }

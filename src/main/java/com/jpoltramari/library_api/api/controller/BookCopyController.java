@@ -133,7 +133,7 @@ public class BookCopyController {
     public BookCopyModel changeStatus(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
             @Parameter(description = "Physical copy identifier", example = "1") @PathVariable @Positive Long id,
-            @Parameter(in = ParameterIn.QUERY, description = "New physical copy status", example = "AVAILABLE") @RequestParam CopyStatus status) {
+            @Parameter(in = ParameterIn.QUERY, description = "New physical copy status. RESERVED and LOANED are managed by the loan lifecycle.", example = "MAINTENANCE") @RequestParam CopyStatus status) {
         return mapper.toModel(service.changeStatus(bookId, id, status));
     }
 
@@ -142,7 +142,7 @@ public class BookCopyController {
     @Operation(summary = "Delete a physical book copy")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Book copy deleted successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid copy ID", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid copy ID or copy is managed by circulation", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "401", description = "Authentication required", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "403", description = "Insufficient permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "404", description = "Book copy not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
