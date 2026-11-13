@@ -16,6 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +37,13 @@ class LoanServiceValidationTest {
 
     @BeforeEach
     void setUp() {
-        service = new LoanService(loanRepository, bookRepository, bookCopyRepository, userRepository);
+        service = new LoanService(
+                loanRepository,
+                bookRepository,
+                bookCopyRepository,
+                userRepository,
+                Clock.fixed(Instant.parse("2026-11-13T10:00:00Z"), ZoneOffset.UTC)
+        );
     }
 
     @Test

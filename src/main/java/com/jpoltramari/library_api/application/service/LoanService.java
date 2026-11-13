@@ -21,8 +21,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,6 +36,7 @@ public class LoanService {
     private final BookRepository bookRepository;
     private final BookCopyRepository bookCopyRepository;
     private final UserRepository userRepository;
+    private final Clock clock;
 
     public Page<Loan> findAll(Pageable pageable) {
         return loanRepository.findAll(pageable);
@@ -47,7 +48,8 @@ public class LoanService {
 
     @Transactional
     public Loan create(CreateLoanCommand command, Long userId) {
-        User user = userRepository.findById(userId)
+        // Serialize requests from the same user before checking existing active loans.
+        User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
         Long bookId = command.bookId();
@@ -74,7 +76,7 @@ public class LoanService {
         loan.setUser(user);
         loan.setBookCopy(copy);
         loan.setStatus(LoanStatus.REQUESTED);
-        loan.setRequestDate(LocalDateTime.now(ZoneOffset.UTC));
+        loan.setRequestDate(LocalDateTime.now(clock));
 
         return loanRepository.save(loan);
     }
@@ -93,7 +95,7 @@ public class LoanService {
             throw new BusinessException("Copy is not reserved for this loan.");
         }
 
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        LocalDateTime now = LocalDateTime.now(clock);
         copy.setStatus(CopyStatus.LOANED);
         bookCopyRepository.save(copy);
 
@@ -108,7 +110,7 @@ public class LoanService {
     @Transactional
     public Loan returnBook(Long id) {
         Loan loan = findForUpdateOrFail(id);
-        validateStatus(loan, LoanStatus.ACTIVE);
+        validateReturnableStatus(loan);
 
         BookCopy copy = findCopyForUpdate(loan);
         if (copy.getStatus() != CopyStatus.LOANED) {
@@ -119,7 +121,7 @@ public class LoanService {
         bookCopyRepository.save(copy);
 
         loan.setStatus(LoanStatus.RETURNED);
-        loan.setReturnDate(LocalDateTime.now(ZoneOffset.UTC));
+        loan.setReturnDate(LocalDateTime.now(clock));
 
         return loanRepository.save(loan);
     }
@@ -146,6 +148,15 @@ public class LoanService {
         return loanRepository.save(loan);
     }
 
+    @Transactional
+    public int markOverdueLoans() {
+        return loanRepository.markOverdueLoans(
+                LocalDateTime.now(clock),
+                LoanStatus.ACTIVE,
+                LoanStatus.LATE
+        );
+    }
+
     public Loan findOrFail(Long id) {
         return loanRepository.findById(id)
                 .orElseThrow(() -> new LoanNotFoundException(id));
@@ -170,6 +181,14 @@ public class LoanService {
         if (loan.getUser() == null || !Objects.equals(loan.getUser().getId(), authenticatedUserId)) {
             // Return the same response as a missing loan to avoid exposing another user's resources.
             throw new LoanNotFoundException(loanId);
+        }
+    }
+
+    private void validateReturnableStatus(Loan loan) {
+        if (loan.getStatus() != LoanStatus.ACTIVE && loan.getStatus() != LoanStatus.LATE) {
+            throw new BusinessException(
+                    String.format("Invalid status transition. Expected: ACTIVE or LATE, current: %s", loan.getStatus())
+            );
         }
     }
 
