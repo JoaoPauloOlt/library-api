@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 import static org.awaitility.Awaitility.await;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.datasource.hikari.maximum-pool-size=4")
 @ActiveProfiles("test")
 class LoanApprovalConcurrencyIntegrationTest {
 
