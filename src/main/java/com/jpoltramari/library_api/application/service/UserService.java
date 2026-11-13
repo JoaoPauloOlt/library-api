@@ -12,6 +12,7 @@ import com.jpoltramari.library_api.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ public class UserService {
         return repository.findAll(pageable);
     }
 
+    @PreAuthorize("hasAuthority('LOAN_CREATE_FOR_USER')")
     public Page<User> findActiveBorrowers(Pageable pageable) {
         return repository.findByStatus(UserStatus.ACTIVE, pageable);
     }

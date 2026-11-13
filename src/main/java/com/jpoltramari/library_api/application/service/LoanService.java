@@ -19,6 +19,7 @@ import com.jpoltramari.library_api.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +55,7 @@ public class LoanService {
     }
 
     @Transactional
+    @PreAuthorize("hasAuthority('LOAN_CREATE_FOR_USER')")
     public Loan createForUser(CreateLoanCommand command, Long userId) {
         User user = findUserForUpdate(userId);
         if (user.getStatus() != UserStatus.ACTIVE) {
