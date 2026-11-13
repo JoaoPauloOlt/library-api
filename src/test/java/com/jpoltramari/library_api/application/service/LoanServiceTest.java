@@ -180,6 +180,22 @@ class LoanServiceTest {
     }
 
     @Test
+    void shouldCancelStaleRequestWithoutReleasingCopyAlreadyLoanedByAnotherLoan() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        BookCopy copy = loan.getBookCopy();
+        copy.setStatus(CopyStatus.LOANED);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+        when(loanRepository.save(loan)).thenReturn(loan);
+
+        Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL"));
+
+        assertEquals(LoanStatus.CANCELED, result.getStatus());
+        assertEquals(CopyStatus.LOANED, copy.getStatus());
+        verify(bookCopyRepository, never()).save(any(BookCopy.class));
+    }
+
+    @Test
     void shouldRejectCancellationOfActiveLoan() {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));

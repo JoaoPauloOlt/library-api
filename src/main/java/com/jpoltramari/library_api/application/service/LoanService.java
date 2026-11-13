@@ -133,13 +133,15 @@ public class LoanService {
         validateStatus(loan, LoanStatus.REQUESTED);
 
         BookCopy copy = findCopyForUpdate(loan);
-        if (copy.getStatus() != CopyStatus.RESERVED) {
-            throw new BusinessException("Copy is not reserved for this loan.");
+        if (copy.getStatus() == CopyStatus.RESERVED) {
+            copy.setStatus(CopyStatus.AVAILABLE);
+            bookCopyRepository.save(copy);
+        } else if (copy.getStatus() != CopyStatus.AVAILABLE && copy.getStatus() != CopyStatus.LOANED) {
+            throw new BusinessException("Copy cannot be released from its current status.");
         }
 
-        copy.setStatus(CopyStatus.AVAILABLE);
-        bookCopyRepository.save(copy);
-
+        // A legacy duplicate request may point to a copy already loaned through another request.
+        // Cancel that stale request without making the other active loan's copy available.
         loan.setStatus(LoanStatus.CANCELED);
         return loanRepository.save(loan);
     }
