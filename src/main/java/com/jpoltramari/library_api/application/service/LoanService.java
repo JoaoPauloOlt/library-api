@@ -48,6 +48,7 @@ public class LoanService {
 
     @Transactional
     public Loan create(CreateLoanCommand command, Long userId) {
+        // Serialize requests from the same user before checking existing active loans.
         User user = userRepository.findByIdForUpdate(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
 
