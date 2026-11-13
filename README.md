@@ -146,7 +146,9 @@ The JWT secret is interpreted as literal UTF-8 text, not Base64, and must contai
 
 - Physical copies associated with books
 - Unique copy barcodes
-- Copy statuses such as `AVAILABLE`, `RESERVED`, `LOANED` and `MAINTENANCE`
+- Copy statuses include `AVAILABLE`, `RESERVED`, `LOANED`, `MAINTENANCE`, `LOST` and `DISCARDED`
+- Available quantity counts only copies with status `AVAILABLE` and `active = true`
+- `LOST` and `DISCARDED` copies are automatically deactivated; a lost copy can be restored, while a discarded copy cannot return to circulation
 - `RESERVED` is assigned when a loan request is created; `LOANED` is assigned only when the request is approved
 - `RESERVED` and `LOANED` are managed by the circulation lifecycle and cannot be assigned, released, deactivated or deleted through manual copy-management operations
 - Quantity creation during book registration
