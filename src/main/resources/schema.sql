@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS book_copies (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     CONSTRAINT chk_book_copy_status
-        CHECK (status IN ('AVAILABLE', 'LOANED', 'MAINTENANCE', 'LOST', 'DISCARDED')),
+        CHECK (status IN ('AVAILABLE', 'RESERVED', 'LOANED', 'MAINTENANCE', 'LOST', 'DISCARDED')),
     CONSTRAINT fk_book_copy_book
         FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE RESTRICT
 );

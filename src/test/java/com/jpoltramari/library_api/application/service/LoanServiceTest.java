@@ -33,45 +33,31 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class LoanServiceTest {
 
-    @Mock
-    private LoanRepository loanRepository;
-
-    @Mock
-    private BookRepository bookRepository;
-
-    @Mock
-    private BookCopyRepository bookCopyRepository;
-
-    @Mock
-    private UserRepository userRepository;
+    @Mock private LoanRepository loanRepository;
+    @Mock private BookRepository bookRepository;
+    @Mock private BookCopyRepository bookCopyRepository;
+    @Mock private UserRepository userRepository;
 
     private LoanService loanService;
 
     @BeforeEach
     void setUp() {
-        loanService = new LoanService(
-                loanRepository,
-                bookRepository,
-                bookCopyRepository,
-                userRepository
-        );
+        loanService = new LoanService(loanRepository, bookRepository, bookCopyRepository, userRepository);
     }
 
     @Test
-    void shouldCreateRequestedLoanWhenUserAndCopyAreAvailable() {
+    void shouldCreateRequestedLoanAndReserveSelectedCopy() {
         User user = new User();
         user.setId(1L);
-
         BookCopy copy = availableCopy();
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(bookRepository.existsById(10L)).thenReturn(true);
-        when(loanRepository.existsByUserIdAndBookCopyBookIdAndStatusIn(any(), any(), any()))
-                .thenReturn(false);
+        when(loanRepository.existsByUserIdAndBookCopyBookIdAndStatusIn(any(), any(), any())).thenReturn(false);
         when(bookCopyRepository.findFirstByBookIdAndActiveTrueAndStatusOrderByIdAsc(10L, CopyStatus.AVAILABLE))
                 .thenReturn(Optional.of(copy));
-        when(loanRepository.save(any(Loan.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(bookCopyRepository.save(copy)).thenReturn(copy);
+        when(loanRepository.save(any(Loan.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Loan result = loanService.create(new CreateLoanCommand(10L), 1L);
 
@@ -79,16 +65,18 @@ class LoanServiceTest {
         assertEquals(user, result.getUser());
         assertEquals(copy, result.getBookCopy());
         assertEquals(LoanStatus.REQUESTED, result.getStatus());
+        assertEquals(CopyStatus.RESERVED, copy.getStatus());
         assertNotNull(result.getRequestDate());
+        verify(bookCopyRepository).save(copy);
     }
 
     @Test
     void shouldApproveRequestedLoanAndActivateItImmediately() {
-        BookCopy copy = availableCopy();
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
-        loan.setBookCopy(copy);
+        BookCopy copy = loan.getBookCopy();
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
         when(loanRepository.save(loan)).thenReturn(loan);
         when(bookCopyRepository.save(copy)).thenReturn(copy);
 
@@ -99,26 +87,38 @@ class LoanServiceTest {
         assertNotNull(result.getApprovalDate());
         assertNotNull(result.getWithdrawableDate());
         assertNotNull(result.getDueDate());
+        verify(bookCopyRepository).findByIdForUpdate(10L);
         verify(bookCopyRepository).save(copy);
         verify(loanRepository).save(loan);
     }
 
     @Test
-    void shouldRejectApprovalWhenLoanIsNotRequested() {
-        Loan loan = loanWithStatus(LoanStatus.ACTIVE);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+    void shouldRejectApprovalWhenCopyIsNotReserved() {
+        Loan loan = loanWithStatus(LoanStatus.REQUESTED);
+        BookCopy copy = loan.getBookCopy();
+        copy.setStatus(CopyStatus.AVAILABLE);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
 
         assertThrows(BusinessException.class, () -> loanService.approve(1L));
+        verify(loanRepository, never()).save(any(Loan.class));
+    }
+
+    @Test
+    void shouldRejectApprovalWhenLoanIsNotRequested() {
+        Loan loan = loanWithStatus(LoanStatus.ACTIVE);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+
+        assertThrows(BusinessException.class, () -> loanService.approve(1L));
+        verify(bookCopyRepository, never()).findByIdForUpdate(any());
     }
 
     @Test
     void shouldReturnActiveLoanAndMakeCopyAvailable() {
-        BookCopy copy = availableCopy();
-        copy.setStatus(CopyStatus.LOANED);
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
-        loan.setBookCopy(copy);
-
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        BookCopy copy = loan.getBookCopy();
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
         when(loanRepository.save(loan)).thenReturn(loan);
         when(bookCopyRepository.save(copy)).thenReturn(copy);
 
@@ -132,15 +132,19 @@ class LoanServiceTest {
     }
 
     @Test
-    void shouldCancelRequestedLoanOwnedByAuthenticatedUser() {
+    void shouldCancelRequestedLoanOwnedByAuthenticatedUserAndReleaseCopy() {
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        BookCopy copy = loan.getBookCopy();
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+        when(bookCopyRepository.save(copy)).thenReturn(copy);
         when(loanRepository.save(loan)).thenReturn(loan);
 
         Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL"));
 
         assertEquals(LoanStatus.CANCELED, result.getStatus());
-        verify(loanRepository).save(loan);
+        assertEquals(CopyStatus.AVAILABLE, copy.getStatus());
+        verify(bookCopyRepository).save(copy);
     }
 
     @Test
@@ -149,10 +153,11 @@ class LoanServiceTest {
         User otherOwner = new User();
         otherOwner.setId(99L);
         loan.setUser(otherOwner);
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
-
-        assertThrows(LoanNotFoundException.class, () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        assertThrows(LoanNotFoundException.class,
+                () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        verify(bookCopyRepository, never()).findByIdForUpdate(any());
         verify(loanRepository, never()).save(any(Loan.class));
     }
 
@@ -162,36 +167,32 @@ class LoanServiceTest {
         User otherOwner = new User();
         otherOwner.setId(99L);
         loan.setUser(otherOwner);
-
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        BookCopy copy = loan.getBookCopy();
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
+        when(bookCopyRepository.save(copy)).thenReturn(copy);
         when(loanRepository.save(loan)).thenReturn(loan);
 
         Loan result = loanService.cancel(1L, principal(42L, "LOAN_CANCEL_ANY"));
 
         assertEquals(LoanStatus.CANCELED, result.getStatus());
-        verify(loanRepository).save(loan);
+        assertEquals(CopyStatus.AVAILABLE, copy.getStatus());
     }
 
     @Test
     void shouldRejectCancellationOfActiveLoan() {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(BusinessException.class, () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        verify(bookCopyRepository, never()).findByIdForUpdate(any());
     }
 
     private AuthenticatedPrincipal principal(Long userId, String... permissions) {
         List<String> grantedPermissions = List.of(permissions);
         return new AuthenticatedPrincipal() {
-            @Override
-            public Long getUserId() {
-                return userId;
-            }
-
-            @Override
-            public boolean hasPermission(String permission) {
-                return grantedPermissions.contains(permission);
-            }
+            @Override public Long getUserId() { return userId; }
+            @Override public boolean hasPermission(String permission) { return grantedPermissions.contains(permission); }
         };
     }
 
@@ -199,11 +200,15 @@ class LoanServiceTest {
         Loan loan = new Loan();
         loan.setId(1L);
         loan.setStatus(status);
-
         User owner = new User();
         owner.setId(42L);
         loan.setUser(owner);
-
+        BookCopy copy = availableCopy();
+        copy.setId(10L);
+        copy.setStatus(status == LoanStatus.REQUESTED ? CopyStatus.RESERVED
+                : status == LoanStatus.ACTIVE || status == LoanStatus.LATE ? CopyStatus.LOANED
+                : CopyStatus.AVAILABLE);
+        loan.setBookCopy(copy);
         return loan;
     }
 

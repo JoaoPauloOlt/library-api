@@ -2,16 +2,24 @@ package com.jpoltramari.library_api.domain.repository;
 
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.model.Loan;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface LoanRepository extends JpaRepository<Loan, Long> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select loan from Loan loan where loan.id = :id")
+    Optional<Loan> findByIdForUpdate(@Param("id") Long id);
+
     @EntityGraph(attributePaths = {"bookCopy", "bookCopy.book", "bookCopy.book.authors"})
     Page<Loan> findByUserId(Long userId, Pageable pageable);
     List<Loan> findByUserId(Long userId);

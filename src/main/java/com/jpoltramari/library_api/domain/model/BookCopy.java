@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
         name = "book_copies",
         indexes = @Index(name = "idx_book_copies_book_id", columnList = "book_id")
 )
-@Check(constraints = "status IN ('AVAILABLE', 'LOANED', 'MAINTENANCE', 'LOST', 'DISCARDED')")
+@Check(constraints = "status IN ('AVAILABLE', 'RESERVED', 'LOANED', 'MAINTENANCE', 'LOST', 'DISCARDED')")
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)

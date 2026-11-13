@@ -56,10 +56,14 @@ public class BookCopyService {
 
     @Transactional
     public BookCopy update(Long bookId, Long id, UpdateBookCopyCommand command) {
-        BookCopy copy = findOrFailForBook(bookId, id);
+        BookCopy copy = findOrFailForBookForUpdate(bookId, id);
 
         if (command.status() != null) {
+            validateManualStatusChange(copy, command.status());
             copy.setStatus(command.status());
+        }
+        if (Boolean.FALSE.equals(command.active()) && isManagedByLoanLifecycle(copy.getStatus())) {
+            throw new BusinessException("A reserved or loaned copy cannot be deactivated manually.");
         }
         if (command.location() != null) {
             copy.setLocation(command.location());
@@ -79,7 +83,8 @@ public class BookCopyService {
 
     @Transactional
     public BookCopy changeStatus(Long bookId, Long id, CopyStatus status) {
-        BookCopy copy = findOrFailForBook(bookId, id);
+        BookCopy copy = findOrFailForBookForUpdate(bookId, id);
+        validateManualStatusChange(copy, status);
         copy.setStatus(status);
         return repository.save(copy);
     }
@@ -98,6 +103,22 @@ public class BookCopyService {
         validateBookExists(bookId);
         return repository.findByIdAndBookId(id, bookId)
                 .orElseThrow(() -> new EntityNotFoundException("Book copy not found."));
+    }
+
+    private BookCopy findOrFailForBookForUpdate(Long bookId, Long id) {
+        validateBookExists(bookId);
+        return repository.findByIdAndBookIdForUpdate(id, bookId)
+                .orElseThrow(() -> new EntityNotFoundException("Book copy not found."));
+    }
+
+    private void validateManualStatusChange(BookCopy copy, CopyStatus targetStatus) {
+        if (isManagedByLoanLifecycle(copy.getStatus()) || isManagedByLoanLifecycle(targetStatus)) {
+            throw new BusinessException("RESERVED and LOANED statuses are managed by the loan lifecycle.");
+        }
+    }
+
+    private boolean isManagedByLoanLifecycle(CopyStatus status) {
+        return status == CopyStatus.RESERVED || status == CopyStatus.LOANED;
     }
 
     private void validateBookExists(Long bookId){

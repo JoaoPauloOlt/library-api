@@ -133,7 +133,7 @@ public class BookCopyController {
     public BookCopyModel changeStatus(
             @Parameter(description = "Book identifier", example = "1") @PathVariable @Positive Long bookId,
             @Parameter(description = "Physical copy identifier", example = "1") @PathVariable @Positive Long id,
-            @Parameter(in = ParameterIn.QUERY, description = "New physical copy status", example = "AVAILABLE") @RequestParam CopyStatus status) {
+            @Parameter(in = ParameterIn.QUERY, description = "New physical copy status. RESERVED and LOANED are managed by the loan lifecycle.", example = "MAINTENANCE") @RequestParam CopyStatus status) {
         return mapper.toModel(service.changeStatus(bookId, id, status));
     }
 

@@ -51,11 +51,14 @@ class ProductionSchemaInitializationTest {
                 """, Integer.class);
 
         assertThat(tableCount).isEqualTo(11);
-        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM groups", Integer.class))
-                .isEqualTo(3);
-        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM permissions", Integer.class))
-                .isGreaterThan(0);
-        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Integer.class))
-                .isZero();
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM groups", Integer.class)).isEqualTo(3);
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM permissions", Integer.class)).isGreaterThan(0);
+        assertThat(jdbcTemplate.queryForObject("SELECT COUNT(*) FROM users", Integer.class)).isZero();
+
+        String copyStatusConstraint = jdbcTemplate.queryForObject(
+                "SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'chk_book_copy_status'",
+                String.class
+        );
+        assertThat(copyStatusConstraint).contains("'RESERVED'");
     }
 }

@@ -66,6 +66,10 @@ public class LoanService {
             throw new BusinessException("Copy no longer available.");
         }
 
+        // The reservation is persisted in the same transaction as the request.
+        copy.setStatus(CopyStatus.RESERVED);
+        bookCopyRepository.save(copy);
+
         Loan loan = new Loan();
         loan.setUser(user);
         loan.setBookCopy(copy);
@@ -77,15 +81,16 @@ public class LoanService {
 
     @Transactional
     public Loan approve(Long id) {
-        Loan loan = findOrFail(id);
+        Loan loan = findForUpdateOrFail(id);
         validateStatus(loan, LoanStatus.REQUESTED);
 
-        BookCopy copy = loan.getBookCopy();
-        if (copy == null || !copy.isActive()) {
+        // Different loan rows may reference the same physical copy, so lock the copy too.
+        BookCopy copy = findCopyForUpdate(loan);
+        if (!copy.isActive()) {
             throw new BusinessException("The copy is inactive.");
         }
-        if (copy.getStatus() != CopyStatus.AVAILABLE) {
-            throw new BusinessException("Copy is not available.");
+        if (copy.getStatus() != CopyStatus.RESERVED) {
+            throw new BusinessException("Copy is not reserved for this loan.");
         }
 
         LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
@@ -102,10 +107,10 @@ public class LoanService {
 
     @Transactional
     public Loan returnBook(Long id) {
-        Loan loan = findOrFail(id);
+        Loan loan = findForUpdateOrFail(id);
         validateStatus(loan, LoanStatus.ACTIVE);
 
-        BookCopy copy = loan.getBookCopy();
+        BookCopy copy = findCopyForUpdate(loan);
         if (copy.getStatus() != CopyStatus.LOANED) {
             throw new BusinessException("Copy is not currently loaned");
         }
@@ -121,14 +126,19 @@ public class LoanService {
 
     @Transactional
     public Loan cancel(Long id, AuthenticatedPrincipal authenticatedPrincipal) {
-        Loan loan = findOrFail(id);
+        Loan loan = findForUpdateOrFail(id);
         if (!authenticatedPrincipal.hasPermission("LOAN_CANCEL_ANY")) {
             validateLoanOwnership(loan, id, authenticatedPrincipal.getUserId());
         }
+        validateStatus(loan, LoanStatus.REQUESTED);
 
-        if (loan.getStatus() == LoanStatus.ACTIVE || loan.getStatus() == LoanStatus.RETURNED) {
-            throw new BusinessException("Only requested loans can be cancelled.");
+        BookCopy copy = findCopyForUpdate(loan);
+        if (copy.getStatus() != CopyStatus.RESERVED) {
+            throw new BusinessException("Copy is not reserved for this loan.");
         }
+
+        copy.setStatus(CopyStatus.AVAILABLE);
+        bookCopyRepository.save(copy);
 
         loan.setStatus(LoanStatus.CANCELED);
         return loanRepository.save(loan);
@@ -137,6 +147,21 @@ public class LoanService {
     public Loan findOrFail(Long id) {
         return loanRepository.findById(id)
                 .orElseThrow(() -> new LoanNotFoundException(id));
+    }
+
+    private Loan findForUpdateOrFail(Long id) {
+        return loanRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new LoanNotFoundException(id));
+    }
+
+    private BookCopy findCopyForUpdate(Loan loan) {
+        if (loan.getBookCopy() == null || loan.getBookCopy().getId() == null) {
+            throw new BusinessException("The copy associated with this loan could not be found.");
+        }
+
+        Long copyId = loan.getBookCopy().getId();
+        return bookCopyRepository.findByIdForUpdate(copyId)
+                .orElseThrow(() -> new BusinessException("The copy associated with this loan could not be found."));
     }
 
     private void validateLoanOwnership(Loan loan, Long loanId, Long authenticatedUserId) {

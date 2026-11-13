@@ -92,7 +92,7 @@ JOIN (
     VALUES
         ('9780451524935', 'BC-1984-001', 'LOANED', 'A-01'),
         ('9780451524935', 'BC-1984-002', 'AVAILABLE', 'A-01'),
-        ('9780141439518', 'BC-PP-001', 'AVAILABLE', 'A-02'),
+        ('9780141439518', 'BC-PP-001', 'RESERVED', 'A-02'),
         ('9780141439518', 'BC-PP-002', 'AVAILABLE', 'A-02'),
         ('9780743273565', 'BC-GATSBY-001', 'AVAILABLE', 'B-01'),
         ('9780743273565', 'BC-GATSBY-002', 'AVAILABLE', 'B-01'),
@@ -143,7 +143,7 @@ WHERE u.email = 'user@library.com'
         AND l.book_copy_id = bc.id
   );
 
--- Requested loan scenario; the copy remains available until approval.
+-- Requested loan scenario; the copy is reserved when the request is created.
 INSERT INTO loans (
     user_id, book_copy_id, status, request_date,
     approval_date, withdrawable_date, due_date, return_date
