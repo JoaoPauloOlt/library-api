@@ -4,7 +4,9 @@ import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
+import com.jpoltramari.library_api.domain.exception.BookNotFoundException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.domain.exception.UserNotFoundException;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
@@ -88,6 +90,27 @@ class LoanServiceForUserTest {
                 () -> service.createForUser(new CreateLoanCommand(10L), 42L));
 
         verify(bookRepository, never()).existsById(any());
+        verify(loanRepository, never()).save(any(Loan.class));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBorrowerDoesNotExist() {
+        when(userRepository.findByIdForUpdate(42L)).thenReturn(Optional.empty());
+
+        assertThrows(UserNotFoundException.class,
+                () -> service.createForUser(new CreateLoanCommand(10L), 42L));
+
+        verify(bookRepository, never()).existsById(any());
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenBookDoesNotExist() {
+        when(userRepository.findByIdForUpdate(42L)).thenReturn(Optional.of(activeBorrower()));
+        when(bookRepository.existsById(10L)).thenReturn(false);
+
+        assertThrows(BookNotFoundException.class,
+                () -> service.createForUser(new CreateLoanCommand(10L), 42L));
+
         verify(loanRepository, never()).save(any(Loan.class));
     }
 
