@@ -171,9 +171,10 @@ class CoverageExpansionTest {
                 CopyStatus.AVAILABLE
         )).thenReturn(Optional.of(copy));
 
+        CreateLoanCommand command = new CreateLoanCommand(10L);
         assertThrows(
                 BusinessException.class,
-                () -> service.createForUser(new CreateLoanCommand(10L), 42L)
+                () -> service.createForUser(command, 42L)
         );
 
         verify(bookCopyRepository, never()).save(any(BookCopy.class));
