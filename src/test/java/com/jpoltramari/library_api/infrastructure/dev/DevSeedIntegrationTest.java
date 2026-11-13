@@ -60,7 +60,7 @@ class DevSeedIntegrationTest {
         Set<String> userPermissions = permissionNames("user@library.com");
 
         assertThat(adminPermissions)
-                .contains("USER_ADMIN", "BOOK_DELETE", "LOAN_RETURN")
+                .contains("USER_ADMIN", "BOOK_DELETE", "LOAN_RETURN", "LOAN_CANCEL_ANY")
                 .doesNotContain("LOAN_WITHDRAW");
 
         assertThat(librarianPermissions)
