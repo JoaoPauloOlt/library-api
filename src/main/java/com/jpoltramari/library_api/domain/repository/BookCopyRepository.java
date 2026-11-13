@@ -5,6 +5,8 @@ import com.jpoltramari.library_api.domain.model.BookCopy;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +18,10 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
     List<BookCopy> findAllByBookId(Long bookId);
     Optional<BookCopy> findByIdAndBookId(Long id, Long bookId);
     boolean existsByBarcode(String barcode);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select copy from BookCopy copy where copy.id = :id")
+    Optional<BookCopy> findByIdForUpdate(@Param("id") Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<BookCopy> findFirstByBookIdAndActiveTrueAndStatusOrderByIdAsc(Long bookId, CopyStatus status);

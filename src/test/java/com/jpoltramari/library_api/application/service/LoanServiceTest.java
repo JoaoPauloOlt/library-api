@@ -88,11 +88,13 @@ class LoanServiceTest {
     @Test
     void shouldApproveRequestedLoanAndActivateItImmediately() {
         BookCopy copy = availableCopy();
+        copy.setId(10L);
         copy.setStatus(CopyStatus.RESERVED);
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
         loan.setBookCopy(copy);
 
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
         when(loanRepository.save(loan)).thenReturn(loan);
         when(bookCopyRepository.save(copy)).thenReturn(copy);
 
@@ -110,9 +112,11 @@ class LoanServiceTest {
     @Test
     void shouldRejectApprovalWhenCopyIsNotReserved() {
         BookCopy copy = availableCopy();
+        copy.setId(10L);
         Loan loan = loanWithStatus(LoanStatus.REQUESTED);
         loan.setBookCopy(copy);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
+        when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
 
         assertThrows(BusinessException.class, () -> loanService.approve(1L));
         verify(loanRepository, never()).save(any(Loan.class));
@@ -121,7 +125,7 @@ class LoanServiceTest {
     @Test
     void shouldRejectApprovalWhenLoanIsNotRequested() {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(BusinessException.class, () -> loanService.approve(1L));
     }
