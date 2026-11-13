@@ -253,6 +253,71 @@ class MapperCoverageTest {
         assertThat(userMapper.mapStatus(null)).isNull();
     }
 
+    @Test
+    void shouldHandleNullMapperInputsAndCompletePartialUpdates() {
+        assertThat(authorMapper.toModel(null)).isNull();
+        assertThat(authorMapper.toEntity(null)).isNull();
+        Author author = new Author();
+        author.setName("Original name");
+        author.setNationality("British");
+        authorMapper.update(null, author);
+        assertThat(author.getName()).isEqualTo("Original name");
+        authorMapper.update(
+                new com.jpoltramari.library_api.api.dto.author.AuthorUpdateInput("Updated name", "Canadian"),
+                author
+        );
+        assertThat(author.getName()).isEqualTo("Updated name");
+        assertThat(author.getNationality()).isEqualTo("Canadian");
+
+        assertThat(bookMapper.toModel(null)).isNull();
+        assertThat(bookMapper.toEntity(null)).isNull();
+        Book book = new Book();
+        bookMapper.update(null, book);
+        bookMapper.update(
+                new BookUpdateInput(
+                        "9780451524935",
+                        "Updated title",
+                        Genre.CLASSIC,
+                        "Updated description",
+                        "https://example.com/updated-cover.jpg",
+                        List.of(2L)
+                ),
+                book
+        );
+        assertThat(book.getIsbn()).isEqualTo("9780451524935");
+        assertThat(book.getTitle()).isEqualTo("Updated title");
+        assertThat(book.getGenre()).isEqualTo(Genre.CLASSIC);
+        assertThat(book.getDescription()).isEqualTo("Updated description");
+        assertThat(book.getCoverUrl()).isEqualTo("https://example.com/updated-cover.jpg");
+
+        Book withoutAuthors = new Book();
+        withoutAuthors.setAuthors(null);
+        assertThat(bookMapper.toModel(withoutAuthors).authors()).isNull();
+
+        assertThat(copyMapper.toModel(null)).isNull();
+        assertThat(copyMapper.toModel(new BookCopy()).bookId()).isNull();
+        Book withoutIdentity = new Book();
+        BookCopy copyWithoutBookMetadata = new BookCopy();
+        copyWithoutBookMetadata.setBook(withoutIdentity);
+        BookCopyModel copyModel = copyMapper.toModel(copyWithoutBookMetadata);
+        assertThat(copyModel.bookId()).isNull();
+        assertThat(copyModel.bookTitle()).isNull();
+
+        assertThat(userMapper.toModel(null)).isNull();
+        assertThat(userMapper.toEntity(null)).isNull();
+        User user = new User();
+        userMapper.update(null, user);
+        userMapper.update(
+                new UserInput("Updated user", "updated@example.com", "11988887777", "NewPassword123!"),
+                user
+        );
+        assertThat(user.getName()).isEqualTo("Updated user");
+        assertThat(user.getEmail()).isEqualTo("updated@example.com");
+        assertThat(user.getTelephone()).isEqualTo("11988887777");
+
+        assertThat(loanMapper.toModel(null)).isNull();
+    }
+
     private BookCopy copy(Long id, Book book, CopyStatus status, boolean active) {
         BookCopy copy = new BookCopy();
         copy.setId(id);
