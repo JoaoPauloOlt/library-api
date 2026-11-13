@@ -2,17 +2,14 @@ package com.jpoltramari.library_api.infrastructure.security.jwt;
 
 import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.model.User;
-import com.jpoltramari.library_api.domain.repository.RefreshTokenRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.domain.repository.UserSecuritySnapshotView;
 import com.jpoltramari.library_api.infrastructure.security.JwtService;
-import com.jpoltramari.library_api.application.service.TokenVersionService;
 import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
 import com.jpoltramari.library_api.infrastructure.security.snapshot.CachedUserSecuritySnapshotAdapter;
 import com.jpoltramari.library_api.application.port.security.UserSecuritySnapshotPort;
 import com.jpoltramari.library_api.application.result.auth.UserSecuritySnapshot;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.mock.env.MockEnvironment;
 import io.jsonwebtoken.Jwts;
 
@@ -23,7 +20,10 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 class JwtInfrastructureCoverageTest {
 
@@ -202,7 +202,8 @@ class JwtInfrastructureCoverageTest {
 
         JwtProperties blank = properties();
         blank.setSecret(" ");
-        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(blank, new MockEnvironment()), "validate"))
+        JwtSecretValidator blankValidator = new JwtSecretValidator(blank, new MockEnvironment());
+        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(blankValidator, "validate"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessage("jwt.secret must be configured");
 
@@ -214,7 +215,8 @@ class JwtInfrastructureCoverageTest {
 
         JwtProperties shortKey = properties();
         shortKey.setSecret("short-secret");
-        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(new JwtSecretValidator(shortKey, new MockEnvironment()), "validate"))
+        JwtSecretValidator shortKeyValidator = new JwtSecretValidator(shortKey, new MockEnvironment());
+        assertThatThrownBy(() -> org.springframework.test.util.ReflectionTestUtils.invokeMethod(shortKeyValidator, "validate"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("at least 32 UTF-8 bytes");
     }
