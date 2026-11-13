@@ -354,6 +354,8 @@ The generated JaCoCo report is available at:
 target/site/jacoco/
 ```
 
+- SonarCloud analysis uses the Maven scanner and blocks CI until the Quality Gate passes.
+
 ## API documentation
 
 When running locally:
