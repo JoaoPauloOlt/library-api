@@ -1,7 +1,6 @@
 package com.jpoltramari.library_api.api.controller;
 
 import com.jpoltramari.library_api.LibraryApiApplication;
-import com.jpoltramari.library_api.api.dto.auth.LoginResponse;
 import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
 import com.jpoltramari.library_api.application.service.AuthService;
 import org.junit.jupiter.api.Test;
