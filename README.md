@@ -146,7 +146,8 @@ The JWT secret is interpreted as literal UTF-8 text, not Base64, and must contai
 
 - Physical copies associated with books
 - Unique copy barcodes
-- Copy statuses such as `AVAILABLE`, `LOANED` and `MAINTENANCE`
+- Copy statuses such as `AVAILABLE`, `RESERVED`, `LOANED` and `MAINTENANCE`
+- `RESERVED` is assigned when a loan request is created; `LOANED` is assigned only when the request is approved
 - Quantity creation during book registration
 - Total and available quantity calculation
 - Copy location and active-state management
@@ -182,6 +183,8 @@ Each environment uses a different schema strategy:
 The production profile never asks Hibernate to create or update tables. On a new production database, `schema.sql` provisions the initial structure before JPA starts. On an existing database, the idempotent DDL skips existing tables and does not delete application data.
 
 Flyway and its migration history are not used. `schema.sql` is an initial bootstrap, not a versioned migration system. Future production schema changes must be delivered through reviewed, manually executed SQL scripts with an explicit execution record and backup/rollback plan. Do not use `ddl-auto=update` in production.
+
+The copy-reservation change adds `RESERVED` to the `book_copies.status` constraint. For an existing production database, take a backup and manually execute `src/main/resources/db/manual-migrations/2026-11-13-reserve-book-copies.sql` before deploying the corresponding application version. The `dev` profile applies this idempotent script automatically; fresh databases already receive the updated constraint from `schema.sql`.
 
 ## Configuration
 
