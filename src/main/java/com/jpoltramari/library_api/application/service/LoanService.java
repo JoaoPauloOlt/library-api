@@ -81,11 +81,12 @@ public class LoanService {
 
     @Transactional
     public Loan approve(Long id) {
-        Loan loan = findOrFail(id);
+        Loan loan = findForUpdateOrFail(id);
         validateStatus(loan, LoanStatus.REQUESTED);
 
-        BookCopy copy = loan.getBookCopy();
-        if (copy == null || !copy.isActive()) {
+        // Lock the physical copy as well: distinct legacy loan rows can reference the same copy.
+        BookCopy copy = findCopyForUpdate(loan);
+        if (!copy.isActive()) {
             throw new BusinessException("The copy is inactive.");
         }
         if (copy.getStatus() != CopyStatus.RESERVED) {
@@ -141,6 +142,21 @@ public class LoanService {
     public Loan findOrFail(Long id) {
         return loanRepository.findById(id)
                 .orElseThrow(() -> new LoanNotFoundException(id));
+    }
+
+    private Loan findForUpdateOrFail(Long id) {
+        return loanRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new LoanNotFoundException(id));
+    }
+
+    private BookCopy findCopyForUpdate(Loan loan) {
+        if (loan.getBookCopy() == null || loan.getBookCopy().getId() == null) {
+            throw new BusinessException("The copy associated with this loan could not be found.");
+        }
+
+        Long copyId = loan.getBookCopy().getId();
+        return bookCopyRepository.findByIdForUpdate(copyId)
+                .orElseThrow(() -> new BusinessException("The copy associated with this loan could not be found."));
     }
 
     private void validateLoanOwnership(Loan loan, Long loanId, Long authenticatedUserId) {

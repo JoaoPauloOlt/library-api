@@ -40,7 +40,7 @@ class LoanServiceValidationTest {
     @Test
     void shouldRejectApprovalWhenLoanIsNotRequested() {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
-        when(loanRepository.findById(1L)).thenReturn(Optional.of(loan));
+        when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
         assertThrows(BusinessException.class, () -> service.approve(1L));
     }
