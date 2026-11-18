@@ -5,6 +5,7 @@ import com.jpoltramari.library_api.domain.model.Fine;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.FineRepository;
+import com.jpoltramari.library_api.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +36,9 @@ class FineServiceTest {
     @Mock
     private OutboxEventService outboxEventService;
 
+    @Mock
+    private UserRepository userRepository;
+
     private FineService service;
 
     @BeforeEach
@@ -43,6 +47,7 @@ class FineServiceTest {
                 fineRepository,
                 new FineCalculationService(),
                 outboxEventService,
+                userRepository,
                 Clock.fixed(NOW, ZoneOffset.UTC)
         );
     }
