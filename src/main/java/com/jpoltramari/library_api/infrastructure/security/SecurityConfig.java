@@ -78,7 +78,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/loans/*/return").hasAuthority("LOAN_RETURN")
                         .requestMatchers(HttpMethod.PUT, "/loans/*/cancel").hasAnyAuthority("LOAN_CANCEL", "LOAN_CANCEL_ANY")
 
-                        .requestMatchers(HttpMethod.GET, "/fines/my").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/fines/my").hasAuthority("FINE_READ_OWN")
                         .requestMatchers(HttpMethod.GET, "/fines").hasAuthority("FINE_READ_ALL")
                         .requestMatchers(HttpMethod.GET, "/fines/*").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/fines/*/waive").hasAuthority("FINE_WAIVE")
