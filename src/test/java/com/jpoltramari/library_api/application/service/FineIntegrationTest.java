@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -146,6 +147,7 @@ class FineIntegrationTest {
     }
 
     @Test
+    @WithMockUser(authorities = "FINE_WAIVE")
     void shouldWaiveOpenFineAndPersistAuditAndOutboxEvent() throws Exception {
         Loan loan = saveLoan(LocalDateTime.parse("2026-11-15T12:00:00"));
         Fine fine = fineService.createForReturnedLoan(
@@ -172,6 +174,7 @@ class FineIntegrationTest {
     }
 
     @Test
+    @WithMockUser(authorities = "FINE_WAIVE")
     void shouldRejectWaivingFineMoreThanOnce() {
         Loan loan = saveLoan(LocalDateTime.parse("2026-11-15T12:00:00"));
         Fine fine = fineService.createForReturnedLoan(
