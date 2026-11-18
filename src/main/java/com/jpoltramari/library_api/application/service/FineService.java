@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class FineService {
     private final FineRepository fineRepository;
     private final FineCalculationService calculationService;
     private final OutboxEventService outboxEventService;
+    private final Clock clock;
 
     /**
      * Creates the fine in the same transaction as the loan return.
@@ -57,7 +59,7 @@ public class FineService {
         fine.setDailyRate(calculationService.getDailyRate());
         fine.setAmount(calculationService.calculateAmount(lateDays));
         fine.setStatus(FineStatus.OPEN);
-        fine.setCreatedAt(Instant.now());
+        fine.setCreatedAt(clock.instant());
 
         Fine saved = fineRepository.save(fine);
         outboxEventService.record(
