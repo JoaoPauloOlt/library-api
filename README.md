@@ -34,6 +34,8 @@ The main capabilities are:
 | JWT / JJWT | Access and refresh tokens |
 | Spring Data JPA / Hibernate | Persistence and ORM |
 | PostgreSQL | Relational database |
+| RabbitMQ | Asynchronous messaging broker |
+| Spring AMQP | RabbitMQ integration and messaging abstractions |
 | MapStruct | Entity/DTO mapping at the API boundary |
 | Springdoc OpenAPI | Swagger/OpenAPI documentation |
 | Maven | Build and dependency management |
@@ -70,7 +72,7 @@ src/main/java/com/jpoltramari/library_api/
 │   └── spec/           # Dynamic query specifications
 │
 └── infrastructure/
-    ├── config/         # Technical configuration
+    ├── config/         # Technical configuration, including shared RabbitMQ topology
     ├── security/       # Authentication, JWT and authorization
     │   ├── filter/
     │   ├── jwt/
@@ -447,3 +449,17 @@ The project is being developed incrementally, prioritizing:
 - Production-ready configuration
 
 The architecture is intentionally evolved according to concrete problems identified in the codebase rather than by introducing patterns or abstractions without a practical need.
+
+
+## Messaging infrastructure
+
+RabbitMQ is provided as shared infrastructure for future application modules. The initial topology declares two durable topic exchanges:
+
+- `library.events`: exchange for application domain events.
+- `library.events.dlx`: dead-letter exchange for messages rejected or exhausted by consumers.
+
+Business modules own their queues, routing keys, bindings and consumer behavior. This avoids coupling the shared messaging layer to a single feature.
+
+The development Compose stack exposes the AMQP port and the management UI only on loopback. The production Compose stack keeps RabbitMQ internal to the Compose network and requires dedicated credentials through `.env.prod`.
+
+The test profile disables the messaging topology so the automated test suite remains independent of an external broker. Publishing, consumers, transactional outbox, retries and dead-letter queue bindings will be introduced with the modules that need them; the current infrastructure commit does not make business operations asynchronous.
