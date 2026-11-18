@@ -68,7 +68,7 @@ class DevSeedIntegrationTest {
                 .doesNotContain("USER_ADMIN", "LOAN_WITHDRAW", "LOAN_CANCEL");
 
         assertThat(userPermissions)
-                .containsExactlyInAnyOrder("BOOK_READ", "AUTHOR_READ", "LOAN_CREATE", "LOAN_CANCEL");
+                .containsExactlyInAnyOrder("BOOK_READ", "AUTHOR_READ", "LOAN_CREATE", "LOAN_CANCEL", "FINE_READ_OWN");
     }
 
     @Test
