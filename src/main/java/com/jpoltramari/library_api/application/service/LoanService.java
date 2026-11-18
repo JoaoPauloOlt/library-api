@@ -27,6 +27,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +40,8 @@ public class LoanService {
     private final BookCopyRepository bookCopyRepository;
     private final UserRepository userRepository;
     private final Clock clock;
+    private final FineService fineService;
+    private final OutboxEventService outboxEventService;
 
     public Page<Loan> findAll(Pageable pageable) {
         return loanRepository.findAll(pageable);
@@ -138,10 +141,24 @@ public class LoanService {
         copy.setStatus(CopyStatus.AVAILABLE);
         bookCopyRepository.save(copy);
 
+        LocalDateTime returnedAt = LocalDateTime.now(clock);
         loan.setStatus(LoanStatus.RETURNED);
-        loan.setReturnDate(LocalDateTime.now(clock));
+        loan.setReturnDate(returnedAt);
 
-        return loanRepository.save(loan);
+        Loan savedLoan = loanRepository.save(loan);
+        fineService.createForReturnedLoan(savedLoan, returnedAt);
+        outboxEventService.record(
+                "LOAN",
+                savedLoan.getId().toString(),
+                "loan.returned",
+                Map.of(
+                        "loanId", savedLoan.getId(),
+                        "userId", savedLoan.getUser().getId(),
+                        "bookCopyId", copy.getId(),
+                        "returnedAt", returnedAt
+                )
+        );
+        return savedLoan;
     }
 
     @Transactional
