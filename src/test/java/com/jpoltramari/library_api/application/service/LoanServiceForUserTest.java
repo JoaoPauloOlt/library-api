@@ -86,8 +86,9 @@ class LoanServiceForUserTest {
         borrower.setStatus(UserStatus.INACTIVE);
         when(userRepository.findByIdForUpdate(42L)).thenReturn(Optional.of(borrower));
 
+        CreateLoanCommand command = new CreateLoanCommand(10L);
         assertThrows(BusinessException.class,
-                () -> service.createForUser(new CreateLoanCommand(10L), 42L));
+                () -> service.createForUser(command, 42L));
 
         verify(bookRepository, never()).existsById(any());
         verify(loanRepository, never()).save(any(Loan.class));
@@ -97,8 +98,9 @@ class LoanServiceForUserTest {
     void shouldReturnNotFoundWhenBorrowerDoesNotExist() {
         when(userRepository.findByIdForUpdate(42L)).thenReturn(Optional.empty());
 
+        CreateLoanCommand command = new CreateLoanCommand(10L);
         assertThrows(UserNotFoundException.class,
-                () -> service.createForUser(new CreateLoanCommand(10L), 42L));
+                () -> service.createForUser(command, 42L));
 
         verify(bookRepository, never()).existsById(any());
     }
@@ -108,8 +110,9 @@ class LoanServiceForUserTest {
         when(userRepository.findByIdForUpdate(42L)).thenReturn(Optional.of(activeBorrower()));
         when(bookRepository.existsById(10L)).thenReturn(false);
 
+        CreateLoanCommand command = new CreateLoanCommand(10L);
         assertThrows(BookNotFoundException.class,
-                () -> service.createForUser(new CreateLoanCommand(10L), 42L));
+                () -> service.createForUser(command, 42L));
 
         verify(loanRepository, never()).save(any(Loan.class));
     }
