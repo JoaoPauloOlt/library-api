@@ -54,6 +54,12 @@ class LoanServiceTest {
 
     private LoanService loanService;
 
+    @Mock
+    private FineService fineService;
+
+    @Mock
+    private OutboxEventService outboxEventService;
+
     @BeforeEach
     void setUp() {
         loanService = new LoanService(
@@ -61,7 +67,9 @@ class LoanServiceTest {
                 bookRepository,
                 bookCopyRepository,
                 userRepository,
-                FIXED_CLOCK
+                FIXED_CLOCK,
+                fineService,
+                outboxEventService
         );
     }
 
