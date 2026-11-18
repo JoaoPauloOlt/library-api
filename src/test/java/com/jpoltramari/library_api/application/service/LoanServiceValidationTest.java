@@ -71,7 +71,8 @@ class LoanServiceValidationTest {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
-        assertThrows(BusinessException.class, () -> service.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        AuthenticatedPrincipal principal = principal(42L, "LOAN_CANCEL");
+        assertThrows(BusinessException.class, () -> service.cancel(1L, principal));
     }
 
     @Test
