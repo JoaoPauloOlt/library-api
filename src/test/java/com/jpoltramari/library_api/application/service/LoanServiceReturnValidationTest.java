@@ -34,6 +34,8 @@ class LoanServiceReturnValidationTest {
     @Mock private BookRepository bookRepository;
     @Mock private BookCopyRepository bookCopyRepository;
     @Mock private UserRepository userRepository;
+    @Mock private FineService fineService;
+    @Mock private OutboxEventService outboxEventService;
 
     private LoanService service;
 
@@ -44,7 +46,9 @@ class LoanServiceReturnValidationTest {
                 bookRepository,
                 bookCopyRepository,
                 userRepository,
-                Clock.fixed(Instant.parse("2026-11-13T10:00:00Z"), ZoneOffset.UTC)
+                Clock.fixed(Instant.parse("2026-11-13T10:00:00Z"), ZoneOffset.UTC),
+                fineService,
+                outboxEventService
         );
     }
 
