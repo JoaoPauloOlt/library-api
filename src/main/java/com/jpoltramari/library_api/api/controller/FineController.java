@@ -16,6 +16,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,7 @@ public class FineController {
  private final FineService fineService;
 
  @GetMapping("/my")
+ @PreAuthorize("hasAuthority('FINE_READ_OWN')")
  public PageResponse<FineModel> findMyFines(
   @RequestParam(required=false) FineStatus status,
   @ParameterObject @PageableDefault(size=20,sort="createdAt") Pageable pageable,
