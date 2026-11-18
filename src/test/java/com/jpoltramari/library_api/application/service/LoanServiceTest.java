@@ -286,7 +286,8 @@ class LoanServiceTest {
 
         when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
-        assertThrows(LoanNotFoundException.class, () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        AuthenticatedPrincipal principal = principal(42L, "LOAN_CANCEL");
+        assertThrows(LoanNotFoundException.class, () -> loanService.cancel(1L, principal));
         verify(bookCopyRepository, never()).findByIdForUpdate(any());
         verify(loanRepository, never()).save(any(Loan.class));
     }
@@ -359,8 +360,8 @@ class LoanServiceTest {
         when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
         when(bookCopyRepository.findByIdForUpdate(10L)).thenReturn(Optional.of(copy));
 
-        assertThrows(BusinessException.class,
-                () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        AuthenticatedPrincipal principal = principal(42L, "LOAN_CANCEL");
+        assertThrows(BusinessException.class, () -> loanService.cancel(1L, principal));
         verify(loanRepository, never()).save(any(Loan.class));
     }
 
@@ -369,7 +370,8 @@ class LoanServiceTest {
         Loan loan = loanWithStatus(LoanStatus.ACTIVE);
         when(loanRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(loan));
 
-        assertThrows(BusinessException.class, () -> loanService.cancel(1L, principal(42L, "LOAN_CANCEL")));
+        AuthenticatedPrincipal principal = principal(42L, "LOAN_CANCEL");
+        assertThrows(BusinessException.class, () -> loanService.cancel(1L, principal));
     }
 
     private AuthenticatedPrincipal principal(Long userId, String... permissions) {
