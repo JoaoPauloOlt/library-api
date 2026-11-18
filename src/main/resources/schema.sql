@@ -153,3 +153,27 @@ CREATE INDEX IF NOT EXISTS idx_outbox_status_available
 
 CREATE INDEX IF NOT EXISTS idx_outbox_aggregate
     ON outbox_events(aggregate_type, aggregate_id);
+
+
+CREATE TABLE IF NOT EXISTS fines (
+    id BIGSERIAL PRIMARY KEY,
+    loan_id BIGINT NOT NULL UNIQUE,
+    user_id BIGINT NOT NULL,
+    late_days INTEGER NOT NULL,
+    daily_rate NUMERIC(12, 2) NOT NULL,
+    amount NUMERIC(12, 2) NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    waived_at TIMESTAMPTZ,
+    waived_by BIGINT,
+    waiver_reason VARCHAR(500),
+    CONSTRAINT chk_fines_late_days CHECK (late_days > 0),
+    CONSTRAINT chk_fines_daily_rate CHECK (daily_rate > 0),
+    CONSTRAINT chk_fines_amount CHECK (amount > 0),
+    CONSTRAINT chk_fines_status CHECK (status IN ('OPEN', 'WAIVED')),
+    CONSTRAINT fk_fines_loan FOREIGN KEY (loan_id) REFERENCES loans(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_fines_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_fines_waived_by FOREIGN KEY (waived_by) REFERENCES users(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX IF NOT EXISTS idx_fines_user_status ON fines(user_id, status);
