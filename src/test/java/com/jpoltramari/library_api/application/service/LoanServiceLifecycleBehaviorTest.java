@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
+import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
@@ -40,6 +41,12 @@ class LoanServiceLifecycleBehaviorTest {
 
     @Mock
     private Clock clock;
+
+    @Mock
+    private FineService fineService;
+
+    @Mock
+    private OutboxEventService outboxEventService;
 
     @InjectMocks
     private LoanService loanService;
@@ -80,6 +87,9 @@ class LoanServiceLifecycleBehaviorTest {
         Loan loan = new Loan();
         loan.setId(11L);
         loan.setStatus(LoanStatus.LATE);
+        User user = new User();
+        user.setId(42L);
+        loan.setUser(user);
 
         BookCopy copy = new BookCopy();
         copy.setId(11L);
@@ -105,6 +115,9 @@ class LoanServiceLifecycleBehaviorTest {
         Loan loan = new Loan();
         loan.setId(10L);
         loan.setStatus(LoanStatus.ACTIVE);
+        User user = new User();
+        user.setId(42L);
+        loan.setUser(user);
 
         BookCopy copy = new BookCopy();
         copy.setId(10L);
