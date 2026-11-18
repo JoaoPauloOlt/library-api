@@ -49,7 +49,7 @@ class OutboxPublisherSchedulerTest {
             CorrelationData correlation = invocation.getArgument(3);
             correlation.getFuture().complete(new CorrelationData.Confirm(true, null));
             return null;
-        }).when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(), any(CorrelationData.class));
+        }).when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class), any(CorrelationData.class));
 
         scheduler.publishPendingEvents();
 
@@ -67,7 +67,7 @@ class OutboxPublisherSchedulerTest {
             CorrelationData correlation = invocation.getArgument(3);
             correlation.getFuture().complete(new CorrelationData.Confirm(false, "broker unavailable"));
             return null;
-        }).when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(), any(CorrelationData.class));
+        }).when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class), any(CorrelationData.class));
 
         scheduler.publishPendingEvents();
 
@@ -84,7 +84,7 @@ class OutboxPublisherSchedulerTest {
         when(repository.findAvailableForUpdate(eq(OutboxStatus.PENDING), any(Instant.class), any(Pageable.class)))
                 .thenReturn(List.of(event));
         doThrow(new IllegalStateException("connection refused"))
-                .when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(), any(CorrelationData.class));
+                .when(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class), any(CorrelationData.class));
 
         scheduler.publishPendingEvents();
 
