@@ -16,6 +16,7 @@ VALUES
     ('BOOK_COPY_UPDATE'),
     ('BOOK_COPY_DELETE'),
     ('LOAN_CREATE'),
+    ('LOAN_CREATE_FOR_USER'),
     ('LOAN_APPROVE'),
     ('LOAN_CANCEL'),
     ('LOAN_CANCEL_ANY'),
@@ -55,7 +56,7 @@ CROSS JOIN permissions p
 WHERE g.name = 'ADMIN'
 ON CONFLICT DO NOTHING;
 
--- LIBRARIAN can manage the catalog, copies and circulation.
+-- LIBRARIAN can manage the catalog, physical copies and staff circulation.
 INSERT INTO group_permissions (group_id, permission_id)
 SELECT g.id, p.id
 FROM groups g
@@ -74,6 +75,7 @@ JOIN permissions p
         'BOOK_COPY_UPDATE',
         'BOOK_COPY_DELETE',
         'LOAN_CREATE',
+        'LOAN_CREATE_FOR_USER',
         'LOAN_APPROVE',
         'LOAN_CANCEL_ANY',
         'LOAN_RETURN',

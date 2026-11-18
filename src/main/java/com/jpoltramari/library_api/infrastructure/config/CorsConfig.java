@@ -34,7 +34,8 @@ public class CorsConfig {
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "DELETE", "OPTIONS"
         ));
-        config.setAllowCredentials(true);
+        // Authentication uses an explicit Bearer token header, not cookies or browser-managed credentials.
+        config.setAllowCredentials(false);
         config.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source =

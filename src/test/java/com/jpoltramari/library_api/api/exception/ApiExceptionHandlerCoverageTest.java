@@ -1,6 +1,9 @@
 package com.jpoltramari.library_api.api.exception;
 
 import com.jpoltramari.library_api.domain.exception.EntityInUseException;
+import com.jpoltramari.library_api.domain.model.Book;
+import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.data.util.TypeInformation;
 import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
@@ -100,6 +103,22 @@ class ApiExceptionHandlerCoverageTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
         assertThat(response.getBody().getErrorCode()).isEqualTo("DATABASE_ERROR");
+    }
+
+    @Test
+    void shouldHandleUnknownSortPropertyWithEntityType() {
+        ApiExceptionHandler handler = handler(false);
+        PropertyReferenceException exception = new PropertyReferenceException(
+                "unknownField",
+                TypeInformation.of(Book.class),
+                java.util.List.of()
+        );
+
+        ResponseEntity<ErrorResponse> response = handler.handlePropertyReference(exception, request());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getErrorCode()).isEqualTo("INVALID_PROPERTY");
+        assertThat(response.getBody().getDetail()).contains("unknownField", "Book");
     }
 
     private ApiExceptionHandler handler(boolean exposeDetails) {

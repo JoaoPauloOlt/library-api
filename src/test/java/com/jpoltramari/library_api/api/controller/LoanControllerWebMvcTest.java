@@ -6,7 +6,6 @@ import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.application.service.LoanService;
 import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
-import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -236,6 +235,32 @@ class LoanControllerWebMvcTest {
         mockMvc.perform(put("/loans/0/cancel")
                         .with(user(principal(42L, "LOAN_CANCEL"))))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldApproveLoanWithDedicatedPermission() throws Exception {
+        Loan loan = new Loan();
+        when(service.approve(10L)).thenReturn(loan);
+        when(mapper.toModel(loan)).thenReturn(null);
+
+        mockMvc.perform(put("/loans/10/approve")
+                        .with(user(principal(7L, "LOAN_APPROVE"))))
+                .andExpect(status().isOk());
+
+        verify(service).approve(10L);
+    }
+
+    @Test
+    void shouldReturnLoanWithDedicatedPermission() throws Exception {
+        Loan loan = new Loan();
+        when(service.returnBook(10L)).thenReturn(loan);
+        when(mapper.toModel(loan)).thenReturn(null);
+
+        mockMvc.perform(put("/loans/10/return")
+                        .with(user(principal(7L, "LOAN_RETURN"))))
+                .andExpect(status().isOk());
+
+        verify(service).returnBook(10L);
     }
 
     private TestPrincipal principal(Long userId, String... permissions) {

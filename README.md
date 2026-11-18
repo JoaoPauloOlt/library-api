@@ -94,9 +94,9 @@ Authentication uses JWT access tokens and refresh tokens. Passwords are protecte
 
 Authorization is permission-based and supports the following groups:
 
-- **USER** — catalog access and own-loan operations
-- **LIBRARIAN** — catalog, physical copies and circulation management
-- **ADMIN** — administrative operations
+- **USER** — catalog access and own-loan operations (`LOAN_CREATE`, `LOAN_CANCEL`)
+- **LIBRARIAN** — catalog, physical copies and staff circulation (`LOAN_CREATE_FOR_USER`, `LOAN_APPROVE`, `LOAN_RETURN`, `LOAN_READ_ALL`, `LOAN_CANCEL_ANY`)
+- **ADMIN** — all application permissions
 
 Security also includes:
 
@@ -157,17 +157,33 @@ The JWT secret is interpreted as literal UTF-8 text, not Base64, and must contai
 
 ## Circulation
 
-- Loan creation
-- Loan approval/activation
-- Loan return
-- Loan cancellation
+- Self-service loan creation for the authenticated user through `POST /loans`
+- Staff-created loan requests for active borrowers through `POST /loans/for-user`
+- A paginated, minimal active-borrower list through `GET /loans/users`
+- Loan approval/activation, return and cancellation
 - Own-loan and all-loan views
 - Loan history
-- Validation of copy availability and loan business rules
+- Validation of borrower status, copy availability and loan business rules
 - Serialization of loan requests per user to prevent concurrent duplicate requests for the same book
 - Automatic transition from `ACTIVE` to `LATE` when the due date is reached; the scheduler checks every five minutes in UTC
 - Return processing accepts both `ACTIVE` and `LATE` loans
 - Late-fee calculation is intentionally outside the base API
+
+### Circulation endpoints and permissions
+
+| Method | Endpoint | Permission | Purpose |
+|---|---|---|---|
+| `GET` | `/loans/my` | Authenticated | List the current user's loans |
+| `GET` | `/loans` | `LOAN_READ_ALL` | List all loans |
+| `GET` | `/loans/{id}` | `LOAN_READ_ALL` | View a loan |
+| `GET` | `/loans/users` | `LOAN_CREATE_FOR_USER` | List active borrowers for staff circulation |
+| `POST` | `/loans` | `LOAN_CREATE` | Request a loan for the authenticated user |
+| `POST` | `/loans/for-user` | `LOAN_CREATE_FOR_USER` | Create a loan request for an active borrower |
+| `PUT` | `/loans/{id}/approve` | `LOAN_APPROVE` | Approve a requested loan |
+| `PUT` | `/loans/{id}/return` | `LOAN_RETURN` | Register a book return |
+| `PUT` | `/loans/{id}/cancel` | `LOAN_CANCEL` or `LOAN_CANCEL_ANY` | Cancel an own loan or any loan with staff permission |
+
+The staff borrower endpoint exposes only user ID, name and email, and returns accounts with `ACTIVE` status. The creation endpoint checks the borrower's status again inside the transaction to prevent loans for inactive or blocked accounts.
 
 ## Database
 
