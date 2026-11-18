@@ -8,6 +8,8 @@ import com.jpoltramari.library_api.application.command.bookcopy.UpdateBookCopyCo
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
 import com.jpoltramari.library_api.application.port.security.UserSecuritySnapshotPort;
 import com.jpoltramari.library_api.application.service.BookCopyService;
+import com.jpoltramari.library_api.application.service.FineService;
+import com.jpoltramari.library_api.application.service.OutboxEventService;
 import com.jpoltramari.library_api.application.service.LoanService;
 import com.jpoltramari.library_api.application.service.TokenVersionService;
 import com.jpoltramari.library_api.application.service.UserService;
@@ -117,7 +119,9 @@ class CoverageExpansionTest {
                 bookRepository,
                 bookCopyRepository,
                 userRepository,
-                FIXED_CLOCK
+                FIXED_CLOCK,
+                mock(FineService.class),
+                mock(OutboxEventService.class)
         );
 
         Pageable pageable = PageRequest.of(0, 10);
