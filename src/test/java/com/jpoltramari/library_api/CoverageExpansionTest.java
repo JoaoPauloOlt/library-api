@@ -151,7 +151,9 @@ class CoverageExpansionTest {
                 bookRepository,
                 bookCopyRepository,
                 userRepository,
-                FIXED_CLOCK
+                FIXED_CLOCK,
+                mock(FineService.class),
+                mock(OutboxEventService.class)
         );
 
         User borrower = new User();
