@@ -6,7 +6,6 @@ import com.jpoltramari.library_api.api.mapper.LoanMapper;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.application.service.LoanService;
 import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
-import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
