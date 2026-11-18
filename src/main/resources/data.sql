@@ -22,7 +22,10 @@ VALUES
     ('LOAN_CANCEL_ANY'),
     ('LOAN_RETURN'),
     ('LOAN_READ_ALL'),
-    ('USER_ADMIN')
+    ('USER_ADMIN'),
+    ('FINE_READ_OWN'),
+    ('FINE_READ_ALL'),
+    ('FINE_WAIVE')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO groups (name, description)
@@ -79,7 +82,8 @@ JOIN permissions p
         'LOAN_APPROVE',
         'LOAN_CANCEL_ANY',
         'LOAN_RETURN',
-        'LOAN_READ_ALL'
+        'LOAN_READ_ALL',
+        'FINE_READ_ALL'
     )
 WHERE g.name = 'LIBRARIAN'
 ON CONFLICT DO NOTHING;
@@ -93,7 +97,8 @@ JOIN permissions p
         'BOOK_READ',
         'AUTHOR_READ',
         'LOAN_CREATE',
-        'LOAN_CANCEL'
+        'LOAN_CANCEL',
+        'FINE_READ_OWN'
     )
 WHERE g.name = 'USER'
 ON CONFLICT DO NOTHING;
