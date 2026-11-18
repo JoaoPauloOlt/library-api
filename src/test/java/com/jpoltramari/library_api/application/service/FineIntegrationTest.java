@@ -117,7 +117,7 @@ class FineIntegrationTest {
 
     @Test
     void shouldNotCreateFineForReturnOnDueCalendarDate() {
-        Loan loan = saveLoan(LocalDateTime.parse("2026-11-18T02:00:00"));
+        Loan loan = saveLoan(LocalDateTime.parse("2026-11-18T12:00:00"));
 
         Loan returned = loanService.returnBook(loan.getId());
 
@@ -212,7 +212,7 @@ class FineIntegrationTest {
     }
 
     private String randomIsbn() {
-        return "978" + String.format("%010d", Math.abs(UUID.randomUUID().getMostSignificantBits()) % 10_000_000_000L);
+        return "978" + String.format("%010d", Math.floorMod(UUID.randomUUID().getMostSignificantBits(), 10_000_000_000L));
     }
 
     @TestConfiguration
