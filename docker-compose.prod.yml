@@ -15,6 +15,22 @@ services:
       retries: 10
     restart: unless-stopped
 
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: library-rabbitmq-prod
+    hostname: library-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?RABBITMQ_USER must be set in .env.prod}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:?RABBITMQ_PASS must be set in .env.prod}
+    volumes:
+      - rabbitmq_prod_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   library-api:
     build: .
     container_name: library-api-prod
@@ -29,12 +45,19 @@ services:
       JWT_ISSUER: ${JWT_ISSUER:-library-api}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-library-api-clients}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://library-web-8lqa.onrender.com}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:?RABBITMQ_USER must be set in .env.prod}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:?RABBITMQ_PASS must be set in .env.prod}
     ports:
       - "${API_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   postgres_prod_data:
+  rabbitmq_prod_data:
