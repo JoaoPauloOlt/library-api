@@ -23,6 +23,5 @@ public class TokenVersionService implements SessionRevocationPort {
     public void revokeAllSessions(Long userId) {
         userRepository.incrementTokenVersion(userId);
         refreshTokenRepository.revokeAllByUserId(userId, Instant.now());
-        snapshotPort.evict(userId);
     }
 }
