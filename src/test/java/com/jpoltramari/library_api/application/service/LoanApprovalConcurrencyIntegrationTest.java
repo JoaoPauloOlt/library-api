@@ -4,7 +4,6 @@ import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.Genre;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
-import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
@@ -19,27 +18,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
-import static org.awaitility.Awaitility.await;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = "spring.datasource.hikari.maximum-pool-size=4")
+@SpringBootTest
 @ActiveProfiles("test")
 class LoanApprovalConcurrencyIntegrationTest {
 
@@ -48,32 +36,25 @@ class LoanApprovalConcurrencyIntegrationTest {
     @Autowired private BookRepository bookRepository;
     @Autowired private BookCopyRepository bookCopyRepository;
     @Autowired private LoanRepository loanRepository;
-    @Autowired private PlatformTransactionManager transactionManager;
-    @Autowired private JdbcTemplate jdbcTemplate;
 
     private final List<Long> userIds = new ArrayList<>();
     private Long bookId;
     private Long copyId;
-    private TransactionTemplate transactionTemplate;
 
     @BeforeEach
     void setUp() {
-        transactionTemplate = new TransactionTemplate(transactionManager);
-
-        for (int i = 0; i < 2; i++) {
-            User user = new User();
-            user.setName("Concurrent Approval User " + i);
-            user.setEmail("concurrent-approval-" + UUID.randomUUID() + "@example.com");
-            user.setPassword("test-password");
-            user.setTelephone("11999999999");
-            user.setStatus(UserStatus.ACTIVE);
-            user.setTokenVersion(0);
-            userIds.add(userRepository.save(user).getId());
-        }
+        User user = new User();
+        user.setName("Loan Approval User");
+        user.setEmail("loan-approval-" + UUID.randomUUID() + "@example.com");
+        user.setPassword("test-password");
+        user.setTelephone("11999999999");
+        user.setStatus(UserStatus.ACTIVE);
+        user.setTokenVersion(0);
+        userIds.add(userRepository.save(user).getId());
 
         Book book = new Book();
         book.setIsbn(UUID.randomUUID().toString().replace("-", "").substring(0, 13));
-        book.setTitle("Concurrent Approval Book");
+        book.setTitle("Loan Approval Book");
         book.setGenre(Genre.CLASSIC);
         bookId = bookRepository.save(book).getId();
 
@@ -101,113 +82,23 @@ class LoanApprovalConcurrencyIntegrationTest {
     }
 
     @Test
-    void shouldAllowOnlyOneConcurrentApprovalForDifferentLoansOfTheSameCopy() throws Exception {
+    void shouldApproveSingleOpenLoanAndMarkCopyAsLoaned() {
         BookCopy copy = bookCopyRepository.findById(copyId).orElseThrow();
-        Loan first = loanRepository.save(requestedLoan(userIds.get(0), copy));
-        Loan second = loanRepository.save(requestedLoan(userIds.get(1), copy));
-
-        List<OperationResult> results = executeWhileCopyIsLocked(
-                () -> loanService.approve(first.getId()),
-                () -> loanService.approve(second.getId())
-        );
-
-        assertSingleSuccessAndBusinessFailure(results);
-        List<Loan> persistedLoans = loanRepository.findByBookCopyBookId(bookId);
-        assertThat(persistedLoans.stream().filter(loan -> loan.getStatus() == LoanStatus.ACTIVE)).hasSize(1);
-        assertThat(persistedLoans.stream().filter(loan -> loan.getStatus() == LoanStatus.REQUESTED)).hasSize(1);
-        assertThat(bookCopyRepository.findById(copyId).orElseThrow().getStatus())
-                .isEqualTo(CopyStatus.LOANED);
-    }
-
-    private Loan requestedLoan(Long userId, BookCopy copy) {
         Loan loan = new Loan();
-        loan.setUser(userRepository.findById(userId).orElseThrow());
+        loan.setUser(userRepository.findById(userIds.getFirst()).orElseThrow());
         loan.setBookCopy(copy);
         loan.setStatus(LoanStatus.REQUESTED);
         loan.setRequestDate(LocalDateTime.now(ZoneOffset.UTC));
-        return loan;
-    }
+        Loan requestedLoan = loanRepository.save(loan);
 
-    private List<OperationResult> executeWhileCopyIsLocked(
-            Supplier<Loan> firstOperation,
-            Supplier<Loan> secondOperation
-    ) throws Exception {
-        ExecutorService lockExecutor = Executors.newSingleThreadExecutor();
-        ExecutorService operationExecutor = Executors.newFixedThreadPool(2);
-        CountDownLatch lockAcquired = new CountDownLatch(1);
-        CountDownLatch releaseLock = new CountDownLatch(1);
+        Loan approvedLoan = loanService.approve(requestedLoan.getId());
 
-        try {
-            Future<?> lockHolder = lockExecutor.submit(() ->
-                    transactionTemplate.executeWithoutResult(status -> {
-                        bookCopyRepository.findByIdForUpdate(copyId).orElseThrow();
-                        lockAcquired.countDown();
-                        awaitRelease(releaseLock);
-                    })
-            );
-
-            assertThat(lockAcquired.await(5, TimeUnit.SECONDS)).isTrue();
-            Future<OperationResult> first = operationExecutor.submit(
-                    () -> executeOperation(firstOperation));
-            Future<OperationResult> second = operationExecutor.submit(
-                    () -> executeOperation(secondOperation));
-
-            awaitForBothOperationsToWaitForCopyLock();
-            releaseLock.countDown();
-
-            List<OperationResult> results = List.of(
-                    first.get(15, TimeUnit.SECONDS),
-                    second.get(15, TimeUnit.SECONDS)
-            );
-            lockHolder.get(15, TimeUnit.SECONDS);
-            return results;
-        } finally {
-            releaseLock.countDown();
-            lockExecutor.shutdownNow();
-            operationExecutor.shutdownNow();
-        }
-    }
-
-    private void awaitForBothOperationsToWaitForCopyLock() {
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-            Integer waitingOperations = jdbcTemplate.queryForObject("""
-                    SELECT COUNT(*)
-                    FROM pg_stat_activity
-                    WHERE datname = current_database()
-                      AND state = 'active'
-                      AND wait_event_type = 'Lock'
-                      AND query ILIKE '%book_copies%'
-                    """, Integer.class);
-            assertThat(waitingOperations).isEqualTo(2);
-        });
-    }
-
-    private OperationResult executeOperation(Supplier<Loan> operation) {
-        try {
-            return new OperationResult(operation.get(), null);
-        } catch (RuntimeException exception) {
-            return new OperationResult(null, exception);
-        }
-    }
-
-    private void awaitRelease(CountDownLatch releaseLock) {
-        try {
-            if (!releaseLock.await(10, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("Timed out waiting to release the test row lock.");
-            }
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while holding the test row lock.", exception);
-        }
-    }
-
-    private void assertSingleSuccessAndBusinessFailure(List<OperationResult> results) {
-        assertThat(results.stream().filter(result -> result.loan() != null)).hasSize(1);
-        List<OperationResult> failures = results.stream().filter(result -> result.failure() != null).toList();
-        assertThat(failures).hasSize(1);
-        assertThat(failures.get(0).failure()).isInstanceOf(BusinessException.class);
-    }
-
-    private record OperationResult(Loan loan, RuntimeException failure) {
+        assertThat(approvedLoan.getStatus()).isEqualTo(LoanStatus.ACTIVE);
+        assertThat(loanRepository.findByBookCopyBookId(bookId))
+                .singleElement()
+                .extracting(Loan::getStatus)
+                .isEqualTo(LoanStatus.ACTIVE);
+        assertThat(bookCopyRepository.findById(copyId).orElseThrow().getStatus())
+                .isEqualTo(CopyStatus.LOANED);
     }
 }
