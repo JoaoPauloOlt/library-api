@@ -101,8 +101,8 @@ class RefreshTokenRepositoryConcurrencyTest {
         );
 
         assertThatThrownBy(() -> second.get(300, TimeUnit.MILLISECONDS))
-                .isInstanceOf(TimeoutException.class)
-                .as("the second transaction must remain blocked while the first transaction holds the row lock");
+                .as("the second transaction must remain blocked while the first transaction holds the row lock")
+                .isInstanceOf(TimeoutException.class);
 
         releaseFirstTransaction.countDown();
 
