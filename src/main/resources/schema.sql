@@ -72,7 +72,7 @@ BEGIN
         RETURN NEW;
     END IF;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS trg_user_groups_token_invalidation ON user_groups;
 DROP TRIGGER IF EXISTS trg_user_groups_token_invalidation_update ON user_groups;
@@ -118,7 +118,7 @@ BEGIN
         RETURN NEW;
     END IF;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS trg_group_permissions_token_invalidation ON group_permissions;
 DROP TRIGGER IF EXISTS trg_group_permissions_token_invalidation_update ON group_permissions;
@@ -148,7 +148,7 @@ BEGIN
     WHERE id IN (SELECT user_id FROM user_groups WHERE group_id = NEW.id);
     RETURN NEW;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS trg_groups_token_invalidation ON groups;
 CREATE TRIGGER trg_groups_token_invalidation
@@ -173,7 +173,7 @@ BEGIN
     );
     RETURN NEW;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS trg_permissions_token_invalidation ON permissions;
 CREATE TRIGGER trg_permissions_token_invalidation
