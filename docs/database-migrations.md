@@ -11,8 +11,31 @@ This repository does not use Flyway or another automatic migration runner. Produ
 
 Never run a manual migration against production without a verified backup and a maintenance/deployment plan.
 
-## Naming and authoring convention
+## Environment startup behavior
 
+### Development (`dev`)
+
+The default local Compose stack activates `dev`. Spring SQL initialization runs on every API startup in this profile:
+
+1. Hibernate applies `ddl-auto=update`.
+2. `schema.sql` ensures the current base schema exists.
+3. The reviewed development schema chain runs in order: `2026-11-13-reserve-book-copies.sql`, `2026-11-20-book-copy-updated-at-not-null.sql`, and `db/dev/2026-11-20-one-open-loan-per-copy.sql`.
+4. `data.sql` and `data-dev.sql` insert RBAC and development fixtures using conflict-safe seed statements.
+
+The scripts are designed to be repeatable; a normal restart does not truncate the database or reset user changes. To discard local changes and restore the initial fixtures, use the guarded `scripts/reset-dev-db.sh` helper documented in the README. The reset is destructive and is not part of application startup.
+
+### Production (`prod`)
+
+Production uses `ddl-auto=validate` and `spring.sql.init.mode=${DB_SCHEMA_INIT_MODE:never}`. The Docker Compose production file forwards `DB_SCHEMA_INIT_MODE` (default `never`) and `DB_SEED_DATA_LOCATIONS` (default `classpath:data.sql`). Therefore:
+
+- A new, empty database requires a one-time, operator-controlled startup with `DB_SCHEMA_INIT_MODE=always`.
+- After successful bootstrap, set the value back to `never` or remove it before routine restarts.
+- Existing databases must remain at `never`; apply required files from `db/manual-migrations/` manually, following the upgrade procedure below.
+- Demo fixtures are not loaded by default. Add `classpath:data-dev.sql` to `DB_SEED_DATA_LOCATIONS` only for a disposable demo database during its bootstrap.
+- The production application never executes `db/manual-migrations/` automatically.
+
+
+## Naming and authoring convention
 Use one SQL file per schema change:
 
 ```text
@@ -212,6 +235,6 @@ Do not deploy code that depends on a schema change before the corresponding prod
 
 ## Relationship with development and CI
 
-The `dev` profile applies `schema.sql` and the reviewed `2026-11-13-reserve-book-copies.sql` adjustment automatically for local development. The one-open-loan index is part of `schema.sql`. The `test` profile creates isolated schemas through Hibernate and exercises the database constraints in PostgreSQL integration tests.
+The `dev` profile applies `schema.sql`, the complete reviewed development schema chain (`2026-11-13-reserve-book-copies.sql`, `2026-11-20-book-copy-updated-at-not-null.sql` and `db/dev/2026-11-20-one-open-loan-per-copy.sql`), then `data.sql` and `data-dev.sql` on every startup. These scripts are repeatable and do not truncate or reset existing data. The destructive reset helper is a separate, explicitly confirmed local operation. The `test` profile creates isolated schemas through Hibernate and exercises the database constraints in PostgreSQL integration tests.
 
-These development/test behaviors do not change the production procedure: production manual migrations remain operator-controlled and are never run automatically.
+These development/test behaviors do not change the production procedure: production schema bootstrap is opt-in through `DB_SCHEMA_INIT_MODE=always` for a new empty database only, and production manual migrations remain operator-controlled and are never run automatically.
