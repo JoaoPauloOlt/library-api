@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Formula;
 
@@ -55,6 +56,7 @@ public class Book {
     @Formula("(select count(l.id) from loans l join book_copies bc on bc.id = l.book_copy_id where bc.book_id = id and l.status in ('ACTIVE', 'RETURNED', 'LATE'))")
     private Long loanCount;
 
+    @BatchSize(size = 50)
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "book_authors",

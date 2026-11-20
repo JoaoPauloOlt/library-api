@@ -35,7 +35,7 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
             @Param("lateStatus") LoanStatus lateStatus
     );
 
-    @EntityGraph(attributePaths = {"bookCopy", "bookCopy.book", "bookCopy.book.authors"})
+    @EntityGraph(attributePaths = {"bookCopy", "bookCopy.book"})
     Page<Loan> findByUserId(Long userId, Pageable pageable);
     List<Loan> findByUserId(Long userId);
     List<Loan> findByBookCopyBookId(Long bookId);

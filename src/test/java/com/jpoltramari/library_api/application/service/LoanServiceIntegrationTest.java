@@ -8,16 +8,21 @@ import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.model.Book;
+import com.jpoltramari.library_api.domain.model.Author;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
+import com.jpoltramari.library_api.domain.repository.AuthorRepository;
 import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -43,6 +48,9 @@ class LoanServiceIntegrationTest {
     @Autowired
     private LoanService loanService;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Autowired
     private Clock clock;
 
@@ -51,6 +59,9 @@ class LoanServiceIntegrationTest {
 
     @Autowired
     private BookRepository bookRepository;
+
+    @Autowired
+    private AuthorRepository authorRepository;
 
     @Autowired
     private LoanRepository loanRepository;
@@ -85,6 +96,42 @@ class LoanServiceIntegrationTest {
         copy.setStatus(CopyStatus.AVAILABLE);
         copy.setActive(true);
         bookCopyId = bookCopyRepository.save(copy).getId();
+    }
+
+    @Test
+    void shouldLoadMyLoansWithBookAuthorsAndFormulaInPagedQuery() {
+        Book book = bookRepository.findById(bookId).orElseThrow();
+        Author author = new Author();
+        author.setName("Pagination Test Author");
+        author.setNationality("Brazilian");
+        author = authorRepository.save(author);
+        book.getAuthors().add(author);
+        bookRepository.save(book);
+
+        Loan loan = new Loan();
+        loan.setUser(userRepository.findById(userId).orElseThrow());
+        loan.setBookCopy(bookCopyRepository.findById(bookCopyId).orElseThrow());
+        loan.setStatus(LoanStatus.ACTIVE);
+        loan.setRequestDate(LocalDateTime.now(clock).minusDays(1));
+        loan.setApprovalDate(LocalDateTime.now(clock));
+        loan.setWithdrawableDate(LocalDateTime.now(clock));
+        loan.setDueDate(LocalDateTime.now(clock).plusDays(7));
+        loan.getBookCopy().setStatus(CopyStatus.LOANED);
+        loanRepository.saveAndFlush(loan);
+        entityManager.clear();
+
+        var result = loanService.findByUserId(
+                userId,
+                PageRequest.of(0, 20)
+        );
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().getBookCopy().getBook().getLoanCount())
+                .isEqualTo(1L);
+        assertThat(result.getContent().getFirst().getBookCopy().getBook().getAuthors())
+                .extracting(Author::getName)
+                .containsExactly("Pagination Test Author");
     }
 
     @Test
