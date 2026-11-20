@@ -201,6 +201,7 @@ Do not deploy code that depends on a schema change before the corresponding prod
 ## Operational safeguards
 
 - Use a dedicated least-privilege migration role where operationally possible; application runtime credentials should not be treated as general-purpose DBA credentials.
+- RBAC invalidation triggers are installed by the application using PostgreSQL `CREATE OR REPLACE TRIGGER`. Keep this in-place replacement behavior; dropping and recreating triggers would create a window where RBAC changes could fail to invalidate JWTs.
 - Pass a PostgreSQL connection URI to `psql` as `PGURI` (for example, `postgresql://user:password@host:5432/database`). Do not pass the JDBC `jdbc:postgresql://` URL directly to `psql`.
 - Keep credentials out of shell history, command output, CI logs and committed files.
 - Use `-v ON_ERROR_STOP=1` so `psql` stops on the first SQL error. Transactional scripts must not be marked as applied when they fail.
