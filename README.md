@@ -386,6 +386,18 @@ The CI workflow provisions these isolated databases automatically and runs again
 
 This executes the automated test suite, generates the JaCoCo report and enforces the project coverage gate.
 
+### HTTP load and concurrency tests
+
+The read-only k6 scenarios exercise authenticated catalog, loan and fine endpoints with concurrent virtual users. They are maintained separately from the Java integration tests and default to a local API target:
+
+```bash
+k6 run tests/load/library-api.js
+K6_PROFILE=load k6 run tests/load/library-api.js
+K6_PROFILE=stress k6 run tests/load/library-api.js
+```
+
+See [tests/load/README.md](tests/load/README.md) for installation, target safety, profiles and thresholds. Remote targets are blocked by default; do not run load tests against production.
+
 The Maven gate requires:
 
 ```text
