@@ -244,6 +244,144 @@ class DevSeedIntegrationTest {
                 .contains(LoanStatus.ACTIVE, LoanStatus.REQUESTED, LoanStatus.RETURNED, LoanStatus.LATE);
     }
 
+
+
+    @Test
+    @Transactional
+    void shouldInvalidateTokensWhenUserGroupMembershipChanges() {
+        Long userId = jdbcTemplate.queryForObject(
+                "SELECT id FROM users WHERE email = ?",
+                Long.class,
+                "user@library.com"
+        );
+        Long groupId = jdbcTemplate.queryForObject(
+                "SELECT id FROM groups WHERE name = ?",
+                Long.class,
+                "LIBRARIAN"
+        );
+        int before = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                userId
+        );
+
+        jdbcTemplate.update(
+                "INSERT INTO user_groups (user_id, group_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+                userId,
+                groupId
+        );
+        int afterInsert = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                userId
+        );
+        assertThat(afterInsert).isEqualTo(before + 1);
+
+        jdbcTemplate.update(
+                "DELETE FROM user_groups WHERE user_id = ? AND group_id = ?",
+                userId,
+                groupId
+        );
+        int afterDelete = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                userId
+        );
+        assertThat(afterDelete).isEqualTo(afterInsert + 1);
+    }
+
+    @Test
+    @Transactional
+    void shouldInvalidateTokensWhenGroupPermissionsChange() {
+        Long librarianId = jdbcTemplate.queryForObject(
+                "SELECT id FROM users WHERE email = ?",
+                Long.class,
+                "librarian@library.com"
+        );
+        Long permissionId = jdbcTemplate.queryForObject(
+                "SELECT id FROM permissions WHERE name = ?",
+                Long.class,
+                "FINE_WAIVE"
+        );
+        Long groupId = jdbcTemplate.queryForObject(
+                "SELECT id FROM groups WHERE name = ?",
+                Long.class,
+                "LIBRARIAN"
+        );
+        int before = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                librarianId
+        );
+
+        jdbcTemplate.update(
+                "INSERT INTO group_permissions (group_id, permission_id) VALUES (?, ?) ON CONFLICT DO NOTHING",
+                groupId,
+                permissionId
+        );
+        int afterInsert = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                librarianId
+        );
+        assertThat(afterInsert).isEqualTo(before + 1);
+
+        jdbcTemplate.update(
+                "DELETE FROM group_permissions WHERE group_id = ? AND permission_id = ?",
+                groupId,
+                permissionId
+        );
+        int afterDelete = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                librarianId
+        );
+        assertThat(afterDelete).isEqualTo(afterInsert + 1);
+    }
+
+    @Test
+    @Transactional
+    void shouldInvalidateTokensWhenGroupOrPermissionNamesChange() {
+        Long librarianId = jdbcTemplate.queryForObject(
+                "SELECT id FROM users WHERE email = ?",
+                Long.class,
+                "librarian@library.com"
+        );
+        int beforeGroupRename = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                librarianId
+        );
+
+        jdbcTemplate.update("UPDATE groups SET name = ? WHERE name = ?", "LIBRARIAN_TEMP", "LIBRARIAN");
+        int afterGroupRename = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                librarianId
+        );
+        assertThat(afterGroupRename).isEqualTo(beforeGroupRename + 1);
+
+        jdbcTemplate.update("UPDATE groups SET name = ? WHERE name = ?", "LIBRARIAN", "LIBRARIAN_TEMP");
+        Long permissionId = jdbcTemplate.queryForObject(
+                "SELECT id FROM permissions WHERE name = ?",
+                Long.class,
+                "LOAN_APPROVE"
+        );
+        int beforePermissionRename = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                librarianId
+        );
+
+        jdbcTemplate.update("UPDATE permissions SET name = ? WHERE id = ?", "LOAN_APPROVE_TEMP", permissionId);
+        int afterPermissionRename = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                librarianId
+        );
+        assertThat(afterPermissionRename).isEqualTo(beforePermissionRename + 1);
+    }
+
     private void assertGroup(String email, String expectedGroup) {
         User user = userRepository.findByEmailWithGroupsAndPermissions(email).orElseThrow();
 
