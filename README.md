@@ -197,23 +197,24 @@ PostgreSQL is the primary database. Schema initialization is profile-specific so
 
 Database initialization is split by responsibility:
 
-- `src/main/resources/schema.sql` contains the PostgreSQL DDL required to provision a new database. Its `CREATE TABLE/INDEX IF NOT EXISTS` statements leave existing tables and their data untouched.
-- `src/main/resources/data.sql` initializes the RBAC groups and permissions in every profile. It does not create demo accounts.
+- `src/main/resources/schema.sql` contains the current PostgreSQL bootstrap DDL. Its guarded table/index creation does not drop existing tables or truncate their data.
+- `src/main/resources/data.sql` initializes RBAC groups and permissions. It does not create demo accounts.
 - `src/main/resources/data-dev.sql` loads demo accounts, catalog fixtures, physical copies and loan scenarios. It runs automatically in `dev`; in `prod`, it is opt-in through `DB_SEED_DATA_LOCATIONS`.
+- The `dev` profile also applies the reviewed manual schema adjustments and a parser-compatible development script for the one-open-loan partial unique index.
 
 Each environment uses a different schema strategy:
 
 | Profile | Hibernate | SQL initialization |
 |---|---|---|
-| `dev` | `ddl-auto=update` | Hibernate runs first, followed by `schema.sql`, `data.sql` and `data-dev.sql` |
+| `dev` | `ddl-auto=update` | Hibernate runs first, then `schema.sql`, the three development schema adjustments, `data.sql` and `data-dev.sql` on every startup |
 | `test` | `ddl-auto=create-drop` | Hibernate creates the isolated test schema, then the shared RBAC seed runs |
-| `prod` | `ddl-auto=validate` | `schema.sql` and `data.sql` run before Hibernate validates the schema; demo fixtures are opt-in via `DB_SEED_DATA_LOCATIONS` |
+| `prod` | `ddl-auto=validate` | SQL initialization is disabled by default (`DB_SCHEMA_INIT_MODE=never`). On a new database only, set it to `always` for the first bootstrap; demo fixtures remain opt-in via `DB_SEED_DATA_LOCATIONS` |
 
-The production profile never asks Hibernate to create or update tables. On a new production database, `schema.sql` provisions the initial structure before JPA starts. On an existing database, the idempotent DDL skips existing tables and does not delete application data.
+The production profile never asks Hibernate to create or update tables. A new production database is provisioned from `schema.sql` only when the operator explicitly sets `DB_SCHEMA_INIT_MODE=always` for the first startup. The default is `never`, so routine restarts and existing databases do not execute schema or seed scripts. Hibernate validates the existing schema.
 
 Flyway and its migration history are not used. `schema.sql` is the current bootstrap for new databases, not a versioned migration system. Production schema upgrades are reviewed SQL scripts under `src/main/resources/db/manual-migrations/`; they are never executed automatically in production. Each script records successful execution in `schema_migrations`. Follow the [database migration runbook](docs/database-migrations.md) for naming, execution order, verification, backups and rollback limitations. Do not use `ddl-auto=update` in production.
 
-The copy-reservation change adds `RESERVED` to the `book_copies.status` constraint. For an existing production database, take a backup and execute `2026-11-13-reserve-book-copies.sql` before deploying the corresponding application version. The `dev` profile applies this adjustment automatically; fresh databases already receive the updated constraint from `schema.sql`. The one-open-loan partial unique index is also included in the current bootstrap schema; existing production databases must execute `2026-11-20-one-open-loan-per-copy.sql` before deploying code that relies on that invariant.
+The copy-reservation change adds `RESERVED` to the `book_copies.status` constraint. For an existing production database, take a backup and execute `2026-11-13-reserve-book-copies.sql` before deploying the corresponding application version. The `dev` profile applies all three reviewed adjustments automatically on startup. Fresh databases already receive the current definitions from `schema.sql`. Existing production databases must execute each applicable script in `db/manual-migrations/` before deploying code that relies on the corresponding invariant.
 
 ## Configuration
 
@@ -257,6 +258,8 @@ openssl rand -hex 32
 
 Set the generated hexadecimal value as `JWT_SECRET` in `.env.prod`. Also set a unique, strong `DB_PASS`, and configure `CORS_ALLOWED_ORIGINS` for the production frontend. The JWT secret must be at least 32 UTF-8 bytes; do not Base64-encode the generated hexadecimal text.
 
+For a **brand-new, empty production database only**, temporarily set `DB_SCHEMA_INIT_MODE=always` in `.env.prod` before the first startup. After the API starts successfully and the schema is provisioned, remove the variable or set it back to `never`, then restart the API. Never enable `always` for an existing database or routine restarts. The default `never` prevents startup from running schema/seed scripts.
+
 Start the production stack with:
 
 ```bash
@@ -279,7 +282,7 @@ Never commit `.env`, `.env.prod`, or any real credentials.
 
 ### Prerequisites
 
-- JDK 17+
+- JDK 21
 - Maven Wrapper included in the repository
 - PostgreSQL, or Docker/Docker Compose
 
@@ -420,13 +423,15 @@ The frontend integration is maintained separately in the `library-web` project.
 
 ### Render demo database bootstrap
 
-For a new Render PostgreSQL database, the `prod` profile creates the initial tables from `schema.sql` and inserts RBAC groups and permissions from `data.sql`. To also populate disposable demo accounts, books, copies and loan scenarios, add this environment variable to the Render API service:
+For a new, empty Render PostgreSQL database, set `DB_SCHEMA_INIT_MODE=always` on the API service for its first successful startup. The `prod` profile then applies `schema.sql` and the configured seed before Hibernate validates the schema. Immediately after bootstrap, remove the variable or set it to `never` and redeploy/restart the API. Do not enable this setting for an existing database or routine restarts. The production default is `never`.
+
+To also populate disposable demo accounts, books, copies and loan scenarios during that one-time bootstrap, set this variable on the Render API service:
 
 ```env
 DB_SEED_DATA_LOCATIONS=classpath:data.sql,classpath:data-dev.sql
 ```
 
-If the variable is omitted, the production default remains `classpath:data.sql` and demo accounts are not created. The demo seed uses conflict-safe inserts and can run again after restarts without intentionally duplicating its fixtures. It does not truncate or reset existing records. Use it only for a demonstration database, not for real user data.
+If `DB_SEED_DATA_LOCATIONS` is omitted, the default remains `classpath:data.sql` and demo accounts are not created. Include `classpath:data-dev.sql` only for a disposable demonstration database. Seed scripts use conflict-safe inserts; they do not truncate or reset existing records. The setting controls the seed executed during the one-time bootstrap, not a recurring demo-data reset.
 
 ## Development workflow
 
