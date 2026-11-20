@@ -57,7 +57,7 @@ public class OutboxEventDeliveryService {
     @Transactional
     public boolean markPublished(OutboxEventClaim claim) {
         return repository.markPublished(
-                claim.id(), claim.leaseUntil(), clock.instant()) == 1;
+                claim.id(), claim.leaseUntil(), clock.instant(), OutboxStatus.PENDING, OutboxStatus.PUBLISHED) == 1;
     }
 
     @Transactional
