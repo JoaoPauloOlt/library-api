@@ -144,11 +144,12 @@ For a new database:
 
 1. Create an empty PostgreSQL database and a dedicated application role.
 2. Configure the production environment variables and a production-strength JWT secret.
-3. Start the application with the `prod` profile. The production SQL initialization applies `schema.sql` and `data.sql`; Hibernate validates the result.
-4. Do **not** replay the historical manual migrations. The current `schema.sql` already includes the reservation status and one-open-loan partial unique index.
-5. Confirm that the application starts and that the schema checks below pass.
+3. For the one-time initial bootstrap only, start the application with the `prod` profile and `DB_SCHEMA_INIT_MODE=always`. This explicitly applies `schema.sql` and `data.sql` before Hibernate validates the schema. Do not enable this setting for routine restarts or existing databases.
+4. After the first successful bootstrap, remove `DB_SCHEMA_INIT_MODE` (or set it to `never`) and restart the application. The default production behavior is `never`: schema and seed scripts are not executed on startup.
+5. Do **not** replay the historical manual migrations. The current `schema.sql` already includes the reservation status and one-open-loan partial unique index.
+6. Confirm that the application starts and that the schema checks below pass.
 
-The initial schema bootstrap creates the `schema_migrations` table. Its lack of historical rows is expected for a new database.
+The initial, explicitly enabled schema bootstrap creates the `schema_migrations` table. Its lack of historical rows is expected for a new database. Existing production databases must keep `DB_SCHEMA_INIT_MODE=never`; apply only the applicable reviewed manual migrations before deploying code that depends on them.
 
 ## Existing database upgrade procedure
 
