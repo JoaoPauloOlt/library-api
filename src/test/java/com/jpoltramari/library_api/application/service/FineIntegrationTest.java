@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.FineStatus;
 import com.jpoltramari.library_api.domain.enums.Genre;
