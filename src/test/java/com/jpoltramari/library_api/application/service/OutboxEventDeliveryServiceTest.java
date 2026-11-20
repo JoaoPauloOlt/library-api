@@ -68,7 +68,7 @@ class OutboxEventDeliveryServiceTest {
     @Test
     void shouldNotMarkPublishedWhenLeaseWasReclaimed() {
         OutboxEventClaim claim = claim();
-        when(repository.markPublished(claim.id(), claim.leaseUntil(), NOW)).thenReturn(0);
+        when(repository.markPublished(claim.id(), claim.leaseUntil(), NOW, OutboxStatus.PENDING, OutboxStatus.PUBLISHED)).thenReturn(0);
 
         assertThat(service.markPublished(claim)).isFalse();
     }
