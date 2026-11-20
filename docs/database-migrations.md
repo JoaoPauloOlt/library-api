@@ -157,7 +157,7 @@ FROM schema_migrations
 WHERE version = '2026-11-20-one-open-loan-per-copy';
 ```
 
-The duplicate query must return no rows. The index definition must contain the partial predicate for the three open statuses.
+The duplicate query must return no rows. The index definition must be unique, target only `book_copy_id`, and contain exactly the partial predicate for the three open statuses. The migration fails rather than silently accepting an existing index with the same name but a different definition.
 
 **Rollback:** If rollback is required, first stop writes that can create or change loans, then drop only the index in a reviewed transaction:
 
@@ -201,6 +201,7 @@ Do not deploy code that depends on a schema change before the corresponding prod
 ## Operational safeguards
 
 - Use a dedicated least-privilege migration role where operationally possible; application runtime credentials should not be treated as general-purpose DBA credentials.
+- RBAC invalidation triggers are installed by the application using PostgreSQL `CREATE OR REPLACE TRIGGER`. Keep this in-place replacement behavior; dropping and recreating triggers would create a window where RBAC changes could fail to invalidate JWTs.
 - Pass a PostgreSQL connection URI to `psql` as `PGURI` (for example, `postgresql://user:password@host:5432/database`). Do not pass the JDBC `jdbc:postgresql://` URL directly to `psql`.
 - Keep credentials out of shell history, command output, CI logs and committed files.
 - Use `-v ON_ERROR_STOP=1` so `psql` stops on the first SQL error. Transactional scripts must not be marked as applied when they fail.

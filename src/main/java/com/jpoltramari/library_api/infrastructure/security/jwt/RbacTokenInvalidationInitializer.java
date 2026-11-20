@@ -11,9 +11,9 @@ import java.util.List;
  * Installs PostgreSQL triggers that invalidate JWT authorization snapshots
  * whenever RBAC relationships or their names change.
  *
- * The statements are executed individually through JDBC because Spring's
- * schema.sql script parser uses semicolons as statement separators and cannot
- * safely parse PL/pgSQL function bodies.
+ * Trigger definitions are replaced in place so application restarts never create
+ * a window in which RBAC changes bypass token invalidation. Statements are executed
+ * individually because Spring's schema.sql parser cannot safely parse PL/pgSQL bodies.
  */
 @Component
 @DependsOnDatabaseInitialization
@@ -102,16 +102,14 @@ public class RbacTokenInvalidationInitializer {
             END;
             $$;
             """,
-            "DROP TRIGGER IF EXISTS trg_user_groups_token_invalidation ON user_groups",
-            "DROP TRIGGER IF EXISTS trg_user_groups_token_invalidation_update ON user_groups",
             """
-            CREATE TRIGGER trg_user_groups_token_invalidation
+            CREATE OR REPLACE TRIGGER trg_user_groups_token_invalidation
             AFTER INSERT OR DELETE ON user_groups
             FOR EACH ROW
             EXECUTE FUNCTION invalidate_tokens_after_user_group_change()
             """,
             """
-            CREATE TRIGGER trg_user_groups_token_invalidation_update
+            CREATE OR REPLACE TRIGGER trg_user_groups_token_invalidation_update
             AFTER UPDATE OF user_id, group_id ON user_groups
             FOR EACH ROW
             WHEN (
@@ -120,16 +118,14 @@ public class RbacTokenInvalidationInitializer {
             )
             EXECUTE FUNCTION invalidate_tokens_after_user_group_change()
             """,
-            "DROP TRIGGER IF EXISTS trg_group_permissions_token_invalidation ON group_permissions",
-            "DROP TRIGGER IF EXISTS trg_group_permissions_token_invalidation_update ON group_permissions",
             """
-            CREATE TRIGGER trg_group_permissions_token_invalidation
+            CREATE OR REPLACE TRIGGER trg_group_permissions_token_invalidation
             AFTER INSERT OR DELETE ON group_permissions
             FOR EACH ROW
             EXECUTE FUNCTION invalidate_tokens_after_group_permission_change()
             """,
             """
-            CREATE TRIGGER trg_group_permissions_token_invalidation_update
+            CREATE OR REPLACE TRIGGER trg_group_permissions_token_invalidation_update
             AFTER UPDATE OF group_id, permission_id ON group_permissions
             FOR EACH ROW
             WHEN (
@@ -138,17 +134,15 @@ public class RbacTokenInvalidationInitializer {
             )
             EXECUTE FUNCTION invalidate_tokens_after_group_permission_change()
             """,
-            "DROP TRIGGER IF EXISTS trg_groups_token_invalidation ON groups",
             """
-            CREATE TRIGGER trg_groups_token_invalidation
+            CREATE OR REPLACE TRIGGER trg_groups_token_invalidation
             AFTER UPDATE OF name ON groups
             FOR EACH ROW
             WHEN (OLD.name IS DISTINCT FROM NEW.name)
             EXECUTE FUNCTION invalidate_tokens_after_group_rename()
             """,
-            "DROP TRIGGER IF EXISTS trg_permissions_token_invalidation ON permissions",
             """
-            CREATE TRIGGER trg_permissions_token_invalidation
+            CREATE OR REPLACE TRIGGER trg_permissions_token_invalidation
             AFTER UPDATE OF name ON permissions
             FOR EACH ROW
             WHEN (OLD.name IS DISTINCT FROM NEW.name)
