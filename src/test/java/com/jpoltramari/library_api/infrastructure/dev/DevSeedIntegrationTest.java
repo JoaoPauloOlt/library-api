@@ -6,6 +6,7 @@ import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
+import com.jpoltramari.library_api.infrastructure.security.jwt.RbacTokenInvalidationInitializer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -45,6 +46,9 @@ class DevSeedIntegrationTest {
 
     @Autowired
     private DataSource dataSource;
+
+    @Autowired
+    private RbacTokenInvalidationInitializer rbacTokenInvalidationInitializer;
 
     @Test
     void shouldLoadDevUsersWithExpectedGroups() {
@@ -223,6 +227,7 @@ class DevSeedIntegrationTest {
                 new ClassPathResource("data-dev.sql")
         );
         DatabasePopulatorUtils.execute(populator, dataSource);
+        rbacTokenInvalidationInitializer.initialize();
 
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT name FROM users WHERE email = ?",
