@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS user_groups (
 CREATE OR REPLACE FUNCTION invalidate_tokens_after_user_group_change()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
         UPDATE users SET token_version = token_version + 1
@@ -95,7 +95,7 @@ EXECUTE FUNCTION invalidate_tokens_after_user_group_change();
 CREATE OR REPLACE FUNCTION invalidate_tokens_after_group_permission_change()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
         UPDATE users
@@ -141,7 +141,7 @@ EXECUTE FUNCTION invalidate_tokens_after_group_permission_change();
 CREATE OR REPLACE FUNCTION invalidate_tokens_after_group_rename()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
     UPDATE users
     SET token_version = token_version + 1
@@ -161,7 +161,7 @@ EXECUTE FUNCTION invalidate_tokens_after_group_rename();
 CREATE OR REPLACE FUNCTION invalidate_tokens_after_permission_rename()
 RETURNS TRIGGER
 LANGUAGE plpgsql
-AS $
+AS $$
 BEGIN
     UPDATE users
     SET token_version = token_version + 1
