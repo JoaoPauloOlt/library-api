@@ -136,9 +136,7 @@ public class ApiExceptionHandler {
             PropertyReferenceException ex,
             HttpServletRequest request
     ) {
-        String typeName = ex.getType() != null
-                ? ex.getType().getType().getSimpleName()
-                : "unknown";
+        String typeName = ex.getType().getType().getSimpleName();
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
