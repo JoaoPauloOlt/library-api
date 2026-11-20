@@ -6,7 +6,7 @@ import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.domain.repository.UserSecuritySnapshotView;
 import com.jpoltramari.library_api.infrastructure.security.JwtService;
 import com.jpoltramari.library_api.infrastructure.security.rbac.RbacResolver;
-import com.jpoltramari.library_api.infrastructure.security.snapshot.CachedUserSecuritySnapshotAdapter;
+import com.jpoltramari.library_api.infrastructure.security.snapshot.DatabaseUserSecuritySnapshotAdapter;
 import com.jpoltramari.library_api.application.port.security.UserSecuritySnapshotPort;
 import com.jpoltramari.library_api.application.result.auth.UserSecuritySnapshot;
 import org.junit.jupiter.api.Test;
@@ -222,28 +222,26 @@ class JwtInfrastructureCoverageTest {
     }
 
     @Test
-    void shouldCacheAndEvictSecuritySnapshots() {
+    void shouldReadSecuritySnapshotsFromDatabaseOnEveryRequest() {
         UserRepository repository = mock(UserRepository.class);
-        CachedUserSecuritySnapshotAdapter adapter = new CachedUserSecuritySnapshotAdapter(repository);
+        DatabaseUserSecuritySnapshotAdapter adapter = new DatabaseUserSecuritySnapshotAdapter(repository);
         UserSecuritySnapshotView view = mock(UserSecuritySnapshotView.class);
 
         when(view.getId()).thenReturn(10L);
-        when(view.getTokenVersion()).thenReturn(3);
+        when(view.getTokenVersion()).thenReturn(3, 4);
         when(view.getStatus()).thenReturn(UserStatus.ACTIVE);
         when(repository.findSecuritySnapshotById(10L)).thenReturn(Optional.of(view));
 
         assertThat(adapter.findByUserId(10L))
                 .contains(new UserSecuritySnapshot(10L, 3, UserStatus.ACTIVE));
         assertThat(adapter.findByUserId(10L))
-                .contains(new UserSecuritySnapshot(10L, 3, UserStatus.ACTIVE));
-        verify(repository, times(1)).findSecuritySnapshotById(10L);
-
-        adapter.evict(10L);
-        assertThat(adapter.findByUserId(10L)).isPresent();
+                .contains(new UserSecuritySnapshot(10L, 4, UserStatus.ACTIVE));
         verify(repository, times(2)).findSecuritySnapshotById(10L);
 
         when(repository.findSecuritySnapshotById(99L)).thenReturn(Optional.empty());
         assertThat(adapter.findByUserId(99L)).isEmpty();
+        assertThat(adapter.findByUserId(null)).isEmpty();
+        verify(repository, times(1)).findSecuritySnapshotById(99L);
     }
 
     @Test
