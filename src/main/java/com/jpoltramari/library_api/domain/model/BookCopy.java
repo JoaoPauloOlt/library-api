@@ -58,6 +58,10 @@ public class BookCopy {
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(
+            name = "updated_at",
+            nullable = false,
+            columnDefinition = "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
+    )
     private LocalDateTime updatedAt;
 }
