@@ -16,9 +16,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OutboxEventDeliveryService {
 
-    private static final int BATCH_SIZE = 50;
+    private static final int BATCH_SIZE = 10;
     private static final int MAX_ATTEMPTS = 10;
-    private static final long LEASE_SECONDS = 60;
+    private static final long LEASE_SECONDS = 180;
 
     private final OutboxEventRepository repository;
     private final Clock clock;
@@ -35,9 +35,11 @@ public class OutboxEventDeliveryService {
         List<OutboxEvent> events = repository.findAvailableForUpdate(
                 OutboxStatus.PENDING, now, PageRequest.of(0, BATCH_SIZE));
 
+        events.forEach(event -> event.setAvailableAt(leaseUntil));
+        repository.saveAll(events);
+
         return events.stream()
                 .map(event -> {
-                    event.setAvailableAt(leaseUntil);
                     return new OutboxEventClaim(
                             event.getId(),
                             event.getEventType(),
