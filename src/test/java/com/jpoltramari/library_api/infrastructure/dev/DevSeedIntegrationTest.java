@@ -50,6 +50,51 @@ class DevSeedIntegrationTest {
     @Autowired
     private RbacTokenInvalidationInitializer rbacTokenInvalidationInitializer;
 
+
+    @Test
+    void shouldApplyAllManualSchemaMigrationsOnDevStartup() {
+        Long appliedMigrations = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM schema_migrations
+                WHERE version IN (
+                    '2026-11-13-reserve-book-copies',
+                    '2026-11-20-book-copy-updated-at-not-null',
+                    '2026-11-20-one-open-loan-per-copy'
+                )
+                """,
+                Long.class
+        );
+        assertThat(appliedMigrations).isEqualTo(3L);
+
+        String updatedAtNullable = jdbcTemplate.queryForObject(
+                """
+                SELECT is_nullable
+                FROM information_schema.columns
+                WHERE table_schema = current_schema()
+                  AND table_name = 'book_copies'
+                  AND column_name = 'updated_at'
+                """,
+                String.class
+        );
+        assertThat(updatedAtNullable).isEqualTo("NO");
+
+        Integer openLoanIndexCount = jdbcTemplate.queryForObject(
+                """
+                SELECT COUNT(*)
+                FROM pg_indexes
+                WHERE schemaname = current_schema()
+                  AND indexname = 'uq_loans_one_open_per_copy'
+                  AND indexdef LIKE '%UNIQUE%'
+                  AND indexdef LIKE '%REQUESTED%'
+                  AND indexdef LIKE '%ACTIVE%'
+                  AND indexdef LIKE '%LATE%'
+                """,
+                Integer.class
+        );
+        assertThat(openLoanIndexCount).isEqualTo(1);
+    }
+
     @Test
     void shouldLoadDevUsersWithExpectedGroups() {
         assertGroup("admin@library.com", "ADMIN");
