@@ -20,7 +20,9 @@ class CorsConfigTest {
 
         assertThat(cors).isNotNull();
         assertThat(cors.getAllowCredentials()).isFalse();
-        assertThat(cors.getAllowedHeaders()).contains("Authorization", "Content-Type");
+        assertThat(cors.getAllowedHeaders()).contains("Authorization", "Content-Type", "X-Correlation-Id");
+        assertThat(cors.getAllowedMethods()).contains("PATCH");
+        assertThat(cors.getExposedHeaders()).contains("Authorization", "X-Correlation-Id");
         assertThat(cors.getAllowedOriginPatterns()).containsExactly("https://library.example");
     }
 }
