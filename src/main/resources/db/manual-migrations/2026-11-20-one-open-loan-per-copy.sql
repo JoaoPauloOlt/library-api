@@ -35,9 +35,44 @@ BEGIN
 END
 $$;
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_loans_one_open_per_copy
-    ON loans(book_copy_id)
-    WHERE status IN ('REQUESTED', 'ACTIVE', 'LATE');
+DO $
+DECLARE
+    existing_index_oid OID;
+    existing_index_valid BOOLEAN;
+    existing_predicate TEXT;
+BEGIN
+    SELECT
+        index_class.oid,
+        index_info.indisunique
+            AND index_info.indisvalid
+            AND index_info.indnkeyatts = 1
+            AND table_class.relname = 'loans'
+            AND pg_get_indexdef(index_info.indexrelid, 1, TRUE) = 'book_copy_id',
+        pg_get_expr(index_info.indpred, index_info.indrelid)
+    INTO existing_index_oid, existing_index_valid, existing_predicate
+    FROM pg_class index_class
+    JOIN pg_namespace index_namespace ON index_namespace.oid = index_class.relnamespace
+    JOIN pg_index index_info ON index_info.indexrelid = index_class.oid
+    JOIN pg_class table_class ON table_class.oid = index_info.indrelid
+    WHERE index_namespace.nspname = current_schema()
+      AND index_class.relname = 'uq_loans_one_open_per_copy';
+
+    IF existing_index_oid IS NULL THEN
+        CREATE UNIQUE INDEX uq_loans_one_open_per_copy
+            ON loans(book_copy_id)
+            WHERE status IN ('REQUESTED', 'ACTIVE', 'LATE');
+    ELSIF NOT existing_index_valid
+        OR existing_predicate IS NULL
+        OR existing_predicate NOT LIKE '%REQUESTED%'
+        OR existing_predicate NOT LIKE '%ACTIVE%'
+        OR existing_predicate NOT LIKE '%LATE%'
+        OR (length(existing_predicate) - length(replace(existing_predicate, '''', ''))) <> 6
+    THEN
+        RAISE EXCEPTION
+            'Index uq_loans_one_open_per_copy already exists with an unexpected definition. Inspect pg_get_indexdef before proceeding.';
+    END IF;
+END
+$;
 
 INSERT INTO schema_migrations (version, description)
 VALUES (
