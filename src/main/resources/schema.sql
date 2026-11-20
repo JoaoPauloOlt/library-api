@@ -117,6 +117,11 @@ CREATE TABLE IF NOT EXISTS loans (
 CREATE INDEX IF NOT EXISTS idx_loans_user_id ON loans(user_id);
 CREATE INDEX IF NOT EXISTS idx_loans_book_copy_id ON loans(book_copy_id);
 
+-- A physical copy can have only one open loan at a time.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_loans_one_open_per_copy
+    ON loans(book_copy_id)
+    WHERE status IN ('REQUESTED', 'ACTIVE', 'LATE');
+
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
