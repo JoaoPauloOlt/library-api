@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 import com.jpoltramari.library_api.domain.enums.OutboxStatus;
 import com.jpoltramari.library_api.domain.model.OutboxEvent;
 import com.jpoltramari.library_api.domain.repository.OutboxEventRepository;
@@ -29,7 +29,7 @@ class OutboxEventServiceTest {
     @Mock
     private OutboxEventRepository repository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+    private final ObjectMapper objectMapper = JsonMapper.builder().addModule(new tools.jackson.datatype.jsr310.JavaTimeModule()).build();
     private final Clock clock = Clock.fixed(Instant.parse("2026-11-18T15:00:00Z"), ZoneOffset.UTC);
 
     @Test
