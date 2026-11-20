@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @OpenAPIDefinition(
         info = @Info(
                 title = "Library API",
-                version = "1.0.0",
+                version = "1.1.0",
                 description = """
                         REST API for managing books, authors, physical copies, users and loans.
 
