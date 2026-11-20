@@ -83,7 +83,8 @@ class OutboxEventDeliveryServiceTest {
                 eq(OutboxStatus.PENDING),
                 eq(OutboxStatus.FAILED),
                 eq(NOW.plusSeconds(5)),
-                eq("broker unavailable")
+                eq("broker unavailable"),
+                eq(10)
         )).thenReturn(1);
 
         assertThat(service.markFailed(claim, new IllegalStateException("broker unavailable"))).isTrue();
@@ -99,7 +100,8 @@ class OutboxEventDeliveryServiceTest {
                 eq(OutboxStatus.PENDING),
                 eq(OutboxStatus.FAILED),
                 eq(NOW),
-                eq("connection refused")
+                eq("connection refused"),
+                eq(10)
         )).thenReturn(1);
 
         assertThat(service.markFailed(claim, new IllegalStateException("connection refused"))).isTrue();
