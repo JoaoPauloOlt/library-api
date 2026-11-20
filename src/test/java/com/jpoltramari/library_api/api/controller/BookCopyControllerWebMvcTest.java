@@ -15,8 +15,10 @@ import static org.mockito.ArgumentMatchers.any;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -115,6 +117,35 @@ class BookCopyControllerWebMvcTest {
                         .contentType("application/json")
                         .content("{\"status\":\"MAINTENANCE\",\"location\":\"Shelf B-02\",\"active\":true}"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldRequireAuthenticationToDeleteCopy() throws Exception {
+        mockMvc.perform(delete("/books/1/copies/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(authorities = "BOOK_COPY_READ")
+    void shouldRejectCopyDeletionWithoutDeletePermission() throws Exception {
+        mockMvc.perform(delete("/books/1/copies/1"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(authorities = "BOOK_COPY_DELETE")
+    void shouldDeleteCopyWithDeletePermission() throws Exception {
+        mockMvc.perform(delete("/books/1/copies/1"))
+                .andExpect(status().isNoContent());
+
+        verify(service).delete(1L, 1L);
+    }
+
+    @Test
+    @WithMockUser(authorities = "BOOK_COPY_DELETE")
+    void shouldRejectInvalidCopyIdOnDelete() throws Exception {
+        mockMvc.perform(delete("/books/1/copies/0"))
+                .andExpect(status().isBadRequest());
     }
 
 }
