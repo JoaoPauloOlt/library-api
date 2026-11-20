@@ -181,8 +181,11 @@ class FineIntegrationTest {
                 loan, LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
         fineService.waive(fine.getId(), "First waiver", administrator.getId());
 
+        Long fineId = fine.getId();
+        Long administratorId = administrator.getId();
+
         assertThatThrownBy(() -> fineService.waive(
-                fine.getId(), "Second waiver", administrator.getId()))
+                fineId, "Second waiver", administratorId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Only open fines can be waived.");
 
