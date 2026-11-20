@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
 /**
- * Extension point for token revocation (Redis, in-memory, etc.).
+ * Persistent access-token revocation contract.
  */
 public interface TokenBlacklist {
 
