@@ -1,5 +1,8 @@
 # 📚 Library API
 
+**Version:** `1.1.0` (release candidate; pending merge and CI validation)
+
+
 REST API for library management, developed with **Java 21 + Spring Boot**. The project provides a backend for catalog management, physical book copies, users, authentication, role/permission-based authorization and loan circulation.
 
 The API is developed as a portfolio project with a focus on **layered architecture, automated testing, security, API contracts and continuous integration**.
@@ -284,9 +287,19 @@ Never commit `.env`, `.env.prod`, or any real credentials.
 
 - JDK 21
 - Maven Wrapper included in the repository
-- PostgreSQL, or Docker/Docker Compose
+- PostgreSQL 16
+- RabbitMQ 4 (required by the default messaging configuration)
+- Docker and Docker Compose (recommended to provision PostgreSQL and RabbitMQ together)
 
-### Run with a local PostgreSQL instance
+### Run with local PostgreSQL and RabbitMQ
+
+Start the required infrastructure (recommended):
+
+```bash
+docker compose up -d postgres rabbitmq
+```
+
+Then configure `.env`, export its values and start the API:
 
 ```bash
 git clone https://github.com/JoaoPauloOlt/library-api.git
@@ -299,6 +312,8 @@ set +a
 ```
 
 Spring Boot does not load a plain `.env` file automatically. Export its values before starting the application so `SPRING_PROFILES_ACTIVE=dev` and the database credentials are available to the process.
+
+The API expects RabbitMQ at `RABBITMQ_HOST` / `RABBITMQ_PORT` (defaults: `localhost:5672`). Set `MESSAGING_ENABLED=false` only when intentionally running without the messaging infrastructure.
 
 The API runs on:
 
