@@ -2,7 +2,7 @@ package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.command.user.CreateUserCommand;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
-import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.domain.exception.EmailAlreadyRegisteredException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.exception.UserNotFoundException;
 import com.jpoltramari.library_api.domain.model.Group;
@@ -60,7 +60,7 @@ public class UserService {
 
     private void validateEmail(String email) {
         if (repository.existsByEmail(email)) {
-            throw new BusinessException("Email already registered.");
+            throw new EmailAlreadyRegisteredException("Email already registered.");
         }
     }
 

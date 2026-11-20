@@ -2,6 +2,7 @@ package com.jpoltramari.library_api.api.exception;
 
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityInUseException;
+import com.jpoltramari.library_api.domain.exception.EmailAlreadyRegisteredException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.api.config.ErrorProperties;
 import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
@@ -135,9 +136,7 @@ public class ApiExceptionHandler {
             PropertyReferenceException ex,
             HttpServletRequest request
     ) {
-        String typeName = ex.getType() != null
-                ? ex.getType().getType().getSimpleName()
-                : "unknown";
+        String typeName = ex.getType().getType().getSimpleName();
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
@@ -172,6 +171,20 @@ public class ApiExceptionHandler {
                 "Entity in use",
                 ex.getMessage(),
                 "ENTITY_IN_USE",
+                request
+        );
+    }
+
+    @ExceptionHandler(EmailAlreadyRegisteredException.class)
+    public ResponseEntity<ErrorResponse> handleEmailAlreadyRegistered(
+            EmailAlreadyRegisteredException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.CONFLICT,
+                "Email already registered",
+                ex.getMessage(),
+                "EMAIL_ALREADY_REGISTERED",
                 request
         );
     }
