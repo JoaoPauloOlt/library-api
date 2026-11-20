@@ -103,6 +103,18 @@ Authorization is permission-based and supports the following groups:
 - **LIBRARIAN** — catalog, physical copies and staff circulation (`LOAN_CREATE_FOR_USER`, `LOAN_APPROVE`, `LOAN_RETURN`, `LOAN_READ_ALL`, `LOAN_CANCEL_ANY`)
 - **ADMIN** — all application permissions
 
+### Development demo accounts
+
+The `dev` profile loads the following demonstration accounts from `src/main/resources/data-dev.sql`. Passwords are stored as BCrypt hashes in the seed file.
+
+| Email | Password | Group / access level |
+|---|---|---|
+| `admin@library.com` | `Admin123!` | `ADMIN` — all application permissions |
+| `librarian@library.com` | `Librarian123!` | `LIBRARIAN` — catalog, physical copies and staff circulation |
+| `user@library.com` | `User123!` | `USER` — catalog access and own-loan operations |
+
+These credentials are for local development and disposable demonstrations only. Never use them in production or expose them as real user credentials. Production demo fixtures are opt-in and should only be enabled for a disposable demo database. The seed uses `ON CONFLICT DO NOTHING`; if an account already exists in a reused database, its existing password is not overwritten by subsequent seed runs.
+
 Security also includes:
 
 - JWT issuer and audience validation
