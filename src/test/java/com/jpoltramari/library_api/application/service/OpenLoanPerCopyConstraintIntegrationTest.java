@@ -36,8 +36,8 @@ class OpenLoanPerCopyConstraintIntegrationTest {
                 RETURNING id
                 """, Long.class, uniqueIsbn());
         bookCopyId = jdbcTemplate.queryForObject("""
-                INSERT INTO book_copies (book_id, barcode, status, active)
-                VALUES (?, ?, 'AVAILABLE', TRUE)
+                INSERT INTO book_copies (book_id, barcode, status, active, updated_at)
+                VALUES (?, ?, 'AVAILABLE', TRUE, CURRENT_TIMESTAMP)
                 RETURNING id
                 """, Long.class, bookId, "OPEN-LOAN-" + UUID.randomUUID());
     }
