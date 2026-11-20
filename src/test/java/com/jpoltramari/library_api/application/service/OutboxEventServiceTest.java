@@ -8,7 +8,6 @@ import com.jpoltramari.library_api.domain.repository.OutboxEventRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -19,9 +18,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OutboxEventServiceTest {
@@ -37,7 +34,7 @@ class OutboxEventServiceTest {
         OutboxEventService service = new OutboxEventService(repository, objectMapper, clock);
         Map<String, Object> data = Map.of("loanId", 42L, "userId", 7L);
 
-        UUID eventId = service.record("LOAN", "42", "loan.returned", data);
+        UUID eventId = service.recordEvent("LOAN", "42", "loan.returned", data);
 
         ArgumentCaptor<OutboxEvent> captor = ArgumentCaptor.forClass(OutboxEvent.class);
         verify(repository).save(captor.capture());
