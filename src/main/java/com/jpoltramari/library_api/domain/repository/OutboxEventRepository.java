@@ -34,17 +34,19 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID> 
     @Modifying
     @Query("""
             update OutboxEvent event
-            set event.status = com.jpoltramari.library_api.domain.enums.OutboxStatus.PUBLISHED,
+            set event.status = :publishedStatus,
                 event.publishedAt = :publishedAt,
                 event.lastError = null
             where event.id = :id
-              and event.status = com.jpoltramari.library_api.domain.enums.OutboxStatus.PENDING
+              and event.status = :pendingStatus
               and event.availableAt = :leaseUntil
             """)
     int markPublished(
             @Param("id") UUID id,
             @Param("leaseUntil") Instant leaseUntil,
-            @Param("publishedAt") Instant publishedAt
+            @Param("publishedAt") Instant publishedAt,
+            @Param("pendingStatus") OutboxStatus pendingStatus,
+            @Param("publishedStatus") OutboxStatus publishedStatus
     );
 
     @Query("select event.attempts from OutboxEvent event where event.id = :id")
@@ -61,7 +63,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID> 
                     else :pendingStatus
                 end
             where event.id = :id
-              and event.status = com.jpoltramari.library_api.domain.enums.OutboxStatus.PENDING
+              and event.status = :pendingStatus
               and event.availableAt = :leaseUntil
             """)
     int markFailed(
