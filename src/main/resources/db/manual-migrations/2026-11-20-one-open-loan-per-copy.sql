@@ -35,7 +35,7 @@ BEGIN
 END
 $$;
 
-DO $
+DO $$
 DECLARE
     existing_index_oid OID;
     existing_index_valid BOOLEAN;
@@ -72,7 +72,7 @@ BEGIN
             'Index uq_loans_one_open_per_copy already exists with an unexpected definition. Inspect pg_get_indexdef before proceeding.';
     END IF;
 END
-$;
+$$;
 
 INSERT INTO schema_migrations (version, description)
 VALUES (
