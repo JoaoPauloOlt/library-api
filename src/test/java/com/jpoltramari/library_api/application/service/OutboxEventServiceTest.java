@@ -29,7 +29,7 @@ class OutboxEventServiceTest {
     @Mock
     private OutboxEventRepository repository;
 
-    private final JsonMapper objectMapper = JsonMapper.builder().addModule(new tools.jackson.datatype.jsr310.JavaTimeModule()).build();
+    private final JsonMapper objectMapper = JsonMapper.builder().build();
     private final Clock clock = Clock.fixed(Instant.parse("2026-11-18T15:00:00Z"), ZoneOffset.UTC);
 
     @Test
