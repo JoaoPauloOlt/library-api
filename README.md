@@ -168,7 +168,7 @@ The JWT secret is interpreted as literal UTF-8 text, not Base64, and must contai
 - Validation of borrower status, copy availability and loan business rules
 - Serialization of loan requests per user to prevent concurrent duplicate requests for the same book
 - Automatic transition from `ACTIVE` to `LATE` when the due date is reached; the scheduler checks every five minutes in UTC
-- Return processing accepts both `ACTIVE` and `LATE` loans
+- Return processing accepts both `ACTIVE` and `LATE` loans\n- Returning a late loan creates one persisted fine in the same transaction as the return\n- Fine rate: R$ 2.00 per calendar day, with no grace period or maximum cap, using `America/Sao_Paulo` business dates\n- Returning on or before the due date does not create a fine\n- Fine consultation is available to borrowers (`/fines/my`) and staff (`/fines`); administrators can waive open fines with an audited reason\n- Fine payment is outside the current scope
 - Late-fee calculation is intentionally outside the base API
 
 ### Circulation endpoints and permissions
