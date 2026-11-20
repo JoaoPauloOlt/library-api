@@ -95,7 +95,7 @@ JOIN (
         ('9780141439518', 'BC-PP-001', 'RESERVED', 'A-02'),
         ('9780141439518', 'BC-PP-002', 'AVAILABLE', 'A-02'),
         ('9780743273565', 'BC-GATSBY-001', 'AVAILABLE', 'B-01'),
-        ('9780743273565', 'BC-GATSBY-002', 'AVAILABLE', 'B-01'),
+        ('9780743273565', 'BC-GATSBY-002', 'LOANED', 'B-01'),
         ('9780316769488', 'BC-CATCHER-001', 'MAINTENANCE', 'B-02'),
         ('9780316769488', 'BC-CATCHER-002', 'AVAILABLE', 'B-02')
 ) AS seed(isbn, barcode, status, location)
@@ -200,4 +200,41 @@ WHERE u.email = 'user@library.com'
       FROM loans l
       WHERE l.user_id = u.id
         AND l.book_copy_id = bc.id
+  );
+
+
+-- Overdue loan scenario for the USER account.
+-- Returning this loan through the API generates and persists a fine.
+INSERT INTO loans (
+    user_id, book_copy_id, status, request_date,
+    approval_date, withdrawable_date, due_date, return_date
+)
+SELECT
+    u.id,
+    bc.id,
+    'LATE',
+    CURRENT_TIMESTAMP - INTERVAL '11 days',
+    CURRENT_TIMESTAMP - INTERVAL '10 days',
+    CURRENT_TIMESTAMP - INTERVAL '9 days',
+    CURRENT_TIMESTAMP - INTERVAL '3 days',
+    NULL
+FROM users u
+JOIN book_copies bc ON bc.barcode = 'BC-GATSBY-002'
+WHERE u.email = 'user@library.com'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM loans l
+      WHERE l.user_id = u.id
+        AND l.book_copy_id = bc.id
+  );
+
+-- Keep the overdue fixture consistent when reusing an existing database.
+UPDATE book_copies copy
+SET status = 'LOANED'
+WHERE copy.barcode = 'BC-GATSBY-002'
+  AND EXISTS (
+      SELECT 1
+      FROM loans loan
+      WHERE loan.book_copy_id = copy.id
+        AND loan.status = 'LATE'
   );
