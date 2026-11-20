@@ -58,7 +58,7 @@ jobs:
           docker exec "$postgres_container" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
             -c "CREATE DATABASE library_test;" \
             -c "CREATE DATABASE library_schema;" \
-  -c "CREATE DATABASE library_migrations;"
+            -c "CREATE DATABASE library_migrations;"
 
       - name: Set up JDK 21
         uses: actions/setup-java@v5
