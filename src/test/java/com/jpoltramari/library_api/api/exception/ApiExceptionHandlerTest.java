@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -63,10 +64,10 @@ class ApiExceptionHandlerTest {
                 handler.handleEmailAlreadyRegistered(exception, request);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getStatus()).isEqualTo(409);
-        assertThat(response.getBody().getTitle()).isEqualTo("Email already registered");
-        assertThat(response.getBody().getErrorCode()).isEqualTo("EMAIL_ALREADY_REGISTERED");
+        ErrorResponse body = Objects.requireNonNull(response.getBody());
+        assertThat(body.getStatus()).isEqualTo(409);
+        assertThat(body.getTitle()).isEqualTo("Email already registered");
+        assertThat(body.getErrorCode()).isEqualTo("EMAIL_ALREADY_REGISTERED");
     }
 
     @Test
