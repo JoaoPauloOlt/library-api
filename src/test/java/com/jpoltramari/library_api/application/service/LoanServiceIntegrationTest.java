@@ -17,6 +17,8 @@ import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +47,9 @@ class LoanServiceIntegrationTest {
 
     @Autowired
     private LoanService loanService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     private Clock clock;
@@ -112,7 +117,8 @@ class LoanServiceIntegrationTest {
         loan.setWithdrawableDate(LocalDateTime.now(clock));
         loan.setDueDate(LocalDateTime.now(clock).plusDays(7));
         loan.getBookCopy().setStatus(CopyStatus.LOANED);
-        loanRepository.save(loan);
+        loanRepository.saveAndFlush(loan);
+        entityManager.clear();
 
         var result = loanService.findByUserId(
                 userId,
