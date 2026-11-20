@@ -157,7 +157,7 @@ FROM schema_migrations
 WHERE version = '2026-11-20-one-open-loan-per-copy';
 ```
 
-The duplicate query must return no rows. The index definition must contain the partial predicate for the three open statuses.
+The duplicate query must return no rows. The index definition must be unique, target only `book_copy_id`, and contain exactly the partial predicate for the three open statuses. The migration fails rather than silently accepting an existing index with the same name but a different definition.
 
 **Rollback:** If rollback is required, first stop writes that can create or change loans, then drop only the index in a reviewed transaction:
 
