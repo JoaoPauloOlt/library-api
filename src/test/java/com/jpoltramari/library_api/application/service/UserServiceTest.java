@@ -2,7 +2,7 @@ package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.command.user.CreateUserCommand;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
-import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.domain.exception.EmailAlreadyRegisteredException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.model.Group;
 import com.jpoltramari.library_api.domain.model.User;
@@ -68,7 +68,7 @@ class UserServiceTest {
                 "John", "john@example.com", "11999999999", "password123");
         when(repository.existsByEmail(command.email())).thenReturn(true);
 
-        assertThrows(BusinessException.class, () -> service.create(command));
+        assertThrows(EmailAlreadyRegisteredException.class, () -> service.create(command));
     }
 
     @Test
