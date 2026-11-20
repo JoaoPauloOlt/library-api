@@ -1,14 +1,23 @@
 package com.jpoltramari.library_api.infrastructure.config;
 
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.core.Ordered;
+import org.springframework.web.filter.UrlHandlerFilter;
 
-@Configuration
-public class WebMvcConfig implements WebMvcConfigurer {
+@Configuration(proxyBeanMethods = false)
+public class WebMvcConfig {
 
-    @Override
-    public void configurePathMatch(PathMatchConfigurer configurer) {
-        configurer.setUseTrailingSlashMatch(true);
+    @Bean
+    public FilterRegistrationBean<UrlHandlerFilter> trailingSlashFilter() {
+        UrlHandlerFilter filter = UrlHandlerFilter
+                .trailingSlashHandler("/**")
+                .wrapRequest()
+                .build();
+
+        FilterRegistrationBean<UrlHandlerFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setOrder(Ordered.HIGHEST_PRECEDENCE + 10);
+        return registration;
     }
 }
