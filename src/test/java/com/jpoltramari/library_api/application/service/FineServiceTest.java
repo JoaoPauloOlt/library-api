@@ -75,7 +75,7 @@ class FineServiceTest {
         assertThat(result.getCreatedAt()).isEqualTo(NOW);
 
         ArgumentCaptor<Map<String, Object>> payloadCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(outboxEventService).record(
+        verify(outboxEventService).recordEvent(
                 eq("FINE"), eq("15"), eq("fine.created"), payloadCaptor.capture());
         assertThat(payloadCaptor.getValue())
                 .containsEntry("fineId", 15L)
