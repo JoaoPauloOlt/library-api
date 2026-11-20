@@ -107,9 +107,8 @@ jobs:
           print(f"JaCoCo report: {report}")
           PY
 
-      # SonarCloud analysis remains enabled for visibility, but its Quality Gate
-      # is informational on pull requests. Maven tests and JaCoCo remain blocking.
-      # Main-branch analysis still waits for the Quality Gate.
+      # SonarCloud analysis and its Quality Gate are blocking for pull requests
+      # and main-branch analysis.
       - name: SonarCloud analysis
         if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
         env:
