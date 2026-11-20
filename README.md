@@ -1,6 +1,6 @@
 # 📚 Library API
 
-**Version:** `1.1.0` (release candidate; pending merge and CI validation)
+**Version:** `1.1.0` — frozen baseline for the Biblioteca PI fork.
 
 
 REST API for library management, developed with **Java 21 + Spring Boot**. The project provides a backend for catalog management, physical book copies, users, authentication, role/permission-based authorization and loan circulation.
