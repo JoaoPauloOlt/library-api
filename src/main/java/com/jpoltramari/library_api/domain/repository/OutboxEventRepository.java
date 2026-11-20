@@ -59,7 +59,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID> 
                 event.lastError = :lastError,
                 event.availableAt = :retryAt,
                 event.status = case
-                    when event.attempts + 1 >= 10 then :failedStatus
+                    when event.attempts + 1 >= :maxAttempts then :failedStatus
                     else :pendingStatus
                 end
             where event.id = :id
@@ -72,6 +72,7 @@ public interface OutboxEventRepository extends JpaRepository<OutboxEvent, UUID> 
             @Param("pendingStatus") OutboxStatus pendingStatus,
             @Param("failedStatus") OutboxStatus failedStatus,
             @Param("retryAt") Instant retryAt,
-            @Param("lastError") String lastError
+            @Param("lastError") String lastError,
+            @Param("maxAttempts") int maxAttempts
     );
 }
