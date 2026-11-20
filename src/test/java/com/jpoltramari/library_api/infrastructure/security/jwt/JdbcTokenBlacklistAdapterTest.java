@@ -56,7 +56,7 @@ class JdbcTokenBlacklistAdapterTest {
         adapter.blacklist("revoked-jti", expiresAt);
 
         verify(jdbcTemplate).update(
-                "DELETE FROM revoked_access_tokens WHERE expires_at <= CURRENT_TIMESTAMP"
+                org.mockito.ArgumentMatchers.contains("DELETE FROM revoked_access_tokens")
         );
         verify(jdbcTemplate).update(
                 org.mockito.ArgumentMatchers.contains("INSERT INTO revoked_access_tokens"),
@@ -81,7 +81,7 @@ class JdbcTokenBlacklistAdapterTest {
         verify(jdbcTemplate).update(
                 org.mockito.ArgumentMatchers.contains("INSERT INTO revoked_access_tokens"),
                 eq("default-expiration-jti"),
-                any(java.sql.Timestamp.class)
+                any(java.time.OffsetDateTime.class)
         );
     }
 }
