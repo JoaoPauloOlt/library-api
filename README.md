@@ -199,7 +199,7 @@ Database initialization is split by responsibility:
 
 - `src/main/resources/schema.sql` contains the PostgreSQL DDL required to provision a new database. Its `CREATE TABLE/INDEX IF NOT EXISTS` statements leave existing tables and their data untouched.
 - `src/main/resources/data.sql` initializes the RBAC groups and permissions in every profile. It does not create demo accounts.
-- `src/main/resources/data-dev.sql` loads development-only accounts, catalog fixtures, physical copies and loan scenarios. It is executed only with the `dev` profile.
+- `src/main/resources/data-dev.sql` loads demo accounts, catalog fixtures, physical copies and loan scenarios. It runs automatically in `dev`; in `prod`, it is opt-in through `DB_SEED_DATA_LOCATIONS`.
 
 Each environment uses a different schema strategy:
 
@@ -207,7 +207,7 @@ Each environment uses a different schema strategy:
 |---|---|---|
 | `dev` | `ddl-auto=update` | Hibernate runs first, followed by `schema.sql`, `data.sql` and `data-dev.sql` |
 | `test` | `ddl-auto=create-drop` | Hibernate creates the isolated test schema, then the shared RBAC seed runs |
-| `prod` | `ddl-auto=validate` | `schema.sql` and `data.sql` run before Hibernate validates the schema |
+| `prod` | `ddl-auto=validate` | `schema.sql` and `data.sql` run before Hibernate validates the schema; demo fixtures are opt-in via `DB_SEED_DATA_LOCATIONS` |
 
 The production profile never asks Hibernate to create or update tables. On a new production database, `schema.sql` provisions the initial structure before JPA starts. On an existing database, the idempotent DDL skips existing tables and does not delete application data.
 
@@ -417,6 +417,16 @@ Production configuration includes:
 - Correlation ID logging
 
 The frontend integration is maintained separately in the `library-web` project.
+
+### Render demo database bootstrap
+
+For a new Render PostgreSQL database, the `prod` profile creates the initial tables from `schema.sql` and inserts RBAC groups and permissions from `data.sql`. To also populate disposable demo accounts, books, copies and loan scenarios, add this environment variable to the Render API service:
+
+```env
+DB_SEED_DATA_LOCATIONS=classpath:data.sql,classpath:data-dev.sql
+```
+
+If the variable is omitted, the production default remains `classpath:data.sql` and demo accounts are not created. The demo seed uses conflict-safe inserts and can run again after restarts without intentionally duplicating its fixtures. It does not truncate or reset existing records. Use it only for a demonstration database, not for real user data.
 
 ## Development workflow
 
