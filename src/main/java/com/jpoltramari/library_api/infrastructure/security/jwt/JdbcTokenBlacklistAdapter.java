@@ -3,7 +3,8 @@ package com.jpoltramari.library_api.infrastructure.security.jwt;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.Instant;
 
 @Repository
@@ -58,6 +59,6 @@ public class JdbcTokenBlacklistAdapter implements TokenBlacklist {
         }
 
         jdbcTemplate.update(DELETE_EXPIRED_SQL);
-        jdbcTemplate.update(UPSERT_SQL, jti, Timestamp.from(expiresAt));
+        jdbcTemplate.update(UPSERT_SQL, jti, OffsetDateTime.ofInstant(expiresAt, ZoneOffset.UTC));
     }
 }
