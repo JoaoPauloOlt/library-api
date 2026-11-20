@@ -21,6 +21,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -100,4 +101,32 @@ class AuthorControllerWebMvcTest {
 
         verify(service).update(org.mockito.ArgumentMatchers.eq(1L), any());
     }
+    @Test
+    void shouldRequireAuthenticationToDeleteAuthor() throws Exception {
+        mockMvc.perform(delete("/authors/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldRejectAuthorDeletionWithoutDeletePermission() throws Exception {
+        mockMvc.perform(delete("/authors/1").with(user("librarian")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldDeleteAuthorWithDeletePermission() throws Exception {
+        mockMvc.perform(delete("/authors/1")
+                        .with(user("admin").authorities(new SimpleGrantedAuthority("AUTHOR_DELETE"))))
+                .andExpect(status().isNoContent());
+
+        verify(service).delete(1L);
+    }
+
+    @Test
+    void shouldRejectInvalidAuthorIdOnDelete() throws Exception {
+        mockMvc.perform(delete("/authors/0")
+                        .with(user("admin").authorities(new SimpleGrantedAuthority("AUTHOR_DELETE"))))
+                .andExpect(status().isBadRequest());
+    }
+
 }

@@ -142,4 +142,30 @@ class BookControllerWebMvcTest {
                         .content(payload))
                 .andExpect(status().isOk());
     }
+    @Test
+    void shouldRequireAuthenticationToDeleteBook() throws Exception {
+        mockMvc.perform(delete("/books/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldRejectBookDeletionWithoutDeletePermission() throws Exception {
+        mockMvc.perform(delete("/books/1").with(user("librarian")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldDeleteBookWithDeletePermission() throws Exception {
+        mockMvc.perform(delete("/books/1")
+                        .with(user("admin").authorities(new SimpleGrantedAuthority("BOOK_DELETE"))))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldRejectInvalidBookIdOnDelete() throws Exception {
+        mockMvc.perform(delete("/books/0")
+                        .with(user("admin").authorities(new SimpleGrantedAuthority("BOOK_DELETE"))))
+                .andExpect(status().isBadRequest());
+    }
+
 }
