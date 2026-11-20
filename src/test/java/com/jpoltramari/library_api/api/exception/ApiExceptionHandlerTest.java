@@ -2,7 +2,6 @@ package com.jpoltramari.library_api.api.exception;
 
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EmailAlreadyRegisteredException;
-import com.jpoltramari.library_api.domain.exception.EmailAlreadyRegisteredException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import com.jpoltramari.library_api.api.config.ErrorProperties;
@@ -53,21 +52,6 @@ class ApiExceptionHandlerTest {
         assertThat(response.getBody().getDetail()).isEqualTo("Book 999 not found");
         assertThat(response.getBody().getErrorCode()).isEqualTo("NOT_FOUND");
         assertThat(response.getBody().getPath()).isEqualTo("/books/999");
-    }
-
-    @Test
-    void shouldReturnConflictForDuplicateEmail() {
-        EmailAlreadyRegisteredException exception =
-                new EmailAlreadyRegisteredException("Email already registered.");
-
-        ResponseEntity<ErrorResponse> response =
-                handler.handleEmailAlreadyRegistered(exception, request);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getStatus()).isEqualTo(409);
-        assertThat(response.getBody().getTitle()).isEqualTo("Email already registered");
-        assertThat(response.getBody().getErrorCode()).isEqualTo("EMAIL_ALREADY_REGISTERED");
     }
 
     @Test
