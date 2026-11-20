@@ -61,7 +61,7 @@ class JdbcTokenBlacklistAdapterTest {
         verify(jdbcTemplate).update(
                 org.mockito.ArgumentMatchers.contains("INSERT INTO revoked_access_tokens"),
                 eq("revoked-jti"),
-                any(java.sql.Timestamp.class)
+                any(java.time.OffsetDateTime.class)
         );
     }
 
