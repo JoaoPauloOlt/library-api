@@ -241,7 +241,7 @@ class DevSeedIntegrationTest {
 
         assertThat(loanRepository.findByUserId(user.getId()))
                 .extracting(loan -> loan.getStatus())
-                .contains(LoanStatus.ACTIVE, LoanStatus.REQUESTED, LoanStatus.RETURNED);
+                .contains(LoanStatus.ACTIVE, LoanStatus.REQUESTED, LoanStatus.RETURNED, LoanStatus.LATE);
     }
 
     private void assertGroup(String email, String expectedGroup) {
