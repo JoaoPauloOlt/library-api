@@ -11,6 +11,7 @@ import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.model.BookCopy;
 import com.jpoltramari.library_api.domain.model.Loan;
 import com.jpoltramari.library_api.domain.model.User;
+import com.jpoltramari.library_api.domain.repository.AuthorRepository;
 import com.jpoltramari.library_api.domain.repository.BookCopyRepository;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
@@ -53,6 +54,9 @@ class LoanServiceIntegrationTest {
     private BookRepository bookRepository;
 
     @Autowired
+    private AuthorRepository authorRepository;
+
+    @Autowired
     private LoanRepository loanRepository;
 
     @Autowired
@@ -85,6 +89,38 @@ class LoanServiceIntegrationTest {
         copy.setStatus(CopyStatus.AVAILABLE);
         copy.setActive(true);
         bookCopyId = bookCopyRepository.save(copy).getId();
+    }
+
+    @Test
+    void shouldLoadMyLoansWithBookAuthorsAndFormulaInPagedQuery() {
+        Book book = bookRepository.findById(bookId).orElseThrow();
+        com.jpoltramari.library_api.domain.model.Author author =
+                new com.jpoltramari.library_api.domain.model.Author();
+        author.setName("Pagination Test Author");
+        author.setNationality("Brazilian");
+        author = authorRepository.save(author);
+        book.getAuthors().add(author);
+        bookRepository.save(book);
+
+        Loan loan = new Loan();
+        loan.setUser(userRepository.findById(userId).orElseThrow());
+        loan.setBookCopy(bookCopyRepository.findById(bookCopyId).orElseThrow());
+        loan.setStatus(LoanStatus.REQUESTED);
+        loan.setRequestDate(LocalDateTime.now(clock));
+        loanRepository.save(loan);
+
+        var result = loanService.findByUserId(
+                userId,
+                org.springframework.data.domain.PageRequest.of(0, 20)
+        );
+
+        assertThat(result.getTotalElements()).isEqualTo(1);
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().getFirst().getBookCopy().getBook().getLoanCount())
+                .isEqualTo(1L);
+        assertThat(result.getContent().getFirst().getBookCopy().getBook().getAuthors())
+                .extracting(com.jpoltramari.library_api.domain.model.Author::getName)
+                .containsExactly("Pagination Test Author");
     }
 
     @Test
