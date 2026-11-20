@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.datatype.jsr310.JavaTimeModule;
 import com.jpoltramari.library_api.infrastructure.security.jwt.JwtClaims;
 import jakarta.servlet.FilterChain;
 import org.junit.jupiter.api.AfterEach;
@@ -112,7 +112,7 @@ class SecurityInfrastructureBehaviorTest {
 
     @Test
     void shouldWriteUnauthorizedAndForbiddenSecurityResponses() throws Exception {
-        ApiSecurityExceptionHandler handler = new ApiSecurityExceptionHandler(new ObjectMapper().registerModule(new JavaTimeModule()));
+        ApiSecurityExceptionHandler handler = new ApiSecurityExceptionHandler(JsonMapper.builder().addModule(new JavaTimeModule()).build());
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/books");
         MockHttpServletResponse unauthorized = new MockHttpServletResponse();
