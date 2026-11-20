@@ -50,9 +50,9 @@ class OutboxEventDeliveryServiceTest {
 
         assertThat(claims).hasSize(1);
         assertThat(claims.get(0).id()).isEqualTo(event.getId());
-        assertThat(claims.getFirst().eventType()).isEqualTo("loan.returned");
-        assertThat(claims.getFirst().payload()).isEqualTo(event.getPayload());
-        assertThat(claims.getFirst().leaseUntil()).isEqualTo(NOW.plusSeconds(180));
+        assertThat(claims.get(0).eventType()).isEqualTo("loan.returned");
+        assertThat(claims.get(0).payload()).isEqualTo(event.getPayload());
+        assertThat(claims.get(0).leaseUntil()).isEqualTo(NOW.plusSeconds(180));
         assertThat(event.getAvailableAt()).isEqualTo(NOW.plusSeconds(180));
         verify(repository).saveAll(List.of(event));
     }
