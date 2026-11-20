@@ -6,7 +6,6 @@ import com.jpoltramari.library_api.api.dto.book.BookInput;
 import com.jpoltramari.library_api.api.dto.user.UserUpdateInput;
 import com.jpoltramari.library_api.application.command.bookcopy.UpdateBookCopyCommand;
 import com.jpoltramari.library_api.application.command.loan.CreateLoanCommand;
-import com.jpoltramari.library_api.application.port.security.UserSecuritySnapshotPort;
 import com.jpoltramari.library_api.application.service.BookCopyService;
 import com.jpoltramari.library_api.application.service.FineService;
 import com.jpoltramari.library_api.application.service.OutboxEventService;
@@ -91,21 +90,15 @@ class CoverageExpansionTest {
     }
 
     @Test
-    void shouldRevokeAllSessionsAcrossPersistenceAndSnapshotPorts() {
+    void shouldRevokeAllSessionsByUpdatingTokenVersionAndRefreshTokens() {
         UserRepository userRepository = mock(UserRepository.class);
         RefreshTokenRepository refreshTokenRepository = mock(RefreshTokenRepository.class);
-        UserSecuritySnapshotPort snapshotPort = mock(UserSecuritySnapshotPort.class);
-        TokenVersionService service = new TokenVersionService(
-                userRepository,
-                refreshTokenRepository,
-                snapshotPort
-        );
+        TokenVersionService service = new TokenVersionService(userRepository, refreshTokenRepository);
 
         service.revokeAllSessions(42L);
 
         verify(userRepository).incrementTokenVersion(42L);
         verify(refreshTokenRepository).revokeAllByUserId(org.mockito.ArgumentMatchers.eq(42L), any(Instant.class));
-        verify(snapshotPort).evict(42L);
     }
 
     @Test
