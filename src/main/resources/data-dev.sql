@@ -85,8 +85,8 @@ JOIN authors a ON a.name = 'J. D. Salinger'
 WHERE b.isbn = '9780316769488'
 ON CONFLICT DO NOTHING;
 
-INSERT INTO book_copies (book_id, barcode, status, location, active)
-SELECT b.id, seed.barcode, seed.status, seed.location, TRUE
+INSERT INTO book_copies (book_id, barcode, status, location, active, updated_at)
+SELECT b.id, seed.barcode, seed.status, seed.location, TRUE, CURRENT_TIMESTAMP
 FROM books b
 JOIN (
     VALUES
