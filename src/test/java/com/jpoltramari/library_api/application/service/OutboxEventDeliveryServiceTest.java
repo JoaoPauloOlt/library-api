@@ -60,7 +60,7 @@ class OutboxEventDeliveryServiceTest {
     @Test
     void shouldMarkClaimAsPublishedUsingLeaseFence() {
         OutboxEventClaim claim = claim();
-        when(repository.markPublished(claim.id(), claim.leaseUntil(), NOW)).thenReturn(1);
+        when(repository.markPublished(claim.id(), claim.leaseUntil(), NOW, OutboxStatus.PENDING, OutboxStatus.PUBLISHED)).thenReturn(1);
 
         assertThat(service.markPublished(claim)).isTrue();
     }
