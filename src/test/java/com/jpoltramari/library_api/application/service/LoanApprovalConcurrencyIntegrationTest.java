@@ -85,7 +85,7 @@ class LoanApprovalConcurrencyIntegrationTest {
     void shouldApproveSingleOpenLoanAndMarkCopyAsLoaned() {
         BookCopy copy = bookCopyRepository.findById(copyId).orElseThrow();
         Loan loan = new Loan();
-        loan.setUser(userRepository.findById(userIds.getFirst()).orElseThrow());
+        loan.setUser(userRepository.findById(userIds.get(0)).orElseThrow());
         loan.setBookCopy(copy);
         loan.setStatus(LoanStatus.REQUESTED);
         loan.setRequestDate(LocalDateTime.now(ZoneOffset.UTC));
