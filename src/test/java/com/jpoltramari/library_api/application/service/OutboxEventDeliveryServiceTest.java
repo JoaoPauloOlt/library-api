@@ -6,7 +6,6 @@ import com.jpoltramari.library_api.domain.repository.OutboxEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
@@ -50,7 +49,7 @@ class OutboxEventDeliveryServiceTest {
         List<OutboxEventClaim> claims = service.claimAvailableEvents();
 
         assertThat(claims).hasSize(1);
-        assertThat(claims.getFirst().id()).isEqualTo(event.getId());
+        assertThat(claims.get(0).id()).isEqualTo(event.getId());
         assertThat(claims.getFirst().eventType()).isEqualTo("loan.returned");
         assertThat(claims.getFirst().payload()).isEqualTo(event.getPayload());
         assertThat(claims.getFirst().leaseUntil()).isEqualTo(NOW.plusSeconds(180));
