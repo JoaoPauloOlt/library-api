@@ -40,6 +40,8 @@ services:
       DB_USER: ${DB_USER:?DB_USER must be set in .env.prod}
       DB_PASS: ${DB_PASS:?DB_PASS must be set in .env.prod}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env.prod}
+      DB_SCHEMA_INIT_MODE: ${DB_SCHEMA_INIT_MODE:-never}
+      DB_SEED_DATA_LOCATIONS: ${DB_SEED_DATA_LOCATIONS:-classpath:data.sql}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION:-86400000}
       JWT_ISSUER: ${JWT_ISSUER:-library-api}
