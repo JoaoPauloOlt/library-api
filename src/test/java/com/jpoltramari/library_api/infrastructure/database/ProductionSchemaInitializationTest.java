@@ -25,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         "jwt.expiration=${JWT_EXPIRATION:3600000}",
         "jwt.refresh-expiration=${JWT_REFRESH_EXPIRATION:86400000}",
         "jwt.issuer=${JWT_ISSUER:library-api}",
-        "jwt.audience=${JWT_AUDIENCE:library-api-clients}"
+        "jwt.audience=${JWT_AUDIENCE:library-api-clients}",
+        "app.cors.allowed-origins=http://localhost:3000"
 })
 @ActiveProfiles("prod")
 class ProductionSchemaInitializationTest {
