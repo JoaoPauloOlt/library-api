@@ -2,6 +2,14 @@
 -- Idempotent by design: existing tables and their data are never dropped or truncated.
 -- Future production schema changes must be handled by reviewed, manual SQL scripts.
 
+-- Records successful, manually executed production schema upgrades.
+CREATE TABLE IF NOT EXISTS schema_migrations (
+    version VARCHAR(120) PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    installed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    installed_by VARCHAR(120) NOT NULL DEFAULT CURRENT_USER
+);
+
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,

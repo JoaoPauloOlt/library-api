@@ -211,9 +211,9 @@ Each environment uses a different schema strategy:
 
 The production profile never asks Hibernate to create or update tables. On a new production database, `schema.sql` provisions the initial structure before JPA starts. On an existing database, the idempotent DDL skips existing tables and does not delete application data.
 
-Flyway and its migration history are not used. `schema.sql` is an initial bootstrap, not a versioned migration system. Future production schema changes must be delivered through reviewed, manually executed SQL scripts with an explicit execution record and backup/rollback plan. Do not use `ddl-auto=update` in production.
+Flyway and its migration history are not used. `schema.sql` is the current bootstrap for new databases, not a versioned migration system. Production schema upgrades are reviewed SQL scripts under `src/main/resources/db/manual-migrations/`; they are never executed automatically in production. Each script records successful execution in `schema_migrations`. Follow the [database migration runbook](docs/database-migrations.md) for naming, execution order, verification, backups and rollback limitations. Do not use `ddl-auto=update` in production.
 
-The copy-reservation change adds `RESERVED` to the `book_copies.status` constraint. For an existing production database, take a backup and manually execute `src/main/resources/db/manual-migrations/2026-11-13-reserve-book-copies.sql` before deploying the corresponding application version. The `dev` profile applies this idempotent script automatically; fresh databases already receive the updated constraint from `schema.sql`.
+The copy-reservation change adds `RESERVED` to the `book_copies.status` constraint. For an existing production database, take a backup and execute `2026-11-13-reserve-book-copies.sql` before deploying the corresponding application version. The `dev` profile applies this adjustment automatically; fresh databases already receive the updated constraint from `schema.sql`. The one-open-loan partial unique index is also included in the current bootstrap schema; existing production databases must execute `2026-11-20-one-open-loan-per-copy.sql` before deploying code that relies on that invariant.
 
 ## Configuration
 
