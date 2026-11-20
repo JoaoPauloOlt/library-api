@@ -75,13 +75,19 @@ END;
 $;
 
 DROP TRIGGER IF EXISTS trg_user_groups_token_invalidation ON user_groups;
+DROP TRIGGER IF EXISTS trg_user_groups_token_invalidation_update ON user_groups;
 CREATE TRIGGER trg_user_groups_token_invalidation
-AFTER INSERT OR DELETE OR UPDATE OF user_id, group_id
+AFTER INSERT OR DELETE
+ON user_groups
+FOR EACH ROW
+EXECUTE FUNCTION invalidate_tokens_after_user_group_change();
+
+CREATE TRIGGER trg_user_groups_token_invalidation_update
+AFTER UPDATE OF user_id, group_id
 ON user_groups
 FOR EACH ROW
 WHEN (
-    TG_OP <> 'UPDATE'
-    OR OLD.user_id IS DISTINCT FROM NEW.user_id
+    OLD.user_id IS DISTINCT FROM NEW.user_id
     OR OLD.group_id IS DISTINCT FROM NEW.group_id
 )
 EXECUTE FUNCTION invalidate_tokens_after_user_group_change();
@@ -115,13 +121,19 @@ END;
 $;
 
 DROP TRIGGER IF EXISTS trg_group_permissions_token_invalidation ON group_permissions;
+DROP TRIGGER IF EXISTS trg_group_permissions_token_invalidation_update ON group_permissions;
 CREATE TRIGGER trg_group_permissions_token_invalidation
-AFTER INSERT OR DELETE OR UPDATE OF group_id, permission_id
+AFTER INSERT OR DELETE
+ON group_permissions
+FOR EACH ROW
+EXECUTE FUNCTION invalidate_tokens_after_group_permission_change();
+
+CREATE TRIGGER trg_group_permissions_token_invalidation_update
+AFTER UPDATE OF group_id, permission_id
 ON group_permissions
 FOR EACH ROW
 WHEN (
-    TG_OP <> 'UPDATE'
-    OR OLD.group_id IS DISTINCT FROM NEW.group_id
+    OLD.group_id IS DISTINCT FROM NEW.group_id
     OR OLD.permission_id IS DISTINCT FROM NEW.permission_id
 )
 EXECUTE FUNCTION invalidate_tokens_after_group_permission_change();
