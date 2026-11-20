@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.infrastructure.security.jwt;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.sql.init.dependency.DependsOnDatabaseInitialization;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -161,6 +162,7 @@ public class RbacTokenInvalidationInitializer {
         this.jdbcTemplate = jdbcTemplate;
     }
 
+    @PostConstruct
     public void initialize() {
         DDL_STATEMENTS.forEach(jdbcTemplate::execute);
     }
