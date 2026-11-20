@@ -62,6 +62,10 @@ class BookControllerWebMvcTest {
         mockMvc.perform(get("/books")
                         .with(user("reader").authorities(new SimpleGrantedAuthority("BOOK_READ"))))
                 .andExpect(status().isOk());
+
+        mockMvc.perform(get("/books/")
+                        .with(user("reader").authorities(new SimpleGrantedAuthority("BOOK_READ"))))
+                .andExpect(status().isOk());
     }
 
     @Test
