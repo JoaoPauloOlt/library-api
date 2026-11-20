@@ -48,6 +48,8 @@ CREATE TABLE IF NOT EXISTS user_groups (
         FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
 );
 
+
+
 CREATE TABLE IF NOT EXISTS authors (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
