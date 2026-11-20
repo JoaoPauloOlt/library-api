@@ -69,6 +69,46 @@ jobs:
 
       - name: Run tests and coverage
         run: mvn -B verify
+      - name: Validate manual PostgreSQL migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          postgres_container="$(docker ps --filter 'ancestor=postgres:16' --format '{{.ID}}' | head -n 1)"
+          if [ -z "$postgres_container" ]; then
+            echo "PostgreSQL service container was not found."
+            exit 1
+          fi
+
+          migration_db="library_migrations"
+          docker exec -i "$postgres_container" psql -U postgres -d "$migration_db" -v ON_ERROR_STOP=1 < src/main/resources/schema.sql
+          docker exec -i "$postgres_container" psql -U postgres -d "$migration_db" -v ON_ERROR_STOP=1 < src/main/resources/db/manual-migrations/2026-11-13-reserve-book-copies.sql
+
+          # A same-named index with an incorrect predicate must be rejected.
+          docker exec "$postgres_container" psql -U postgres -d "$migration_db" -v ON_ERROR_STOP=1 \
+            -c "DROP INDEX uq_loans_one_open_per_copy;" \
+            -c "CREATE UNIQUE INDEX uq_loans_one_open_per_copy ON loans(book_copy_id) WHERE status = 'ACTIVE';"
+          if docker exec -i "$postgres_container" psql -U postgres -d "$migration_db" -v ON_ERROR_STOP=1 < src/main/resources/db/manual-migrations/2026-11-20-one-open-loan-per-copy.sql; then
+            echo "The migration incorrectly accepted an index with a different predicate."
+            exit 1
+          fi
+
+          # The correct migration must create the index and remain idempotent.
+          docker exec "$postgres_container" psql -U postgres -d "$migration_db" -v ON_ERROR_STOP=1 -c "DROP INDEX uq_loans_one_open_per_copy;"
+          docker exec -i "$postgres_container" psql -U postgres -d "$migration_db" -v ON_ERROR_STOP=1 < src/main/resources/db/manual-migrations/2026-11-20-one-open-loan-per-copy.sql
+          docker exec -i "$postgres_container" psql -U postgres -d "$migration_db" -v ON_ERROR_STOP=1 < src/main/resources/db/manual-migrations/2026-11-20-one-open-loan-per-copy.sql
+
+          # Simulate a legacy nullable timestamp and verify the forward migration.
+          docker exec "$postgres_container" psql -U postgres -d "$migration_db" -v ON_ERROR_STOP=1 \
+            -c "ALTER TABLE book_copies ALTER COLUMN updated_at DROP NOT NULL;" \
+            -c "INSERT INTO books (isbn, title, genre) VALUES ('9780000000002', 'Legacy timestamp fixture', 'DRAMA');" \
+            -c "INSERT INTO book_copies (book_id, barcode, status, updated_at) SELECT id, 'MIGRATION-LEGACY-001', 'AVAILABLE', NULL FROM books WHERE isbn = '9780000000002';"
+          docker exec -i "$postgres_container" psql -U postgres -d "$migration_db" -v ON_ERROR_STOP=1 < src/main/resources/db/manual-migrations/2026-11-20-book-copy-updated-at-not-null.sql
+
+          nullable="$(docker exec "$postgres_container" psql -U postgres -d "$migration_db" -At -c "SELECT is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'book_copies' AND column_name = 'updated_at';")"
+          null_rows="$(docker exec "$postgres_container" psql -U postgres -d "$migration_db" -At -c "SELECT COUNT(*) FROM book_copies WHERE updated_at IS NULL;")"
+          test "$nullable" = "NO"
+          test "$null_rows" = "0"
+
 
       # Issue #39: keep the generated coverage report available for objective analysis.
       # The artifact is retained independently from the Maven 80% gate.
