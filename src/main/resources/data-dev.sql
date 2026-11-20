@@ -1,5 +1,5 @@
--- DEV ONLY: deterministic demo data for local development and CI.
--- This script is loaded after data.sql and only with the dev profile.
+-- DEMO FIXTURES: deterministic accounts, catalog records and loan scenarios.
+-- Loaded in dev automatically and in prod only when DB_SEED_DATA_LOCATIONS includes this file.
 
 -- Keep development accounts available on both empty and reused databases.
 INSERT INTO users (
