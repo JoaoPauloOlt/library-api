@@ -2,7 +2,6 @@ package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.command.user.CreateUserCommand;
 import com.jpoltramari.library_api.domain.enums.UserStatus;
-import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EmailAlreadyRegisteredException;
 import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.exception.UserNotFoundException;
