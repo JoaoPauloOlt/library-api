@@ -29,7 +29,7 @@ public class OutboxEventService {
      * The event is therefore committed or rolled back with the aggregate change.
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public UUID record(String aggregateType, String aggregateId, String eventType, Object data) {
+    public UUID recordEvent(String aggregateType, String aggregateId, String eventType, Object data) {
         Instant now = clock.instant();
         UUID eventId = UUID.randomUUID();
 
