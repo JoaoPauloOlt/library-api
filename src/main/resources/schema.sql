@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS book_copies (
     location VARCHAR(100),
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_book_copy_status
         CHECK (status IN ('AVAILABLE', 'RESERVED', 'LOANED', 'MAINTENANCE', 'LOST', 'DISCARDED')),
     CONSTRAINT fk_book_copy_book

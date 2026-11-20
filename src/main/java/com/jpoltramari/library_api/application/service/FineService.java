@@ -66,7 +66,7 @@ public class FineService {
   fine.setWaivedBy(admin);
   fine.setWaiverReason(reason.trim());
   Fine saved=fineRepository.save(fine);
-  outboxEventService.record("FINE",saved.getId().toString(),"fine.waived",Map.of(
+  outboxEventService.recordEvent("FINE",saved.getId().toString(),"fine.waived",Map.of(
    "fineId",saved.getId(),"loanId",saved.getLoan().getId(),"userId",saved.getUser().getId(),
    "waivedBy",adminUserId,"reason",saved.getWaiverReason(),"waivedAt",waivedAt));
   return saved;
@@ -89,7 +89,7 @@ public class FineService {
   fine.setAmount(calculationService.calculateAmount(lateDays));
   fine.setStatus(FineStatus.OPEN); fine.setCreatedAt(clock.instant());
   Fine saved=fineRepository.save(fine);
-  outboxEventService.record("FINE",saved.getId().toString(),"fine.created",Map.of(
+  outboxEventService.recordEvent("FINE",saved.getId().toString(),"fine.created",Map.of(
    "fineId",saved.getId(),"loanId",loan.getId(),"userId",loan.getUser().getId(),
    "lateDays",lateDays,"dailyRate",saved.getDailyRate(),"amount",saved.getAmount(),"currency","BRL"));
   return saved;

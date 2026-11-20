@@ -92,7 +92,40 @@ WHERE version = '2026-11-13-reserve-book-copies';
 
 **Rollback:** There is no safe blind rollback. The migration may have changed copy states to `RESERVED` or `LOANED`, and the deployed application may rely on `RESERVED`. A rollback requires stopping the newer application, reconciling every affected copy against its loan history, proving that no `RESERVED` status remains, and only then restoring the previous check constraint in a separately reviewed transaction. Do not simply change `RESERVED` to `AVAILABLE`.
 
-### 2. `2026-11-20-one-open-loan-per-copy.sql`
+### 2. `2026-11-20-book-copy-updated-at-not-null.sql`
+
+**Purpose:** Align the `book_copies.updated_at` column with Hibernate 7's non-null mapping and provide a database default for direct SQL inserts. Existing null values are backfilled from `created_at`; no copy or loan records are deleted.
+
+**Prerequisite:** Back up the database and confirm `book_copies.created_at` is populated.
+
+**Execute:**
+
+```bash
+psql "$PGURI" -v ON_ERROR_STOP=1 \
+  -f src/main/resources/db/manual-migrations/2026-11-20-book-copy-updated-at-not-null.sql
+```
+
+**Verify:**
+
+```sql
+SELECT column_name, is_nullable, column_default
+FROM information_schema.columns
+WHERE table_schema = current_schema()
+  AND table_name = 'book_copies'
+  AND column_name = 'updated_at';
+
+SELECT COUNT(*)
+FROM book_copies
+WHERE updated_at IS NULL;
+
+SELECT version, installed_at, installed_by
+FROM schema_migrations
+WHERE version = '2026-11-20-book-copy-updated-at-not-null';
+```
+
+Expected: `is_nullable = 'NO'`, a `CURRENT_TIMESTAMP` default, and zero null rows. The migration is forward-compatible with the previous application version; no rollback is recommended because the upgraded Hibernate mapping requires the invariant.
+
+### 3. `2026-11-20-one-open-loan-per-copy.sql`
 
 **Purpose:** Enforce at database level that each physical copy has at most one open loan. Open statuses are `REQUESTED`, `ACTIVE` and `LATE`. Historical terminal statuses such as `RETURNED` and `CANCELED` remain unrestricted.
 

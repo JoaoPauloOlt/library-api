@@ -147,7 +147,7 @@ public class LoanService {
 
         Loan savedLoan = loanRepository.save(loan);
         fineService.createForReturnedLoan(savedLoan, returnedAt);
-        outboxEventService.record(
+        outboxEventService.recordEvent(
                 "LOAN",
                 savedLoan.getId().toString(),
                 "loan.returned",

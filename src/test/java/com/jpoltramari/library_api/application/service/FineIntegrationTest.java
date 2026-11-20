@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.FineStatus;
 import com.jpoltramari.library_api.domain.enums.Genre;
@@ -181,8 +181,11 @@ class FineIntegrationTest {
                 loan, LocalDateTime.ofInstant(NOW, ZoneOffset.UTC));
         fineService.waive(fine.getId(), "First waiver", administrator.getId());
 
+        Long fineId = fine.getId();
+        Long administratorId = administrator.getId();
+
         assertThatThrownBy(() -> fineService.waive(
-                fine.getId(), "Second waiver", administrator.getId()))
+                fineId, "Second waiver", administratorId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage("Only open fines can be waived.");
 

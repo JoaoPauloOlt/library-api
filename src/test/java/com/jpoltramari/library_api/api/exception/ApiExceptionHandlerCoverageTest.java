@@ -2,8 +2,8 @@ package com.jpoltramari.library_api.api.exception;
 
 import com.jpoltramari.library_api.domain.exception.EntityInUseException;
 import com.jpoltramari.library_api.domain.model.Book;
-import org.springframework.data.mapping.PropertyReferenceException;
-import org.springframework.data.util.TypeInformation;
+import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.data.core.TypeInformation;
 import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;

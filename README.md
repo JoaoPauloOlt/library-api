@@ -1,6 +1,6 @@
 # 📚 Library API
 
-REST API for library management, developed with **Java 17 + Spring Boot**. The project provides a backend for catalog management, physical book copies, users, authentication, role/permission-based authorization and loan circulation.
+REST API for library management, developed with **Java 21 + Spring Boot**. The project provides a backend for catalog management, physical book copies, users, authentication, role/permission-based authorization and loan circulation.
 
 The API is developed as a portfolio project with a focus on **layered architecture, automated testing, security, API contracts and continuous integration**.
 
@@ -27,8 +27,8 @@ The main capabilities are:
 
 | Technology | Purpose |
 |---|---|
-| Java 17 | Application language and runtime target |
-| Spring Boot 3.2.5 | Backend framework |
+| Java 21 | Application language and runtime target |
+| Spring Boot 4.1.2 | Backend framework |
 | Spring Web | REST API |
 | Spring Security | Authentication and authorization |
 | JWT / JJWT | Access and refresh tokens |

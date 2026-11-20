@@ -1,6 +1,6 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.jpoltramari.library_api.api.exception.ErrorResponse;
 import com.jpoltramari.library_api.infrastructure.security.filter.CorrelationIdFilter;
 import jakarta.servlet.http.HttpServletRequest;

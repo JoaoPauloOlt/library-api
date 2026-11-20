@@ -4,6 +4,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+
+import javax.sql.DataSource;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +32,9 @@ class ProductionSchemaInitializationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private DataSource dataSource;
 
     @Test
     void shouldProvisionFreshProductionSchemaAndSeedRbacBeforeHibernateValidation() {
@@ -61,4 +68,57 @@ class ProductionSchemaInitializationTest {
         );
         assertThat(copyStatusConstraint).contains("'RESERVED'");
     }
+    @Test
+    void shouldMigrateLegacyNullBookCopyUpdatedAtValues() {
+        jdbcTemplate.execute("ALTER TABLE book_copies ALTER COLUMN updated_at DROP NOT NULL");
+
+        Long bookId = jdbcTemplate.queryForObject("""
+                INSERT INTO books (isbn, title, genre, description)
+                VALUES ('9780000000001', 'Migration fixture', 'CLASSIC', 'Migration fixture')
+                RETURNING id
+                """, Long.class);
+
+        Long copyId = jdbcTemplate.queryForObject("""
+                INSERT INTO book_copies (book_id, barcode, status, updated_at)
+                VALUES (?, 'MIGRATION-FIXTURE-001', 'AVAILABLE', NULL)
+                RETURNING id
+                """, Long.class, bookId);
+
+        new ResourceDatabasePopulator(new ClassPathResource(
+                "db/manual-migrations/2026-11-20-book-copy-updated-at-not-null.sql"
+        )).execute(dataSource);
+
+        String nullable = jdbcTemplate.queryForObject("""
+                SELECT is_nullable
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'book_copies'
+                  AND column_name = 'updated_at'
+                """, String.class);
+        String defaultValue = jdbcTemplate.queryForObject("""
+                SELECT column_default
+                FROM information_schema.columns
+                WHERE table_schema = 'public'
+                  AND table_name = 'book_copies'
+                  AND column_name = 'updated_at'
+                """, String.class);
+        Integer backfilled = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM book_copies
+                WHERE id = ?
+                  AND updated_at IS NOT NULL
+                  AND updated_at = created_at
+                """, Integer.class, copyId);
+        Integer recorded = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM schema_migrations
+                WHERE version = '2026-11-20-book-copy-updated-at-not-null'
+                """, Integer.class);
+
+        assertThat(nullable).isEqualTo("NO");
+        assertThat(defaultValue).contains("CURRENT_TIMESTAMP");
+        assertThat(backfilled).isEqualTo(1);
+        assertThat(recorded).isEqualTo(1);
+    }
+
 }

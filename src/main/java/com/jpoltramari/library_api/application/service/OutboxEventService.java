@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.jpoltramari.library_api.domain.enums.OutboxStatus;
 import com.jpoltramari.library_api.domain.model.OutboxEvent;
 import com.jpoltramari.library_api.domain.repository.OutboxEventRepository;
@@ -29,7 +29,7 @@ public class OutboxEventService {
      * The event is therefore committed or rolled back with the aggregate change.
      */
     @Transactional(propagation = Propagation.MANDATORY)
-    public UUID record(String aggregateType, String aggregateId, String eventType, Object data) {
+    public UUID recordEvent(String aggregateType, String aggregateId, String eventType, Object data) {
         Instant now = clock.instant();
         UUID eventId = UUID.randomUUID();
 
@@ -59,7 +59,7 @@ public class OutboxEventService {
     private String serialize(Map<String, Object> envelope) {
         try {
             return objectMapper.writeValueAsString(envelope);
-        } catch (JsonProcessingException exception) {
+        } catch (JacksonException exception) {
             throw new IllegalStateException("Could not serialize outbox event.", exception);
         }
     }

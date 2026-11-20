@@ -5,8 +5,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -101,8 +101,8 @@ class RefreshTokenRepositoryConcurrencyTest {
         );
 
         assertThatThrownBy(() -> second.get(300, TimeUnit.MILLISECONDS))
-                .isInstanceOf(TimeoutException.class)
-                .as("the second transaction must remain blocked while the first transaction holds the row lock");
+                .as("the second transaction must remain blocked while the first transaction holds the row lock")
+                .isInstanceOf(TimeoutException.class);
 
         releaseFirstTransaction.countDown();
 
