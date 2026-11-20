@@ -240,6 +240,57 @@ class DevSeedIntegrationTest {
         assertThat(bookCopyRepository.findByBarcode("BC-1984-001")).isPresent();
     }
 
+
+    @Test
+    @Transactional
+    void shouldKeepRbacInvalidationTriggersActiveAfterRepeatedInitialization() {
+        Long userId = jdbcTemplate.queryForObject(
+                "SELECT id FROM users WHERE email = ?",
+                Long.class,
+                "user@library.com"
+        );
+        Long librarianGroupId = jdbcTemplate.queryForObject(
+                "SELECT id FROM groups WHERE name = ?",
+                Long.class,
+                "LIBRARIAN"
+        );
+        Integer before = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                userId
+        );
+
+        rbacTokenInvalidationInitializer.initialize();
+
+        jdbcTemplate.update(
+                "INSERT INTO user_groups (user_id, group_id) VALUES (?, ?)",
+                userId,
+                librarianGroupId
+        );
+
+        Integer after = jdbcTemplate.queryForObject(
+                "SELECT token_version FROM users WHERE id = ?",
+                Integer.class,
+                userId
+        );
+        Integer installedTriggers = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM pg_trigger
+                WHERE NOT tgisinternal
+                  AND tgname IN (
+                      'trg_user_groups_token_invalidation',
+                      'trg_user_groups_token_invalidation_update',
+                      'trg_group_permissions_token_invalidation',
+                      'trg_group_permissions_token_invalidation_update',
+                      'trg_groups_token_invalidation',
+                      'trg_permissions_token_invalidation'
+                  )
+                """, Integer.class);
+
+        assertThat(installedTriggers).isEqualTo(6);
+        assertThat(after).isEqualTo(before + 1);
+    }
+
     @Test
     void shouldLoadDevLoanScenarios() {
         User user = userRepository.findByEmail("user@library.com").orElseThrow();
