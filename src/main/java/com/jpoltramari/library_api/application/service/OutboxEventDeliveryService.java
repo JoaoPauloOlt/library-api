@@ -39,14 +39,12 @@ public class OutboxEventDeliveryService {
         repository.saveAll(events);
 
         return events.stream()
-                .map(event -> {
-                    return new OutboxEventClaim(
-                            event.getId(),
-                            event.getEventType(),
-                            event.getPayload(),
-                            leaseUntil
-                    );
-                })
+                .map(event -> new OutboxEventClaim(
+                        event.getId(),
+                        event.getEventType(),
+                        event.getPayload(),
+                        leaseUntil
+                ))
                 .toList();
     }
 
@@ -74,7 +72,8 @@ public class OutboxEventDeliveryService {
                 OutboxStatus.PENDING,
                 OutboxStatus.FAILED,
                 retryAt,
-                safeMessage(exception)
+                safeMessage(exception),
+                MAX_ATTEMPTS
         ) == 1;
     }
 
