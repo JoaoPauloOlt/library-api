@@ -2,6 +2,7 @@ package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.readmodel.DashboardSummary;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
+import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,14 +60,14 @@ class DashboardServiceTest {
 
     @Test
     void shouldRejectNullStartDate() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(BusinessException.class,
                 () -> service.getMySummary(42L, null, LocalDate.of(2026, 12, 1)));
         verify(bookRepository, never()).count();
     }
 
     @Test
     void shouldRejectNullEndDate() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(BusinessException.class,
                 () -> service.getMySummary(42L, LocalDate.of(2026, 11, 1), null));
         verify(bookRepository, never()).count();
     }
@@ -74,9 +75,9 @@ class DashboardServiceTest {
     @Test
     void shouldRejectEndDateThatIsNotAfterStartDate() {
         LocalDate date = LocalDate.of(2026, 11, 1);
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(BusinessException.class,
                 () -> service.getMySummary(42L, date, date));
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(BusinessException.class,
                 () -> service.getMySummary(42L, date, date.minusDays(1)));
         verify(bookRepository, never()).count();
     }
