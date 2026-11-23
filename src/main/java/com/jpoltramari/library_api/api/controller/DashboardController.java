@@ -53,6 +53,14 @@ public class DashboardController {
         return dashboardService.getGenreMetrics();
     }
 
+    @GetMapping("/most-borrowed")
+    public PageResponse<BookModel> getMostBorrowed(
+            @PageableDefault(size = 5) Pageable pageable) {
+        return PageResponse.from(
+                dashboardService.getMostBorrowed(pageable),
+                bookMapper::toModel);
+    }
+
     @GetMapping("/available-highlights")
     public PageResponse<BookModel> getAvailableHighlights(
             @PageableDefault(size = 5) Pageable pageable) {
