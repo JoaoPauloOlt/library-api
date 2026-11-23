@@ -1,6 +1,13 @@
 package com.jpoltramari.library_api.application.service;
 
+import com.jpoltramari.library_api.application.readmodel.DashboardGenreMetric;
 import com.jpoltramari.library_api.application.readmodel.DashboardSummary;
+import com.jpoltramari.library_api.domain.enums.CopyStatus;
+import com.jpoltramari.library_api.domain.enums.Genre;
+import com.jpoltramari.library_api.domain.model.Book;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
@@ -57,6 +64,49 @@ class DashboardServiceTest {
                 org.mockito.ArgumentMatchers.eq(42L),
                 org.mockito.ArgumentMatchers.eq(List.of(LoanStatus.ACTIVE, LoanStatus.LATE)),
                 org.mockito.ArgumentMatchers.any(LocalDateTime.class));
+    }
+
+    @Test
+    void shouldReturnGenreMetricsForTheWholeCatalog() {
+        List<DashboardGenreMetric> metrics =
+                List.of(new DashboardGenreMetric(Genre.FANTASY, 12L));
+        when(bookRepository.findDashboardGenreMetrics(
+                List.of(LoanStatus.ACTIVE, LoanStatus.RETURNED, LoanStatus.LATE)))
+                .thenReturn(metrics);
+
+        assertEquals(metrics, service.getGenreMetrics());
+        verify(bookRepository).findDashboardGenreMetrics(
+                List.of(LoanStatus.ACTIVE, LoanStatus.RETURNED, LoanStatus.LATE));
+    }
+
+    @Test
+    void shouldReturnAvailableHighlightsUsingTheRequestedPage() {
+        Pageable pageable = Pageable.ofSize(5);
+        Page<Book> expected = new PageImpl<>(List.of(new Book()));
+        when(bookRepository.findDashboardAvailableHighlights(
+                CopyStatus.AVAILABLE,
+                List.of(LoanStatus.ACTIVE, LoanStatus.RETURNED, LoanStatus.LATE),
+                pageable)).thenReturn(expected);
+
+        assertEquals(expected, service.getAvailableHighlights(pageable));
+        verify(bookRepository).findDashboardAvailableHighlights(
+                CopyStatus.AVAILABLE,
+                List.of(LoanStatus.ACTIVE, LoanStatus.RETURNED, LoanStatus.LATE),
+                pageable);
+    }
+
+    @Test
+    void shouldReturnMostBorrowedBooksUsingGroupedQuery() {
+        Pageable pageable = Pageable.ofSize(5);
+        Page<Book> expected = new PageImpl<>(List.of(new Book()));
+        when(bookRepository.findDashboardMostBorrowed(
+                List.of(LoanStatus.ACTIVE, LoanStatus.RETURNED, LoanStatus.LATE),
+                pageable)).thenReturn(expected);
+
+        assertEquals(expected, service.getMostBorrowed(pageable));
+        verify(bookRepository).findDashboardMostBorrowed(
+                List.of(LoanStatus.ACTIVE, LoanStatus.RETURNED, LoanStatus.LATE),
+                pageable);
     }
 
     @Test
