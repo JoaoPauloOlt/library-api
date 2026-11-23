@@ -58,6 +58,11 @@ public class DashboardService {
     }
 
     @Transactional(readOnly = true)
+    public Page<Book> getMostBorrowed(Pageable pageable) {
+        return bookRepository.findDashboardMostBorrowed(COUNTED_LOAN_STATUSES, pageable);
+    }
+
+    @Transactional(readOnly = true)
     public Page<Book> getAvailableHighlights(Pageable pageable) {
         return bookRepository.findDashboardAvailableHighlights(
                 CopyStatus.AVAILABLE, COUNTED_LOAN_STATUSES, pageable);
