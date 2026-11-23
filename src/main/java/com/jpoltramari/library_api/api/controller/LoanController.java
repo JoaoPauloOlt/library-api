@@ -65,6 +65,17 @@ public class LoanController {
         );
     }
 
+    @GetMapping("/my/active")
+    @Operation(summary = "List my open loans", description = "Returns the authenticated user's requested, active, and overdue loans in paginated form.")
+    public PageResponse<LoanModel> myActiveLoans(
+            @ParameterObject @PageableDefault(size = 5, sort = "requestDate", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable,
+            Authentication authentication) {
+        return PageResponse.from(
+                service.findActiveByUserId(authenticatedPrincipal(authentication).getUserId(), pageable),
+                mapper::toModel
+        );
+    }
+
     @PreAuthorize("hasAuthority('LOAN_CREATE_FOR_USER')")
     @GetMapping("/users")
     @Operation(
