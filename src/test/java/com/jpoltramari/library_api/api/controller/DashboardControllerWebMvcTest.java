@@ -2,7 +2,12 @@ package com.jpoltramari.library_api.api.controller;
 
 import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
+import com.jpoltramari.library_api.application.readmodel.DashboardGenreMetric;
 import com.jpoltramari.library_api.application.readmodel.DashboardSummary;
+import com.jpoltramari.library_api.domain.enums.Genre;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import com.jpoltramari.library_api.application.service.DashboardService;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import org.junit.jupiter.api.Test;
@@ -83,6 +88,46 @@ class DashboardControllerWebMvcTest {
                         .with(user(new TestPrincipal(42L))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("BUSINESS_RULE"));
+    }
+
+    @Test
+    void shouldReturnGenreMetrics() throws Exception {
+        when(dashboardService.getGenreMetrics())
+                .thenReturn(List.of(new DashboardGenreMetric(Genre.FANTASY, 12L)));
+
+        mockMvc.perform(get("/dashboard/genres")
+                        .with(user(new TestPrincipal(42L))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].genre").value("FANTASY"))
+                .andExpect(jsonPath("$[0].loanCount").value(12));
+    }
+
+    @Test
+    void shouldReturnAvailableHighlightsPage() throws Exception {
+        when(dashboardService.getAvailableHighlights(org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(Page.empty(PageRequest.of(0, 5)));
+
+        mockMvc.perform(get("/dashboard/available-highlights")
+                        .param("page", "0")
+                        .param("size", "5")
+                        .with(user(new TestPrincipal(42L))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty());
+    }
+
+    @Test
+    void shouldReturnMostBorrowedBooksPage() throws Exception {
+        when(dashboardService.getMostBorrowed(org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(Page.empty(PageRequest.of(0, 5)));
+
+        mockMvc.perform(get("/dashboard/most-borrowed")
+                        .param("page", "0")
+                        .param("size", "5")
+                        .with(user(new TestPrincipal(42L))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty());
     }
 
     private static final class TestPrincipal implements UserDetails, AuthenticatedPrincipal {
