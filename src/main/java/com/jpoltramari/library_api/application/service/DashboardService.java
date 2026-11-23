@@ -1,6 +1,6 @@
 package com.jpoltramari.library_api.application.service;
 
-import com.jpoltramari.library_api.api.dto.dashboard.DashboardSummaryModel;
+import com.jpoltramari.library_api.application.readmodel.DashboardSummary;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
@@ -23,7 +23,7 @@ public class DashboardService {
     private final LoanRepository loanRepository;
 
     @Transactional(readOnly = true)
-    public DashboardSummaryModel getMySummary(Long userId, LocalDate from, LocalDate to) {
+    public DashboardSummary getMySummary(Long userId, LocalDate from, LocalDate to) {
         if (from == null || to == null || !to.isAfter(from)) {
             throw new IllegalArgumentException("The 'to' date must be after the 'from' date.");
         }
@@ -39,6 +39,6 @@ public class DashboardService {
                 .countByUserIdAndStatusInAndDueDateBefore(
                         userId, OVERDUE_STATUSES, LocalDateTime.now());
 
-        return new DashboardSummaryModel(totalBooks, monthlyLoans, overdueLoans);
+        return new DashboardSummary(totalBooks, monthlyLoans, overdueLoans);
     }
 }
