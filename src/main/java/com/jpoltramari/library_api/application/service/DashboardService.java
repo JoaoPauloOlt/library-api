@@ -2,6 +2,7 @@ package com.jpoltramari.library_api.application.service;
 
 import com.jpoltramari.library_api.application.readmodel.DashboardSummary;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
+import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
 import com.jpoltramari.library_api.domain.repository.LoanRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,7 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardSummary getMySummary(Long userId, LocalDate from, LocalDate to) {
         if (from == null || to == null || !to.isAfter(from)) {
-            throw new IllegalArgumentException("The 'to' date must be after the 'from' date.");
+            throw new BusinessException("The 'to' date must be after the 'from' date.");
         }
 
         LocalDateTime periodStart = from.atStartOfDay();
