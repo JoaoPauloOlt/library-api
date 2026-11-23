@@ -39,6 +39,21 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
         value = """
             select b
             from Book b
+            left join b.copies c
+            left join Loan l on l.bookCopy = c and l.status in :loanStatuses
+            group by b
+            order by count(l.id) desc, b.title asc
+        """,
+        countQuery = "select count(b.id) from Book b"
+    )
+    Page<Book> findDashboardMostBorrowed(
+            @Param("loanStatuses") Collection<LoanStatus> loanStatuses,
+            Pageable pageable);
+
+    @Query(
+        value = """
+            select b
+            from Book b
             join b.copies c
             left join Loan l on l.bookCopy = c and l.status in :loanStatuses
             where c.active = true and c.status = :availableStatus
