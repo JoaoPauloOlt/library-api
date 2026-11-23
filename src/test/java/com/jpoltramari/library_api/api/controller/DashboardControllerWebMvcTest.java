@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.LibraryApiApplication;
 import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import com.jpoltramari.library_api.application.readmodel.DashboardSummary;
 import com.jpoltramari.library_api.application.service.DashboardService;
+import com.jpoltramari.library_api.domain.exception.BusinessException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -67,6 +68,21 @@ class DashboardControllerWebMvcTest {
                         .param("to", "2026-12-01")
                         .with(user(new TestPrincipal(42L))))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestWhenEndDateIsNotAfterStartDate() throws Exception {
+        LocalDate from = LocalDate.of(2026, 12, 1);
+        LocalDate to = LocalDate.of(2026, 11, 1);
+        when(dashboardService.getMySummary(42L, from, to))
+                .thenThrow(new BusinessException("The 'to' date must be after the 'from' date."));
+
+        mockMvc.perform(get("/dashboard/my-summary")
+                        .param("from", "2026-12-01")
+                        .param("to", "2026-11-01")
+                        .with(user(new TestPrincipal(42L))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("BUSINESS_RULE"));
     }
 
     private static final class TestPrincipal implements UserDetails, AuthenticatedPrincipal {
