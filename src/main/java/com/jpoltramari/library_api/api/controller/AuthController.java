@@ -16,12 +16,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -31,6 +34,7 @@ public class AuthController {
     private static final String REFRESH_COOKIE = "refreshToken";
     private final AuthService service;
     private final CorsConfigurationSource corsConfigurationSource;
+    private final CsrfTokenRepository csrfTokenRepository;
 
     @Value("${app.security.refresh-cookie-secure:true}")
     private boolean refreshCookieSecure;
@@ -38,6 +42,12 @@ public class AuthController {
     private String refreshCookieSameSite;
     @Value("${app.security.refresh-cookie-max-age-seconds:86400}")
     private long refreshCookieMaxAgeSeconds;
+
+    @GetMapping("/csrf")
+    @Operation(summary = "Get CSRF token", description = "Initializes the browser CSRF cookie and returns its matching request token.")
+    public Map<String, String> csrf(CsrfToken csrfToken) {
+        return Map.of("token", csrfToken.getToken());
+    }
 
     @Operation(summary = "Authenticate user", description = "Returns an access token and stores the refresh token in an HttpOnly cookie.")
     @ApiResponses({
@@ -86,6 +96,7 @@ public class AuthController {
             service.logout(refreshToken, accessToken);
         } finally {
             clearRefreshCookie(response);
+            csrfTokenRepository.saveToken(null, request, response);
         }
     }
 
