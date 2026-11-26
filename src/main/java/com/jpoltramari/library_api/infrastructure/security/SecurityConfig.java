@@ -27,10 +27,15 @@ public class SecurityConfig {
     private static final String AUTHORS_PATH = "/authors/**";
 
     private final JwtAuthenticationFilter filter;
+    private final PublicEndpointRateLimitFilter publicEndpointRateLimitFilter;
     private final CorsConfigurationSource corsConfigurationSource;
 
-    public SecurityConfig(JwtAuthenticationFilter filter, @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource) {
+    public SecurityConfig(
+            JwtAuthenticationFilter filter,
+            PublicEndpointRateLimitFilter publicEndpointRateLimitFilter,
+            @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource) {
         this.filter = filter;
+        this.publicEndpointRateLimitFilter = publicEndpointRateLimitFilter;
         this.corsConfigurationSource = corsConfigurationSource;
     }
 
@@ -86,6 +91,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/users", "/users/**").hasAuthority("USER_ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(publicEndpointRateLimitFilter, JwtAuthenticationFilter.class)
                 .build();
     }
 
