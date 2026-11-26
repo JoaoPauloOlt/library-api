@@ -9,7 +9,7 @@ import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.infrastructure.security.PublicRateLimitService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -20,8 +20,6 @@ import com.jpoltramari.library_api.domain.util.EmailNormalizer;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-
-    private static final long ACCOUNT_RETRY_AFTER_SECONDS = 900;
 
     private final AuthenticationManager authenticationManager;
     private final AccessTokenPort accessTokenPort;
@@ -34,14 +32,14 @@ public class AuthService {
         String normalizedEmail = EmailNormalizer.normalize(email);
 
         if (rateLimitService.isAccountBlocked(normalizedEmail)) {
-            throw new LoginRateLimitException(ACCOUNT_RETRY_AFTER_SECONDS);
+            throw new LoginRateLimitException(rateLimitService.accountRetryAfterSeconds(normalizedEmail));
         }
 
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(normalizedEmail, password)
             );
-        } catch (AuthenticationException ex) {
+        } catch (BadCredentialsException ex) {
             rateLimitService.recordFailedLogin(normalizedEmail);
             throw ex;
         }
