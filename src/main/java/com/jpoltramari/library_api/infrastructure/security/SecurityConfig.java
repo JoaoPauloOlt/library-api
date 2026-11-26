@@ -61,10 +61,11 @@ public class SecurityConfig {
                 // All other API endpoints remain stateless and authenticate with Bearer tokens.
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
-                        .requireCsrfProtectionMatcher(request ->
-                                "POST".equalsIgnoreCase(request.getMethod())
-                                        && ("/auth/refresh".equals(request.getServletPath())
-                                        || "/auth/logout".equals(request.getServletPath()))))
+                        .requireCsrfProtectionMatcher(request -> {
+                            String path = request.getRequestURI();
+                            return "POST".equalsIgnoreCase(request.getMethod())
+                                    && (path.endsWith("/auth/refresh") || path.endsWith("/auth/logout"));
+                        })
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.deny())
