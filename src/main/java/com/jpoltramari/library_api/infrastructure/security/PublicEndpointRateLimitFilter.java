@@ -1,5 +1,8 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jpoltramari.library_api.api.exception.ErrorResponse;
+import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,20 +12,25 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Slf4j
 public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
 
     private static final String LOGIN_PATH = "/auth/login";
     private static final String REGISTRATION_PATH = "/users";
-    private static final String RATE_LIMIT_BODY = """
-            {"status":429,"title":"Too many requests","detail":"Request rate limit exceeded. Please try again later.","errorCode":"RATE_LIMIT_EXCEEDED"}
-            """;
 
     private final PublicRateLimitService rateLimitService;
+    private final CorrelationIdPort correlationIdPort;
+    private final ObjectMapper objectMapper;
 
-    public PublicEndpointRateLimitFilter(PublicRateLimitService rateLimitService) {
+    public PublicEndpointRateLimitFilter(PublicRateLimitService rateLimitService,
+                                         CorrelationIdPort correlationIdPort,
+                                         ObjectMapper objectMapper) {
         this.rateLimitService = rateLimitService;
+        this.correlationIdPort = correlationIdPort;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -33,14 +41,16 @@ public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
             String clientIp = request.getRemoteAddr();
 
             if (LOGIN_PATH.equals(path) && !rateLimitService.allowLoginFromIp(clientIp)) {
-                log.warn("event=rate_limit_rejected scope=ip path={}", path);
-                reject(response, 60);
+                log.warn("event=rate_limit_rejected scope=ip path={} correlationId={}",
+                        path, correlationId());
+                reject(request, response, rateLimitService.loginIpRetryAfterSeconds(clientIp));
                 return;
             }
 
             if (REGISTRATION_PATH.equals(path) && !rateLimitService.allowRegistrationFromIp(clientIp)) {
-                log.warn("event=rate_limit_rejected scope=ip path={}", path);
-                reject(response, 3600);
+                log.warn("event=rate_limit_rejected scope=ip path={} correlationId={}",
+                        path, correlationId());
+                reject(request, response, rateLimitService.registrationIpRetryAfterSeconds(clientIp));
                 return;
             }
         }
@@ -48,11 +58,26 @@ public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private void reject(HttpServletResponse response, long retryAfterSeconds) throws IOException {
-        response.setStatus(429);
-        response.setHeader("Retry-After", Long.toString(retryAfterSeconds));
+    private void reject(HttpServletRequest request, HttpServletResponse response,
+                        long retryAfterSeconds) throws IOException {
+        ErrorResponse body = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
+                .status(HttpServletResponse.SC_TOO_MANY_REQUESTS)
+                .title("Too many requests")
+                .detail("Request rate limit exceeded. Please try again later.")
+                .path(request.getRequestURI())
+                .correlationId(correlationId())
+                .errorCode("RATE_LIMIT_EXCEEDED")
+                .build();
+
+        response.setStatus(HttpServletResponse.SC_TOO_MANY_REQUESTS);
+        response.setHeader("Retry-After", Long.toString(Math.max(1, retryAfterSeconds)));
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(RATE_LIMIT_BODY);
+        objectMapper.writeValue(response.getWriter(), body);
+    }
+
+    private String correlationId() {
+        return correlationIdPort.getCorrelationId().orElse(null);
     }
 }
