@@ -103,6 +103,21 @@ class DashboardControllerWebMvcTest {
     }
 
     @Test
+    void shouldReturnBooksForRequestedGenrePage() throws Exception {
+        when(dashboardService.getGenreBooks(org.mockito.ArgumentMatchers.eq(Genre.FANTASY),
+                org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(Page.empty(PageRequest.of(0, 4)));
+
+        mockMvc.perform(get("/dashboard/genres/FANTASY/books")
+                        .param("page", "0")
+                        .param("size", "4")
+                        .with(user(new TestPrincipal(42L))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content").isEmpty());
+    }
+
+    @Test
     void shouldReturnAvailableHighlightsPage() throws Exception {
         when(dashboardService.getAvailableHighlights(org.mockito.ArgumentMatchers.any(Pageable.class)))
                 .thenReturn(Page.empty(PageRequest.of(0, 5)));
