@@ -47,8 +47,10 @@ class DashboardServiceTest {
         LocalDate from = LocalDate.of(2026, 11, 1);
         LocalDate to = LocalDate.of(2026, 12, 1);
         when(bookRepository.count()).thenReturn(120L);
+        LocalDateTime periodStart = LocalDateTime.of(2026, 11, 1, 3, 0);
+        LocalDateTime periodEnd = LocalDateTime.of(2026, 12, 1, 3, 0);
         when(loanRepository.countByUserIdAndRequestDateGreaterThanEqualAndRequestDateLessThan(
-                42L, from.atStartOfDay(), to.atStartOfDay())).thenReturn(14L);
+                42L, periodStart, periodEnd)).thenReturn(14L);
         when(loanRepository.countByUserIdAndStatusInAndDueDateBefore(
                 org.mockito.ArgumentMatchers.eq(42L),
                 org.mockito.ArgumentMatchers.eq(List.of(LoanStatus.ACTIVE, LoanStatus.LATE)),
@@ -59,7 +61,7 @@ class DashboardServiceTest {
         assertEquals(new DashboardSummary(120L, 14L, 3L), result);
         verify(bookRepository).count();
         verify(loanRepository).countByUserIdAndRequestDateGreaterThanEqualAndRequestDateLessThan(
-                42L, from.atStartOfDay(), to.atStartOfDay());
+                42L, periodStart, periodEnd);
         verify(loanRepository).countByUserIdAndStatusInAndDueDateBefore(
                 org.mockito.ArgumentMatchers.eq(42L),
                 org.mockito.ArgumentMatchers.eq(List.of(LoanStatus.ACTIVE, LoanStatus.LATE)),
