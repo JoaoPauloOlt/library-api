@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -93,6 +94,15 @@ public class SecurityConfig {
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(publicEndpointRateLimitFilter, JwtAuthenticationFilter.class)
                 .build();
+    }
+
+    @Bean
+    public FilterRegistrationBean<PublicEndpointRateLimitFilter> disableServletContainerRegistration(
+            PublicEndpointRateLimitFilter rateLimitFilter) {
+        FilterRegistrationBean<PublicEndpointRateLimitFilter> registration =
+                new FilterRegistrationBean<>(rateLimitFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
