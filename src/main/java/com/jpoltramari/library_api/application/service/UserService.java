@@ -42,12 +42,15 @@ public class UserService {
     @Transactional
     public User create(CreateUserCommand command) {
         String normalizedEmail = EmailNormalizer.normalize(command.email());
+        // Run the same password-hashing work before checking whether the email exists,
+        // reducing the timing difference between new and already-registered addresses.
+        String encodedPassword = passwordEncoder.encode(command.password());
         validateEmail(normalizedEmail);
         User user = new User();
         user.setName(command.name());
         user.setEmail(normalizedEmail);
         user.setTelephone(command.telephone());
-        user.setPassword(passwordEncoder.encode(command.password()));
+        user.setPassword(encodedPassword);
         user.setStatus(UserStatus.ACTIVE);
         user.setGroups(Set.of(findDefaultGroup()));
         return repository.save(user);
