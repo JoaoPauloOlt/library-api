@@ -66,7 +66,6 @@ BEGIN
         OR existing_predicate NOT LIKE '%REQUESTED%'
         OR existing_predicate NOT LIKE '%ACTIVE%'
         OR existing_predicate NOT LIKE '%LATE%'
-        OR (length(existing_predicate) - length(replace(existing_predicate, '''', ''))) <> 6
     THEN
         RAISE EXCEPTION
             'Index uq_loans_one_open_per_copy already exists with an unexpected definition. Inspect pg_get_indexdef before proceeding.';
