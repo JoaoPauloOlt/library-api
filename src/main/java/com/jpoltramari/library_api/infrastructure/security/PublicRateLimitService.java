@@ -13,6 +13,8 @@ import java.util.HexFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.time.Duration;
+import java.util.Objects;
+import java.util.function.LongSupplier;
 
 @Service
 public class PublicRateLimitService {
@@ -32,7 +34,9 @@ public class PublicRateLimitService {
     private final int accountFailureLimit;
     private final Duration accountFailureWindow;
     private final String hmacSecret;
+    private final LongSupplier nanoTime;
 
+    @Autowired
     public PublicRateLimitService(
             @Value("${app.security.rate-limit.login-ip.max-attempts:30}") int loginIpLimit,
             @Value("${app.security.rate-limit.login-ip.window:PT1M}") Duration loginIpWindow,
@@ -41,6 +45,14 @@ public class PublicRateLimitService {
             @Value("${app.security.rate-limit.account.max-failed-attempts:5}") int accountFailureLimit,
             @Value("${app.security.rate-limit.account.window:PT15M}") Duration accountFailureWindow,
             @Value("${jwt.secret}") String hmacSecret) {
+        this(loginIpLimit, loginIpWindow, registrationIpLimit, registrationIpWindow,
+                accountFailureLimit, accountFailureWindow, hmacSecret, System::nanoTime);
+    }
+
+    PublicRateLimitService(int loginIpLimit, Duration loginIpWindow,
+                           int registrationIpLimit, Duration registrationIpWindow,
+                           int accountFailureLimit, Duration accountFailureWindow,
+                           String hmacSecret, LongSupplier nanoTime) {
         this.loginIpLimit = loginIpLimit;
         this.loginIpWindow = loginIpWindow;
         this.registrationIpLimit = registrationIpLimit;
@@ -48,6 +60,7 @@ public class PublicRateLimitService {
         this.accountFailureLimit = accountFailureLimit;
         this.accountFailureWindow = accountFailureWindow;
         this.hmacSecret = hmacSecret;
+        this.nanoTime = Objects.requireNonNull(nanoTime);
     }
 
     public boolean allowLoginFromIp(String ipAddress) {
@@ -90,7 +103,7 @@ public class PublicRateLimitService {
                     return false;
                 }
             }
-            Window candidate = new Window();
+            Window candidate = new Window(nanoTime);
             Window existing = windows.putIfAbsent(key, candidate);
             window = existing == null ? candidate : existing;
         }
@@ -124,7 +137,13 @@ public class PublicRateLimitService {
     }
 
     private static final class Window {
-        private long startedAtNanos = System.nanoTime();
+        private long startedAtNanos;
+        private final LongSupplier nanoTime;
+
+        private Window(LongSupplier nanoTime) {
+            this.nanoTime = nanoTime;
+            this.startedAtNanos = nanoTime.getAsLong();
+        }
         private int count;
         private boolean evicted;
 
@@ -149,7 +168,7 @@ public class PublicRateLimitService {
         }
 
         synchronized boolean isExpired(Duration duration) {
-            if (evicted || System.nanoTime() - startedAtNanos >= duration.toNanos()) {
+            if (evicted || nanoTime.getAsLong() - startedAtNanos >= duration.toNanos()) {
                 evicted = true;
                 return true;
             }
