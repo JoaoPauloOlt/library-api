@@ -21,8 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -49,10 +47,8 @@ class DashboardServiceTest {
         LocalDate from = LocalDate.of(2026, 11, 1);
         LocalDate to = LocalDate.of(2026, 12, 1);
         when(bookRepository.count()).thenReturn(120L);
-        LocalDateTime periodStart = from.atStartOfDay(ZoneId.of("America/Sao_Paulo"))
-                .withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
-        LocalDateTime periodEnd = to.atStartOfDay(ZoneId.of("America/Sao_Paulo"))
-                .withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        LocalDateTime periodStart = LocalDateTime.of(2026, 11, 1, 3, 0);
+        LocalDateTime periodEnd = LocalDateTime.of(2026, 12, 1, 3, 0);
         when(loanRepository.countByUserIdAndRequestDateGreaterThanEqualAndRequestDateLessThan(
                 42L, periodStart, periodEnd)).thenReturn(14L);
         when(loanRepository.countByUserIdAndStatusInAndDueDateBefore(
