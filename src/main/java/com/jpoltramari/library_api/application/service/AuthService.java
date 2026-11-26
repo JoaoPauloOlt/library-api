@@ -5,6 +5,7 @@ import com.jpoltramari.library_api.application.port.security.AccessTokenPort;
 import com.jpoltramari.library_api.application.port.security.RefreshTokenPort;
 import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.infrastructure.security.PublicRateLimitService;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +48,7 @@ public class AuthService {
 
         rateLimitService.resetFailedLogins(normalizedEmail);
         var user = userRepository.findByEmailWithGroupsAndPermissions(normalizedEmail)
-                .orElseThrow();
+                .orElseThrow(() -> new EntityNotFoundException("Authenticated user was not found."));
 
         var issued = refreshTokenPort.issueTokens(user);
         return toAuthenticationResult(issued);
