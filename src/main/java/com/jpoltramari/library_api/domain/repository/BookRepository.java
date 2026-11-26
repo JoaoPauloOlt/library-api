@@ -3,6 +3,7 @@ package com.jpoltramari.library_api.domain.repository;
 import com.jpoltramari.library_api.application.readmodel.DashboardGenreMetric;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
+import com.jpoltramari.library_api.domain.enums.Genre;
 import com.jpoltramari.library_api.domain.model.Book;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,23 @@ public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificat
     """)
     List<DashboardGenreMetric> findDashboardGenreMetrics(
             @Param("loanStatuses") Collection<LoanStatus> loanStatuses);
+
+    @Query(
+        value = """
+            select b
+            from Book b
+            left join b.copies c
+            left join Loan l on l.bookCopy = c and l.status in :loanStatuses
+            where b.genre = :genre
+            group by b
+            order by count(l.id) desc, b.title asc
+        """,
+        countQuery = "select count(b.id) from Book b where b.genre = :genre"
+    )
+    Page<Book> findDashboardGenreBooks(
+            @Param("genre") Genre genre,
+            @Param("loanStatuses") Collection<LoanStatus> loanStatuses,
+            Pageable pageable);
 
     @Query(
         value = """
