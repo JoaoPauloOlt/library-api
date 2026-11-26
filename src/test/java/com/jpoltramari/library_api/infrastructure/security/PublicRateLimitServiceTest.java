@@ -102,6 +102,40 @@ class PublicRateLimitServiceTest {
     }
 
     @Test
+    void shouldReturnConfiguredWindowWhenNoIpBucketExistsOrLimitWasNotReached() {
+        PublicRateLimitService configured = new PublicRateLimitService(
+                2, Duration.ofMillis(2_500),
+                2, Duration.ofMillis(5_500),
+                2, Duration.ofMillis(7_500),
+                "test-hmac-secret");
+
+        assertEquals(3, configured.loginIpRetryAfterSeconds("192.0.2.91"));
+        assertTrue(configured.allowLoginFromIp("192.0.2.91"));
+        assertEquals(3, configured.loginIpRetryAfterSeconds("192.0.2.91"));
+        assertEquals(0, configured.accountRetryAfterSeconds("not-yet-blocked@example.com"));
+    }
+
+    @Test
+    void shouldReturnSafeRetryAfterForInvalidRateLimitConfiguration() {
+        PublicRateLimitService invalid = new PublicRateLimitService(
+                0, Duration.ofMinutes(1),
+                0, Duration.ofHours(1),
+                0, Duration.ofMinutes(15),
+                "test-hmac-secret");
+
+        assertEquals(1, invalid.loginIpRetryAfterSeconds("192.0.2.92"));
+        assertEquals(1, invalid.registrationIpRetryAfterSeconds("192.0.2.92"));
+        assertEquals(900, invalid.accountRetryAfterSeconds("blocked@example.com"));
+
+        PublicRateLimitService zeroDuration = new PublicRateLimitService(
+                1, Duration.ofMinutes(1),
+                1, Duration.ofHours(1),
+                1, Duration.ZERO,
+                "test-hmac-secret");
+        assertEquals(1, zeroDuration.accountRetryAfterSeconds("blocked@example.com"));
+    }
+
+    @Test
     void shouldReturnConfiguredRetryAfterRoundedUpToRemainingWindow() {
         AtomicLong clock = new AtomicLong(0);
         PublicRateLimitService configured = new PublicRateLimitService(
