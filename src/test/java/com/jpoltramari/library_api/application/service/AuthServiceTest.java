@@ -89,9 +89,11 @@ class AuthServiceTest {
     @Test
     void shouldRejectLoginWhenAccountIsBlockedBeforePasswordVerification() {
         when(rateLimitService.isAccountBlocked("john@example.com")).thenReturn(true);
+        when(rateLimitService.accountRetryAfterSeconds("john@example.com")).thenReturn(120L);
 
-        assertThrows(LoginRateLimitException.class,
+        LoginRateLimitException exception = assertThrows(LoginRateLimitException.class,
                 () -> service.login(" JOHN@Example.com ", "password123"));
+        assertEquals(120L, exception.getRetryAfterSeconds());
         org.mockito.Mockito.verifyNoInteractions(authenticationManager);
     }
 
