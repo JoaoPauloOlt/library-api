@@ -13,12 +13,11 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
-    @Value("$" + "{app.cors.allowed-origins:http://localhost:*}")
+    @Value("${app.cors.allowed-origins:http://localhost:*}")
     private String allowedOrigins;
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-
         CorsConfiguration config = new CorsConfiguration();
 
         List<String> origins = Arrays.stream(allowedOrigins.split(","))
@@ -35,15 +34,12 @@ public class CorsConfig {
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
         ));
-        // Authentication uses an explicit Bearer token header, not cookies or browser-managed credentials.
-        config.setAllowCredentials(false);
-        config.setExposedHeaders(List.of("Authorization", "X-Correlation-Id"));
+        // Credentialed CORS is required only for the HttpOnly refresh cookie.
+        config.setAllowCredentials(true);
+        config.setExposedHeaders(List.of("X-Correlation-Id"));
 
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-
         return source;
     }
 }
