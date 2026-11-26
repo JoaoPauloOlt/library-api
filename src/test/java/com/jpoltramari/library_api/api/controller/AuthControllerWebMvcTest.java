@@ -83,6 +83,13 @@ class AuthControllerWebMvcTest {
     }
 
     @Test
+    void shouldRejectRefreshWithoutCookie() throws Exception {
+        mockMvc.perform(post("/auth/refresh")
+                        .header("Origin", "http://localhost:5173"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void shouldLogoutAndClearRefreshCookie() throws Exception {
         mockMvc.perform(post("/auth/logout")
                         .cookie(new jakarta.servlet.http.Cookie("refreshToken", "refresh-token"))
