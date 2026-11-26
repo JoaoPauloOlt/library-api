@@ -102,6 +102,27 @@ class PublicRateLimitServiceTest {
     }
 
     @Test
+    void shouldReturnConfiguredRetryAfterRoundedUpToRemainingWindow() {
+        AtomicLong clock = new AtomicLong(0);
+        PublicRateLimitService configured = new PublicRateLimitService(
+                1, Duration.ofMillis(2_500),
+                1, Duration.ofMillis(5_500),
+                1, Duration.ofMillis(7_500),
+                "test-hmac-secret", clock::get);
+
+        assertTrue(configured.allowLoginFromIp("192.0.2.90"));
+        assertFalse(configured.allowLoginFromIp("192.0.2.90"));
+        assertEquals(3, configured.loginIpRetryAfterSeconds("192.0.2.90"));
+
+        clock.addAndGet(Duration.ofMillis(1_200).toNanos());
+        assertEquals(2, configured.loginIpRetryAfterSeconds("192.0.2.90"));
+
+        configured.recordFailedLogin("blocked@example.com");
+        assertTrue(configured.isAccountBlocked("blocked@example.com"));
+        assertEquals(8, configured.accountRetryAfterSeconds("blocked@example.com"));
+    }
+
+    @Test
     void shouldExposeSpecificExceptionForRateLimitKeyFailure() {
         IllegalArgumentException cause = new IllegalArgumentException("test");
         RateLimitKeyGenerationException exception = new RateLimitKeyGenerationException(cause);
