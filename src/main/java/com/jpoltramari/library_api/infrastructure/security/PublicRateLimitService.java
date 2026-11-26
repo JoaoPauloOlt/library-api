@@ -59,6 +59,9 @@ public class PublicRateLimitService {
 
     public boolean isAccountBlocked(String email) {
         String key = accountKey(email);
+        if (accountFailureLimit < 1 || accountFailureWindow.isZero() || accountFailureWindow.isNegative()) {
+            return true;
+        }
         Window window = accountFailureWindows.get(key);
         return window != null && window.isBlocked(accountFailureLimit, accountFailureWindow);
     }
@@ -76,11 +79,11 @@ public class PublicRateLimitService {
         if (limit < 1 || duration.isZero() || duration.isNegative()) {
             return false;
         }
-        cleanupOccasionally(windows);
+        cleanupOccasionally(windows, duration);
         Window window = windows.get(key);
         if (window == null) {
             if (windows.size() >= MAX_TRACKED_KEYS) {
-                cleanupExpired(windows);
+                cleanupExpired(windows, duration);
                 if (windows.size() >= MAX_TRACKED_KEYS) {
                     return false;
                 }
@@ -92,14 +95,14 @@ public class PublicRateLimitService {
         return window.tryAcquire(limit, duration);
     }
 
-    private void cleanupOccasionally(ConcurrentHashMap<String, Window> windows) {
+    private void cleanupOccasionally(ConcurrentHashMap<String, Window> windows, Duration duration) {
         if (operations.incrementAndGet() % CLEANUP_INTERVAL == 0) {
-            cleanupExpired(windows);
+            cleanupExpired(windows, duration);
         }
     }
 
-    private void cleanupExpired(ConcurrentHashMap<String, Window> windows) {
-        windows.entrySet().removeIf(entry -> entry.getValue().isExpired());
+    private void cleanupExpired(ConcurrentHashMap<String, Window> windows, Duration duration) {
+        windows.entrySet().removeIf(entry -> entry.getValue().isExpired(duration));
     }
 
     private String accountKey(String email) {
@@ -136,8 +139,8 @@ public class PublicRateLimitService {
             return count >= limit;
         }
 
-        synchronized boolean isExpired() {
-            return System.nanoTime() - startedAtNanos >= Duration.ofHours(2).toNanos();
+        synchronized boolean isExpired(Duration duration) {
+            return System.nanoTime() - startedAtNanos >= duration.toNanos();
         }
 
         private void resetIfExpired(Duration duration) {
