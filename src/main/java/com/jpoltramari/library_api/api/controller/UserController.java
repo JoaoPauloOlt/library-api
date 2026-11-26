@@ -5,6 +5,8 @@ import com.jpoltramari.library_api.application.command.user.CreateUserCommand;
 import com.jpoltramari.library_api.api.dto.PageResponse;
 import com.jpoltramari.library_api.api.dto.user.UserInput;
 import com.jpoltramari.library_api.api.dto.user.UserModel;
+import com.jpoltramari.library_api.api.dto.user.RegistrationResponse;
+import com.jpoltramari.library_api.domain.exception.EmailAlreadyRegisteredException;
 import com.jpoltramari.library_api.api.mapper.UserMapper;
 import com.jpoltramari.library_api.application.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +23,9 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -63,15 +67,48 @@ public class UserController {
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Register a user", description = "Creates a new user account. This endpoint is public and does not require a bearer token.")
+    @Operation(summary = "Register a user", description = "Creates a new user account. The response is intentionally generic and does not disclose whether the email is already registered.")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "User created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid user data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "409", description = "User email already registered", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @ApiResponse(responseCode = "202", description = "Registration request accepted"),
+            @ApiResponse(responseCode = "400", description = "Invalid user data", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public UserModel create(@RequestBody @Valid UserInput input) {
-        return mapper.toModel(service.create(new CreateUserCommand(
-                input.name(), input.email(), input.telephone(), input.password())));
+    public ResponseEntity<RegistrationResponse> create(@RequestBody @Valid UserInput input) {
+        RegistrationResponse response = RegistrationResponse.genericConfirmation();
+        try {
+            service.create(new CreateUserCommand(
+                    input.name(), input.email(), input.telephone(), input.password()));
+        } catch (EmailAlreadyRegisteredException ex) {
+            // Keep the status and response body identical for existing and new email addresses.
+        } catch (DataIntegrityViolationException ex) {
+            if (!isEmailUniquenessViolation(ex)) {
+                throw ex;
+            }
+            // Handles the concurrent duplicate-email race without revealing account existence.
+        }
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+    }
+
+    private boolean isEmailUniquenessViolation(Throwable exception) {
+        Throwable current = exception;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null) {
+                String normalized = message.toLowerCase(java.util.Locale.ROOT);
+                if (normalized.contains("email")
+                        && (normalized.contains("unique")
+                        || normalized.contains("duplicate")
+                        || normalized.contains("users_email"))) {
+                    return true;
+                }
+            }
+            if (current instanceof java.sql.SQLException sqlException
+                    && "23505".equals(sqlException.getSQLState())) {
+                String message = sqlException.getMessage();
+                return message != null
+                        && message.toLowerCase(java.util.Locale.ROOT).contains("email");
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 }
