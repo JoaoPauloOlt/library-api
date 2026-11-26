@@ -21,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,8 +49,12 @@ class DashboardServiceTest {
         LocalDate from = LocalDate.of(2026, 11, 1);
         LocalDate to = LocalDate.of(2026, 12, 1);
         when(bookRepository.count()).thenReturn(120L);
+        LocalDateTime periodStart = from.atStartOfDay(ZoneId.of("America/Sao_Paulo"))
+                .withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        LocalDateTime periodEnd = to.atStartOfDay(ZoneId.of("America/Sao_Paulo"))
+                .withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
         when(loanRepository.countByUserIdAndRequestDateGreaterThanEqualAndRequestDateLessThan(
-                42L, from.atStartOfDay(), to.atStartOfDay())).thenReturn(14L);
+                42L, periodStart, periodEnd)).thenReturn(14L);
         when(loanRepository.countByUserIdAndStatusInAndDueDateBefore(
                 org.mockito.ArgumentMatchers.eq(42L),
                 org.mockito.ArgumentMatchers.eq(List.of(LoanStatus.ACTIVE, LoanStatus.LATE)),
@@ -59,7 +65,7 @@ class DashboardServiceTest {
         assertEquals(new DashboardSummary(120L, 14L, 3L), result);
         verify(bookRepository).count();
         verify(loanRepository).countByUserIdAndRequestDateGreaterThanEqualAndRequestDateLessThan(
-                42L, from.atStartOfDay(), to.atStartOfDay());
+                42L, periodStart, periodEnd);
         verify(loanRepository).countByUserIdAndStatusInAndDueDateBefore(
                 org.mockito.ArgumentMatchers.eq(42L),
                 org.mockito.ArgumentMatchers.eq(List.of(LoanStatus.ACTIVE, LoanStatus.LATE)),
