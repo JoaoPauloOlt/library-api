@@ -10,6 +10,7 @@ import com.jpoltramari.library_api.domain.repository.UserRepository;
 import com.jpoltramari.library_api.infrastructure.security.PublicRateLimitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ public class AuthService {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(normalizedEmail, password)
             );
-        } catch (BadCredentialsException ex) {
+        } catch (BadCredentialsException | UsernameNotFoundException ex) {
             rateLimitService.recordFailedLogin(normalizedEmail);
             throw ex;
         }
