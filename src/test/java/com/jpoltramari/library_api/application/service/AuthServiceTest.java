@@ -15,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import com.jpoltramari.library_api.infrastructure.security.PublicRateLimitService;
 import org.springframework.security.core.Authentication;
 import org.mockito.ArgumentCaptor;
@@ -71,6 +72,18 @@ class AuthServiceTest {
                 () -> service.login("  John@Example.com ", "wrong-password"));
 
         verify(rateLimitService).recordFailedLogin("john@example.com");
+    }
+
+    @Test
+    void shouldNotCountAuthenticationInfrastructureFailuresAsBadCredentials() {
+        doThrow(new InternalAuthenticationServiceException("identity provider unavailable"))
+                .when(authenticationManager).authenticate(any());
+
+        assertThrows(InternalAuthenticationServiceException.class,
+                () -> service.login("reader@example.com", "password123"));
+
+        org.mockito.Mockito.verify(rateLimitService, org.mockito.Mockito.never())
+                .recordFailedLogin("reader@example.com");
     }
 
     @Test
