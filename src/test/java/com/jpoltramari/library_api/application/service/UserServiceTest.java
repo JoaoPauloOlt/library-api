@@ -43,9 +43,9 @@ class UserServiceTest {
     @Test
     void shouldCreateActiveUserWithDefaultGroupAndEncodedPassword() {
         CreateUserCommand command = new CreateUserCommand(
-                "John", "john@example.com", "11999999999", "password123");
+                "John", "  John@Example.COM ", "11999999999", "password123");
         Group group = new Group();
-        when(repository.existsByEmail(command.email())).thenReturn(false);
+        when(repository.existsByEmail("john@example.com")).thenReturn(false);
         when(passwordEncoder.encode(command.password())).thenReturn("encoded");
         when(groupRepository.findByName("USER")).thenReturn(Optional.of(group));
         when(repository.save(org.mockito.ArgumentMatchers.any(User.class)))
@@ -55,6 +55,7 @@ class UserServiceTest {
 
         assertEquals("John", result.getName());
         assertEquals("john@example.com", result.getEmail());
+        verify(repository).existsByEmail("john@example.com");
         assertEquals("11999999999", result.getTelephone());
         assertEquals(UserStatus.ACTIVE, result.getStatus());
         assertEquals("encoded", result.getPassword());
@@ -65,8 +66,8 @@ class UserServiceTest {
     @Test
     void shouldRejectDuplicateEmail() {
         CreateUserCommand command = new CreateUserCommand(
-                "John", "john@example.com", "11999999999", "password123");
-        when(repository.existsByEmail(command.email())).thenReturn(true);
+                "John", "JOHN@EXAMPLE.COM", "11999999999", "password123");
+        when(repository.existsByEmail("john@example.com")).thenReturn(true);
 
         assertThrows(EmailAlreadyRegisteredException.class, () -> service.create(command));
     }

@@ -9,6 +9,7 @@ import com.jpoltramari.library_api.domain.model.Group;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.GroupRepository;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
+import com.jpoltramari.library_api.domain.util.EmailNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,16 +23,12 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
     private static final String DEFAULT_GROUP = "USER";
-
     private final UserRepository repository;
     private final GroupRepository groupRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public Page<User> findAll(Pageable pageable) {
-        return repository.findAll(pageable);
-    }
+    public Page<User> findAll(Pageable pageable) { return repository.findAll(pageable); }
 
     @PreAuthorize("hasAuthority('LOAN_CREATE_FOR_USER')")
     public Page<User> findActiveBorrowers(Pageable pageable) {
@@ -39,22 +36,20 @@ public class UserService {
     }
 
     public User findOrFail(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException(id));
+        return repository.findById(id).orElseThrow(() -> new UserNotFoundException(id));
     }
 
     @Transactional
     public User create(CreateUserCommand command) {
-        validateEmail(command.email());
-
+        String normalizedEmail = EmailNormalizer.normalize(command.email());
+        validateEmail(normalizedEmail);
         User user = new User();
         user.setName(command.name());
-        user.setEmail(command.email());
+        user.setEmail(normalizedEmail);
         user.setTelephone(command.telephone());
         user.setPassword(passwordEncoder.encode(command.password()));
         user.setStatus(UserStatus.ACTIVE);
         user.setGroups(Set.of(findDefaultGroup()));
-
         return repository.save(user);
     }
 
@@ -65,11 +60,7 @@ public class UserService {
     }
 
     private Group findDefaultGroup() {
-        return groupRepository.findByName(DEFAULT_GROUP)
-                .orElseThrow(() ->
-                        new EntityNotFoundException(
-                                "Default group USER was not found."
-                        )
-                );
+        return groupRepository.findByName(DEFAULT_GROUP).orElseThrow(() ->
+                new EntityNotFoundException("Default group USER was not found."));
     }
 }

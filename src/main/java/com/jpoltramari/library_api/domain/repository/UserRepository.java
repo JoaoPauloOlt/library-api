@@ -10,7 +10,6 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -18,8 +17,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from User u where u.id = :id")
     Optional<User> findByIdForUpdate(@Param("id") Long id);
 
-    Optional<User> findByEmail(String email);
-    boolean existsByEmail(String email);
+    @Query("select u from User u where lower(trim(u.email)) = lower(trim(:email))")
+    Optional<User> findByEmail(@Param("email") String email);
+
+    @Query("select case when count(u) > 0 then true else false end from User u where lower(trim(u.email)) = lower(trim(:email))")
+    boolean existsByEmail(@Param("email") String email);
+
     Page<User> findByStatus(UserStatus status, Pageable pageable);
 
     @Query("""
@@ -27,9 +30,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
         from User u
         left join fetch u.groups g
         left join fetch g.permissions
-        where u.email = :email
+        where lower(trim(u.email)) = lower(trim(:email))
     """)
-    Optional<User> findByEmailWithGroupsAndPermissions(String email);
+    Optional<User> findByEmailWithGroupsAndPermissions(@Param("email") String email);
 
     @Query("""
         select distinct u
