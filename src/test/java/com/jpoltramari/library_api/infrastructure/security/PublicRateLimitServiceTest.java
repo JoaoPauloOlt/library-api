@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -68,16 +69,17 @@ class PublicRateLimitServiceTest {
     }
 
     @Test
-    void shouldResetWindowAfterConfiguredDuration() throws InterruptedException {
+    void shouldResetWindowAfterConfiguredDuration() {
+        AtomicLong clock = new AtomicLong(1_000_000L);
         PublicRateLimitService shortWindow = new PublicRateLimitService(
                 1, Duration.ofMillis(20),
                 1, Duration.ofHours(1),
                 1, Duration.ofMinutes(15),
-                "test-hmac-secret");
+                "test-hmac-secret", clock::get);
 
         assertTrue(shortWindow.allowLoginFromIp("192.0.2.50"));
         assertFalse(shortWindow.allowLoginFromIp("192.0.2.50"));
-        Thread.sleep(30);
+        clock.addAndGet(Duration.ofMillis(21).toNanos());
         assertTrue(shortWindow.allowLoginFromIp("192.0.2.50"));
     }
 
