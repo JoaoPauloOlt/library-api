@@ -43,7 +43,7 @@ public class SecurityConfig {
 
     @Bean
     public CookieCsrfTokenRepository csrfTokenRepository() {
-        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        CookieCsrfTokenRepository repository = new CookieCsrfTokenRepository();
         repository.setCookieCustomizer(cookie -> cookie
                 .path("/")
                 .httpOnly(true)
@@ -59,7 +59,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             ApiSecurityExceptionHandler handler,
-            CookieCsrfTokenRepository csrfTokenRepository) throws Exception {
+            CookieCsrfTokenRepository csrfTokenRepository) {
         return http
                 // Require CSRF tokens only where the browser automatically sends the refresh cookie.
                 // All other API endpoints remain stateless and authenticate with Bearer tokens.
@@ -121,7 +121,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
         return config.getAuthenticationManager();
     }
 
