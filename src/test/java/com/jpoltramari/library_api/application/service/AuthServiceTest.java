@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.application.service;
 
+import com.jpoltramari.library_api.application.exception.LoginRateLimitException;
 import com.jpoltramari.library_api.application.port.security.AccessTokenPort;
 import com.jpoltramari.library_api.application.port.security.RefreshTokenPort;
 import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
@@ -12,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import com.jpoltramari.library_api.infrastructure.security.PublicRateLimitService;
 import org.springframework.security.core.Authentication;
 import org.mockito.ArgumentCaptor;
 
@@ -29,12 +32,13 @@ class AuthServiceTest {
     @Mock private AccessTokenPort accessTokenPort;
     @Mock private RefreshTokenPort refreshTokenPort;
     @Mock private UserRepository userRepository;
+    @Mock private PublicRateLimitService rateLimitService;
 
     private AuthService service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthService(authenticationManager, accessTokenPort, refreshTokenPort, userRepository);
+        service = new AuthService(authenticationManager, accessTokenPort, refreshTokenPort, userRepository, rateLimitService);
     }
 
     @Test
@@ -53,6 +57,27 @@ class AuthServiceTest {
         ArgumentCaptor<Authentication> authenticationCaptor = ArgumentCaptor.forClass(Authentication.class);
         verify(authenticationManager).authenticate(authenticationCaptor.capture());
         assertEquals("john@example.com", authenticationCaptor.getValue().getName());
+        verify(rateLimitService).resetFailedLogins("john@example.com");
+    }
+
+    @Test
+    void shouldRecordFailedLoginAttempt() {
+        org.mockito.Mockito.doThrow(new BadCredentialsException("bad credentials"))
+                .when(authenticationManager).authenticate(any());
+
+        assertThrows(BadCredentialsException.class,
+                () -> service.login("  John@Example.com ", "wrong-password"));
+
+        verify(rateLimitService).recordFailedLogin("john@example.com");
+    }
+
+    @Test
+    void shouldRejectLoginWhenAccountIsBlockedBeforePasswordVerification() {
+        when(rateLimitService.isAccountBlocked("john@example.com")).thenReturn(true);
+
+        assertThrows(LoginRateLimitException.class,
+                () -> service.login(" JOHN@Example.com ", "password123"));
+        org.mockito.Mockito.verifyNoInteractions(authenticationManager);
     }
 
     @Test
