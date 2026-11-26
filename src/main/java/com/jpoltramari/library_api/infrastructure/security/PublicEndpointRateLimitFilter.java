@@ -45,7 +45,7 @@ public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
     }
 
     private void reject(HttpServletResponse response) throws IOException {
-        response.setStatus(HttpServletResponse.SC_TOO_MANY_REQUESTS);
+        response.setStatus(429);
         response.setHeader("Retry-After", "60");
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
