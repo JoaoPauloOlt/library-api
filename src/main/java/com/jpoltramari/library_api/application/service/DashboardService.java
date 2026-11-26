@@ -4,6 +4,7 @@ import com.jpoltramari.library_api.application.readmodel.DashboardGenreMetric;
 import com.jpoltramari.library_api.application.readmodel.DashboardSummary;
 import com.jpoltramari.library_api.domain.enums.CopyStatus;
 import com.jpoltramari.library_api.domain.enums.LoanStatus;
+import com.jpoltramari.library_api.domain.enums.Genre;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.model.Book;
 import com.jpoltramari.library_api.domain.repository.BookRepository;
@@ -55,6 +56,12 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public List<DashboardGenreMetric> getGenreMetrics() {
         return bookRepository.findDashboardGenreMetrics(COUNTED_LOAN_STATUSES);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<Book> getGenreBooks(Genre genre, Pageable pageable) {
+        return bookRepository.findDashboardGenreBooks(
+                genre, COUNTED_LOAN_STATUSES, pageable);
     }
 
     @Transactional(readOnly = true)
