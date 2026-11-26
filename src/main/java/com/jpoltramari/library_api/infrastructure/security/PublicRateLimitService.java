@@ -176,8 +176,9 @@ public class PublicRateLimitService {
         }
 
         private void resetIfExpired(Duration duration) {
-            if (!evicted && System.nanoTime() - startedAtNanos >= duration.toNanos()) {
-                startedAtNanos = System.nanoTime();
+            long now = nanoTime.getAsLong();
+            if (!evicted && now - startedAtNanos >= duration.toNanos()) {
+                startedAtNanos = now;
                 count = 0;
             }
         }
