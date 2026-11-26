@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,16 +68,22 @@ class UserServiceTest {
     void shouldRejectDuplicateEmail() {
         CreateUserCommand command = new CreateUserCommand(
                 "John", "JOHN@EXAMPLE.COM", "11999999999", "password123");
+        when(passwordEncoder.encode(command.password())).thenReturn("encoded");
+        when(groupRepository.findByName("USER")).thenReturn(Optional.of(new Group()));
         when(repository.existsByEmail("john@example.com")).thenReturn(true);
 
         assertThrows(EmailAlreadyRegisteredException.class, () -> service.create(command));
+
+        var order = inOrder(passwordEncoder, groupRepository, repository);
+        order.verify(passwordEncoder).encode(command.password());
+        order.verify(groupRepository).findByName("USER");
+        order.verify(repository).existsByEmail("john@example.com");
     }
 
     @Test
     void shouldRejectWhenDefaultGroupDoesNotExist() {
         CreateUserCommand command = new CreateUserCommand(
                 "John", "john@example.com", "11999999999", "password123");
-        when(repository.existsByEmail(command.email())).thenReturn(false);
         when(groupRepository.findByName("USER")).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> service.create(command));

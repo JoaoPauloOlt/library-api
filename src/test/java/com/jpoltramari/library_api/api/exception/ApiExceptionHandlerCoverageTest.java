@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.api.exception;
 
+import com.jpoltramari.library_api.application.exception.LoginRateLimitException;
 import com.jpoltramari.library_api.domain.exception.EntityInUseException;
 import com.jpoltramari.library_api.domain.model.Book;
 import org.springframework.data.core.PropertyReferenceException;
@@ -8,6 +9,8 @@ import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpStatus;
@@ -68,6 +71,39 @@ class ApiExceptionHandlerCoverageTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody().getErrorCode()).isEqualTo("ENTITY_IN_USE");
+    }
+
+    @Test
+    void shouldHandleInvalidCredentialsWithoutRevealingAccountState() {
+        ResponseEntity<ErrorResponse> response = handler(false).handleAuthentication(
+                new BadCredentialsException("private authentication detail"), request());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+        assertThat(response.getBody().getErrorCode()).isEqualTo("INVALID_CREDENTIALS");
+        assertThat(response.getBody().getDetail()).isEqualTo("Invalid email or password.");
+    }
+
+    @Test
+    void shouldReturnServiceUnavailableForAuthenticationProviderFailure() {
+        ResponseEntity<ErrorResponse> response = handler(false)
+                .handleAuthenticationServiceUnavailable(
+                        new AuthenticationServiceException("provider unavailable"), request());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getBody().getErrorCode())
+                .isEqualTo("AUTHENTICATION_SERVICE_UNAVAILABLE");
+        assertThat(response.getBody().getDetail())
+                .isEqualTo("Authentication could not be completed. Please try again later.");
+    }
+
+    @Test
+    void shouldHandleAccountRateLimitWithRetryAfter() {
+        ResponseEntity<ErrorResponse> response = handler(false).handleLoginRateLimit(
+                new LoginRateLimitException(900), request());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(response.getHeaders().getFirst("Retry-After")).isEqualTo("900");
+        assertThat(response.getBody().getErrorCode()).isEqualTo("RATE_LIMIT_EXCEEDED");
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.api.exception;
 
+import com.jpoltramari.library_api.application.exception.LoginRateLimitException;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
 import com.jpoltramari.library_api.domain.exception.EntityInUseException;
 import com.jpoltramari.library_api.domain.exception.EmailAlreadyRegisteredException;
@@ -14,6 +15,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -23,6 +25,8 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -187,6 +191,56 @@ public class ApiExceptionHandler {
                 "EMAIL_ALREADY_REGISTERED",
                 request
         );
+    }
+
+    @ExceptionHandler(AuthenticationServiceException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationServiceUnavailable(
+            AuthenticationServiceException ex,
+            HttpServletRequest request
+    ) {
+        log.error("event=authentication_service_unavailable path={} correlationId={}",
+                request.getRequestURI(), correlationId(), ex);
+        return buildResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Authentication service unavailable",
+                "Authentication could not be completed. Please try again later.",
+                "AUTHENTICATION_SERVICE_UNAVAILABLE",
+                request,
+                ex
+        );
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(
+            AuthenticationException ex,
+            HttpServletRequest request
+    ) {
+        return buildResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Authentication failed",
+                "Invalid email or password.",
+                "INVALID_CREDENTIALS",
+                request
+        );
+    }
+
+    @ExceptionHandler(LoginRateLimitException.class)
+    public ResponseEntity<ErrorResponse> handleLoginRateLimit(
+            LoginRateLimitException ex,
+            HttpServletRequest request
+    ) {
+        log.warn("event=rate_limit_rejected scope=account path={} correlationId={}",
+                request.getRequestURI(), correlationId());
+        ResponseEntity<ErrorResponse> response = buildResponse(
+                HttpStatus.TOO_MANY_REQUESTS,
+                "Too many requests",
+                "Too many login attempts. Please try again later.",
+                "RATE_LIMIT_EXCEEDED",
+                request
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(ex.getRetryAfterSeconds()))
+                .body(response.getBody());
     }
 
     @ExceptionHandler(BusinessException.class)
