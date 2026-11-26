@@ -20,6 +20,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -67,9 +68,14 @@ class UserServiceTest {
     void shouldRejectDuplicateEmail() {
         CreateUserCommand command = new CreateUserCommand(
                 "John", "JOHN@EXAMPLE.COM", "11999999999", "password123");
+        when(passwordEncoder.encode(command.password())).thenReturn("encoded");
         when(repository.existsByEmail("john@example.com")).thenReturn(true);
 
         assertThrows(EmailAlreadyRegisteredException.class, () -> service.create(command));
+
+        var order = inOrder(passwordEncoder, repository);
+        order.verify(passwordEncoder).encode(command.password());
+        order.verify(repository).existsByEmail("john@example.com");
     }
 
     @Test
