@@ -25,7 +25,7 @@ class PublicEndpointRateLimitFilterTest {
                 3, Duration.ofMinutes(15),
                 "test-hmac-secret");
         filter = new PublicEndpointRateLimitFilter(
-                service, () -> java.util.Optional.of("test-correlation-id"), new ObjectMapper());
+                service, () -> java.util.Optional.of("test-correlation-id"), new ObjectMapper().findAndRegisterModules());
     }
 
     @Test
