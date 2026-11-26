@@ -23,6 +23,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,7 +63,7 @@ class AuthServiceTest {
 
     @Test
     void shouldRecordFailedLoginAttempt() {
-        org.mockito.Mockito.doThrow(new BadCredentialsException("bad credentials"))
+        doThrow(new BadCredentialsException("bad credentials"))
                 .when(authenticationManager).authenticate(any());
 
         assertThrows(BadCredentialsException.class,
