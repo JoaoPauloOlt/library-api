@@ -61,6 +61,27 @@ class PublicRateLimitServiceTest {
     }
 
     @Test
+    void shouldTreatNullAndBlankIpAsSameClientKey() {
+        assertTrue(service.allowLoginFromIp(null));
+        assertTrue(service.allowLoginFromIp(""));
+        assertFalse(service.allowLoginFromIp("   "));
+    }
+
+    @Test
+    void shouldResetWindowAfterConfiguredDuration() throws InterruptedException {
+        PublicRateLimitService shortWindow = new PublicRateLimitService(
+                1, Duration.ofMillis(20),
+                1, Duration.ofHours(1),
+                1, Duration.ofMinutes(15),
+                "test-hmac-secret");
+
+        assertTrue(shortWindow.allowLoginFromIp("192.0.2.50"));
+        assertFalse(shortWindow.allowLoginFromIp("192.0.2.50"));
+        Thread.sleep(30);
+        assertTrue(shortWindow.allowLoginFromIp("192.0.2.50"));
+    }
+
+    @Test
     void shouldFailClosedWhenLimitConfigurationIsInvalid() {
         PublicRateLimitService invalid = new PublicRateLimitService(
                 0, Duration.ofMinutes(1),
@@ -70,5 +91,6 @@ class PublicRateLimitServiceTest {
 
         assertFalse(invalid.allowLoginFromIp("192.0.2.10"));
         assertFalse(invalid.allowRegistrationFromIp("192.0.2.10"));
+        assertTrue(invalid.isAccountBlocked("reader@example.com"));
     }
 }
