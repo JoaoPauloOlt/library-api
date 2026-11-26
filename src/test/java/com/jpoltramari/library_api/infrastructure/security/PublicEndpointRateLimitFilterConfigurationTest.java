@@ -1,6 +1,8 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
 import org.junit.jupiter.api.Test;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.core.Ordered;
 
@@ -21,7 +23,9 @@ class PublicEndpointRateLimitFilterConfigurationTest {
 
         FilterRegistrationBean<PublicEndpointRateLimitFilter> registration =
                 new PublicEndpointRateLimitFilterConfiguration()
-                        .publicEndpointRateLimitFilterRegistration(service);
+                        .publicEndpointRateLimitFilterRegistration(
+                                service, () -> java.util.Optional.of("test-correlation-id"),
+                                new ObjectMapper());
 
         assertNotNull(registration.getFilter());
         assertEquals(Ordered.HIGHEST_PRECEDENCE + 10, registration.getOrder());
