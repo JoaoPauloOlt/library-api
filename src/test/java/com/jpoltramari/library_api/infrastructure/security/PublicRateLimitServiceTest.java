@@ -1,5 +1,6 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
+import com.jpoltramari.library_api.application.exception.RateLimitKeyGenerationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -81,6 +82,32 @@ class PublicRateLimitServiceTest {
         assertFalse(shortWindow.allowLoginFromIp("192.0.2.50"));
         clock.addAndGet(Duration.ofMillis(21).toNanos());
         assertTrue(shortWindow.allowLoginFromIp("192.0.2.50"));
+    }
+
+    @Test
+    void shouldRemoveExpiredBucketsDuringPeriodicCleanup() {
+        AtomicLong clock = new AtomicLong(1_000_000L);
+        PublicRateLimitService cleanupService = new PublicRateLimitService(
+                10, Duration.ofMillis(10),
+                10, Duration.ofHours(1),
+                10, Duration.ofMinutes(15),
+                "test-hmac-secret", clock::get);
+
+        assertTrue(cleanupService.allowLoginFromIp("expired-client"));
+        clock.addAndGet(Duration.ofMillis(11).toNanos());
+        for (int i = 0; i < 127; i++) {
+            assertTrue(cleanupService.allowLoginFromIp("client-" + i));
+        }
+        assertTrue(cleanupService.allowLoginFromIp("expired-client"));
+    }
+
+    @Test
+    void shouldExposeSpecificExceptionForRateLimitKeyFailure() {
+        IllegalArgumentException cause = new IllegalArgumentException("test");
+        RateLimitKeyGenerationException exception = new RateLimitKeyGenerationException(cause);
+
+        assertEquals("Unable to create account rate-limit key", exception.getMessage());
+        assertSame(cause, exception.getCause());
     }
 
     @Test
