@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -62,7 +63,7 @@ public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
                         long retryAfterSeconds) throws IOException {
         ErrorResponse body = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now(ZoneOffset.UTC))
-                .status(HttpServletResponse.SC_TOO_MANY_REQUESTS)
+                .status(HttpStatus.TOO_MANY_REQUESTS.value())
                 .title("Too many requests")
                 .detail("Request rate limit exceeded. Please try again later.")
                 .path(request.getRequestURI())
