@@ -69,7 +69,7 @@ public class UserController {
     @PostMapping
     @Operation(summary = "Register a user", description = "Creates a new user account. The response is intentionally generic and does not disclose whether the email is already registered.")
     @ApiResponses({
-            @ApiResponse(responseCode = "202", description = "Registration request accepted"),
+            @ApiResponse(responseCode = "200", description = "Generic registration confirmation"),
             @ApiResponse(responseCode = "400", description = "Invalid user data", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     public ResponseEntity<RegistrationResponse> create(@RequestBody @Valid UserInput input) {
@@ -85,7 +85,7 @@ public class UserController {
             }
             // Handles the concurrent duplicate-email race without revealing account existence.
         }
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     private boolean isEmailUniquenessViolation(Throwable exception) {
