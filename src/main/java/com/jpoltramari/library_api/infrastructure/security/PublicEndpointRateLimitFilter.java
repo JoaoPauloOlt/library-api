@@ -1,7 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jpoltramari.library_api.api.exception.ErrorResponse;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -21,17 +21,15 @@ public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
 
     private static final String LOGIN_PATH = "/auth/login";
     private static final String REGISTRATION_PATH = "/users";
+    private static final JsonFactory JSON_FACTORY = new JsonFactory();
 
     private final PublicRateLimitService rateLimitService;
     private final CorrelationIdPort correlationIdPort;
-    private final ObjectMapper objectMapper;
 
     public PublicEndpointRateLimitFilter(PublicRateLimitService rateLimitService,
-                                         CorrelationIdPort correlationIdPort,
-                                         ObjectMapper objectMapper) {
+                                         CorrelationIdPort correlationIdPort) {
         this.rateLimitService = rateLimitService;
         this.correlationIdPort = correlationIdPort;
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -61,21 +59,25 @@ public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
 
     private void reject(HttpServletRequest request, HttpServletResponse response,
                         long retryAfterSeconds) throws IOException {
-        ErrorResponse body = ErrorResponse.builder()
-                .timestamp(LocalDateTime.now(ZoneOffset.UTC))
-                .status(HttpStatus.TOO_MANY_REQUESTS.value())
-                .title("Too many requests")
-                .detail("Request rate limit exceeded. Please try again later.")
-                .path(request.getRequestURI())
-                .correlationId(correlationId())
-                .errorCode("RATE_LIMIT_EXCEEDED")
-                .build();
-
         response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setHeader("Retry-After", Long.toString(Math.max(1, retryAfterSeconds)));
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        objectMapper.writeValue(response.getWriter(), body);
+
+        try (JsonGenerator json = JSON_FACTORY.createGenerator(response.getWriter())) {
+            json.writeStartObject();
+            json.writeStringField("timestamp", LocalDateTime.now(ZoneOffset.UTC).toString());
+            json.writeNumberField("status", HttpStatus.TOO_MANY_REQUESTS.value());
+            json.writeStringField("title", "Too many requests");
+            json.writeStringField("detail", "Request rate limit exceeded. Please try again later.");
+            json.writeStringField("path", request.getRequestURI());
+            String correlationId = correlationId();
+            if (correlationId != null) {
+                json.writeStringField("correlationId", correlationId);
+            }
+            json.writeStringField("errorCode", "RATE_LIMIT_EXCEEDED");
+            json.writeEndObject();
+        }
     }
 
     private String correlationId() {
