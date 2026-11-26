@@ -124,10 +124,14 @@ public class PublicRateLimitService {
     private static final class Window {
         private long startedAtNanos = System.nanoTime();
         private int count;
+        private boolean evicted;
 
         synchronized boolean tryAcquire(int limit, Duration duration) {
+            if (evicted) {
+                return false;
+            }
             resetIfExpired(duration);
-            if (count >= limit) {
+            if (evicted || count >= limit) {
                 return false;
             }
             count++;
@@ -135,16 +139,23 @@ public class PublicRateLimitService {
         }
 
         synchronized boolean isBlocked(int limit, Duration duration) {
+            if (evicted) {
+                return true;
+            }
             resetIfExpired(duration);
-            return count >= limit;
+            return evicted || count >= limit;
         }
 
         synchronized boolean isExpired(Duration duration) {
-            return System.nanoTime() - startedAtNanos >= duration.toNanos();
+            if (evicted || System.nanoTime() - startedAtNanos >= duration.toNanos()) {
+                evicted = true;
+                return true;
+            }
+            return false;
         }
 
         private void resetIfExpired(Duration duration) {
-            if (System.nanoTime() - startedAtNanos >= duration.toNanos()) {
+            if (!evicted && System.nanoTime() - startedAtNanos >= duration.toNanos()) {
                 startedAtNanos = System.nanoTime();
                 count = 0;
             }
