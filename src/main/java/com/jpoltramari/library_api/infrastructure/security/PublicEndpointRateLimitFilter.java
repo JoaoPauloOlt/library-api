@@ -71,7 +71,7 @@ public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
                 .errorCode("RATE_LIMIT_EXCEEDED")
                 .build();
 
-        response.setStatus(HttpServletResponse.SC_TOO_MANY_REQUESTS);
+        response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
         response.setHeader("Retry-After", Long.toString(Math.max(1, retryAfterSeconds)));
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
