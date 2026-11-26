@@ -41,7 +41,9 @@ class PublicEndpointRateLimitFilterTest {
     void shouldApplyRegistrationLimitOnlyToRegistrationEndpoint() throws Exception {
         assertEquals(200, invoke("POST", "/users", "192.0.2.2").getStatus());
         assertEquals(200, invoke("POST", "/users", "192.0.2.2").getStatus());
-        assertEquals(429, invoke("POST", "/users", "192.0.2.2").getStatus());
+        MockHttpServletResponse limited = invoke("POST", "/users", "192.0.2.2");
+        assertEquals(429, limited.getStatus());
+        assertEquals("3600", limited.getHeader("Retry-After"));
         assertEquals(200, invoke("GET", "/users", "192.0.2.2").getStatus());
     }
 
