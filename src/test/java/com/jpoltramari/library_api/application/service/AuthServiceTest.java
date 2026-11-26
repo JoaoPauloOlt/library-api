@@ -5,6 +5,7 @@ import com.jpoltramari.library_api.application.port.security.AccessTokenPort;
 import com.jpoltramari.library_api.application.port.security.RefreshTokenPort;
 import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
 import com.jpoltramari.library_api.domain.exception.BusinessException;
+import com.jpoltramari.library_api.domain.exception.EntityNotFoundException;
 import com.jpoltramari.library_api.domain.model.User;
 import com.jpoltramari.library_api.domain.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,6 +80,16 @@ class AuthServiceTest {
         assertThrows(LoginRateLimitException.class,
                 () -> service.login(" JOHN@Example.com ", "password123"));
         org.mockito.Mockito.verifyNoInteractions(authenticationManager);
+    }
+
+    @Test
+    void shouldThrowSpecificExceptionIfAuthenticatedUserCannotBeLoaded() {
+        when(userRepository.findByEmailWithGroupsAndPermissions("john@example.com"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class,
+                () -> service.login("john@example.com", "password123"));
+        verify(rateLimitService).resetFailedLogins("john@example.com");
     }
 
     @Test
