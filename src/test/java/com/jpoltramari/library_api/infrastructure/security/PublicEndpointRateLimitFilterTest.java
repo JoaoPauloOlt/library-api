@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockFilterChain;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import jakarta.servlet.ServletException;
 import java.io.IOException;
 
@@ -23,7 +25,8 @@ class PublicEndpointRateLimitFilterTest {
                 2, Duration.ofHours(1),
                 3, Duration.ofMinutes(15),
                 "test-hmac-secret");
-        filter = new PublicEndpointRateLimitFilter(service);
+        filter = new PublicEndpointRateLimitFilter(
+                service, () -> java.util.Optional.of("test-correlation-id"), new ObjectMapper());
     }
 
     @Test
@@ -37,6 +40,11 @@ class PublicEndpointRateLimitFilterTest {
         assertEquals(429, third.getStatus());
         assertEquals("60", third.getHeader("Retry-After"));
         assertTrue(third.getContentAsString().contains("RATE_LIMIT_EXCEEDED"));
+        com.fasterxml.jackson.databind.JsonNode error = new ObjectMapper().readTree(third.getContentAsString());
+        assertTrue(error.hasNonNull("timestamp"));
+        assertEquals("/auth/login", error.get("path").asText());
+        assertEquals("test-correlation-id", error.get("correlationId").asText());
+        assertEquals("Too many requests", error.get("title").asText());
     }
 
     @Test
