@@ -10,13 +10,14 @@ import com.jpoltramari.library_api.domain.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-import org.mockito.MockitoAnnotations;
-import java.util.concurrent.atomic.AtomicBoolean;
 
+@ExtendWith(MockitoExtension.class)
 class UserControllerRegistrationTest {
 
     @Mock private UserService service;
@@ -25,7 +26,6 @@ class UserControllerRegistrationTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         controller = new UserController(service, mapper);
     }
 
