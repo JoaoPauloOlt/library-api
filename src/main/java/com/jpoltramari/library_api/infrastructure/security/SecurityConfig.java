@@ -53,6 +53,9 @@ public class SecurityConfig {
     }
 
     @Bean
+    // Suppress S4502: CSRF is intentionally limited to cookie-authenticated refresh/logout.
+    // Other API mutations require an explicit Authorization: Bearer header, not ambient cookies.
+    @SuppressWarnings("java:S4502")
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             ApiSecurityExceptionHandler handler,
