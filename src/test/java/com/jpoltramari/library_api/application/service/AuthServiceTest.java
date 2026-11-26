@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.mockito.ArgumentCaptor;
 
 import java.util.Optional;
 
@@ -43,12 +45,14 @@ class AuthServiceTest {
         when(refreshTokenPort.issueTokens(user)).thenReturn(issued);
         when(accessTokenPort.getExpiration()).thenReturn(900L);
 
-        AuthenticationResult response = service.login("john@example.com", "password123");
+        AuthenticationResult response = service.login("  JOHN@Example.COM ", "password123");
 
         assertEquals("access", response.accessToken());
         assertEquals("refresh", response.refreshToken());
         assertEquals(900L, response.expiresIn());
-        verify(authenticationManager).authenticate(any());
+        ArgumentCaptor<Authentication> authenticationCaptor = ArgumentCaptor.forClass(Authentication.class);
+        verify(authenticationManager).authenticate(authenticationCaptor.capture());
+        assertEquals("john@example.com", authenticationCaptor.getValue().getName());
     }
 
     @Test
