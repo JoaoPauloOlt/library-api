@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpStatus;
@@ -80,6 +81,19 @@ class ApiExceptionHandlerCoverageTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
         assertThat(response.getBody().getErrorCode()).isEqualTo("INVALID_CREDENTIALS");
         assertThat(response.getBody().getDetail()).isEqualTo("Invalid email or password.");
+    }
+
+    @Test
+    void shouldReturnServiceUnavailableForAuthenticationProviderFailure() {
+        ResponseEntity<ErrorResponse> response = handler(false)
+                .handleAuthenticationServiceUnavailable(
+                        new AuthenticationServiceException("provider unavailable"), request());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(response.getBody().getErrorCode())
+                .isEqualTo("AUTHENTICATION_SERVICE_UNAVAILABLE");
+        assertThat(response.getBody().getDetail())
+                .isEqualTo("Authentication could not be completed. Please try again later.");
     }
 
     @Test
