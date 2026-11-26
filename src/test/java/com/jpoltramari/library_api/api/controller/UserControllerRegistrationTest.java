@@ -85,8 +85,7 @@ class UserControllerRegistrationTest {
     @Test
     void shouldReturnGenericResponseForPostgresEmailUniqueViolation() {
         UserInput input = new UserInput("Reader", "reader@example.com", "11999999999", "StrongPassword123!");
-        SQLException sqlException = new SQLException(
-                "duplicate key value violates unique constraint users_email_key", "23505");
+        SQLException sqlException = new SQLException("email constraint violation", "23505");
         DataIntegrityViolationException exception = new DataIntegrityViolationException(
                 "could not execute statement", sqlException);
 
