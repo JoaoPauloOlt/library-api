@@ -103,9 +103,9 @@ public class UserController {
             }
             if (current instanceof java.sql.SQLException sqlException
                     && "23505".equals(sqlException.getSQLState())) {
-                String message = sqlException.getMessage();
-                return message != null
-                        && message.toLowerCase(java.util.Locale.ROOT).contains("email");
+                String sqlMessage = sqlException.getMessage();
+                return sqlMessage != null
+                        && sqlMessage.toLowerCase(java.util.Locale.ROOT).contains("email");
             }
             current = current.getCause();
         }
