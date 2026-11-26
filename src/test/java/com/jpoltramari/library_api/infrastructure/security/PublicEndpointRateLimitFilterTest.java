@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockFilterChain;
+import jakarta.servlet.ServletException;
+import java.io.IOException;
 
 import java.time.Duration;
 
@@ -25,7 +27,7 @@ class PublicEndpointRateLimitFilterTest {
     }
 
     @Test
-    void shouldRejectLoginIpAfterLimitAndSetRetryAfter() throws Exception {
+    void shouldRejectLoginIpAfterLimitAndSetRetryAfter() throws IOException, ServletException {
         MockHttpServletResponse first = invoke("POST", "/auth/login", "192.0.2.1");
         MockHttpServletResponse second = invoke("POST", "/auth/login", "192.0.2.1");
         MockHttpServletResponse third = invoke("POST", "/auth/login", "192.0.2.1");
