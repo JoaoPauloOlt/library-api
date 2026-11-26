@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -13,6 +14,7 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
 
     private static final String LOGIN_PATH = "/auth/login";
@@ -31,11 +33,13 @@ public class PublicEndpointRateLimitFilter extends OncePerRequestFilter {
             String clientIp = request.getRemoteAddr();
 
             if (LOGIN_PATH.equals(path) && !rateLimitService.allowLoginFromIp(clientIp)) {
+                log.warn("event=rate_limit_rejected scope=ip path={}", path);
                 reject(response, 60);
                 return;
             }
 
             if (REGISTRATION_PATH.equals(path) && !rateLimitService.allowRegistrationFromIp(clientIp)) {
+                log.warn("event=rate_limit_rejected scope=ip path={}", path);
                 reject(response, 3600);
                 return;
             }
