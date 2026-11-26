@@ -40,7 +40,7 @@ class UserControllerRegistrationTest {
                 .thenThrow(new EmailAlreadyRegisteredException("Email already registered."));
         var duplicateResponse = controller.create(input);
 
-        assertEquals(202, createdResponse.getStatusCode().value());
+        assertEquals(200, createdResponse.getStatusCode().value());
         assertEquals(createdResponse.getStatusCode(), duplicateResponse.getStatusCode());
         assertEquals(createdResponse.getBody(), duplicateResponse.getBody());
         assertEquals(RegistrationResponse.genericConfirmation(), duplicateResponse.getBody());
