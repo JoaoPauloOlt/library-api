@@ -2,7 +2,6 @@ package com.jpoltramari.library_api.infrastructure.security;
 
 import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.core.Ordered;
 
