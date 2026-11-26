@@ -37,8 +37,8 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, ApiSecurityExceptionHandler handler) throws Exception {
         return http
-                // Safe for this stateless API: JWTs are accepted only from the Authorization header.
-                // Authentication tokens are returned in response bodies; no auth cookies or HTTP sessions are used.
+                // Resource endpoints use stateless Bearer authentication. Refresh/logout use an HttpOnly
+                // cookie and enforce a configured Origin check in AuthController, with SameSite protection.
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .headers(headers -> headers
