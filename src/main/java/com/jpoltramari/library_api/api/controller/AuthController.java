@@ -6,7 +6,6 @@ import com.jpoltramari.library_api.application.result.auth.AuthenticationResult;
 import com.jpoltramari.library_api.application.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -50,11 +49,9 @@ public class AuthController {
     }
 
     @Operation(summary = "Authenticate user", description = "Returns an access token and stores the refresh token in an HttpOnly cookie.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Authentication successful"),
-            @ApiResponse(responseCode = "400", description = "Invalid credentials payload"),
-            @ApiResponse(responseCode = "401", description = "Invalid credentials")
-    })
+    @ApiResponse(responseCode = "200", description = "Authentication successful")
+    @ApiResponse(responseCode = "400", description = "Invalid credentials payload")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @PostMapping("/login")
     public LoginResponse login(@RequestBody @Valid LoginInput input, HttpServletResponse response) {
         AuthenticationResult result = service.login(input.email(), input.password());
@@ -63,10 +60,8 @@ public class AuthController {
     }
 
     @Operation(summary = "Refresh access token", description = "Rotates the HttpOnly refresh cookie and returns a new access token.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Token refreshed successfully"),
-            @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
-    })
+    @ApiResponse(responseCode = "200", description = "Token refreshed successfully")
+    @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
     @PostMapping("/refresh")
     public LoginResponse refresh(@CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken,
                                  HttpServletRequest request, HttpServletResponse response) {
@@ -80,10 +75,8 @@ public class AuthController {
     }
 
     @Operation(summary = "Logout", description = "Invalidates the refresh cookie and current access token session.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Logout completed successfully"),
-            @ApiResponse(responseCode = "403", description = "Untrusted request origin")
-    })
+    @ApiResponse(responseCode = "204", description = "Logout completed successfully")
+    @ApiResponse(responseCode = "403", description = "Untrusted request origin")
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout(@CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken,
