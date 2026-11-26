@@ -72,6 +72,46 @@ public class PublicRateLimitService {
                 registrationIpLimit, registrationIpWindow);
     }
 
+    public long loginIpRetryAfterSeconds(String ipAddress) {
+        return retryAfterSeconds(loginIpWindows, "ip:" + safeIp(ipAddress),
+                loginIpLimit, loginIpWindow);
+    }
+
+    public long registrationIpRetryAfterSeconds(String ipAddress) {
+        return retryAfterSeconds(registrationIpWindows, "ip:" + safeIp(ipAddress),
+                registrationIpLimit, registrationIpWindow);
+    }
+
+    public long accountRetryAfterSeconds(String email) {
+        if (accountFailureLimit < 1 || accountFailureWindow.isZero()
+                || accountFailureWindow.isNegative()) {
+            return durationSecondsCeiling(accountFailureWindow);
+        }
+        Window window = accountFailureWindows.get(accountKey(email));
+        return window == null ? 0 : window.retryAfterSeconds(accountFailureLimit, accountFailureWindow);
+    }
+
+    private long retryAfterSeconds(ConcurrentHashMap<String, Window> windows, String key,
+                                  int limit, Duration duration) {
+        if (limit < 1 || duration.isZero() || duration.isNegative()) {
+            return 1;
+        }
+        Window window = windows.get(key);
+        if (window == null) {
+            return PublicRateLimitService.durationSecondsCeiling(duration);
+        }
+        long remaining = window.retryAfterSeconds(limit, duration);
+        return remaining > 0 ? remaining : durationSecondsCeiling(duration);
+    }
+
+    private static long durationSecondsCeiling(Duration duration) {
+        if (duration.isZero() || duration.isNegative()) {
+            return 1;
+        }
+        long seconds = duration.getSeconds();
+        return duration.getNano() == 0 ? Math.max(1, seconds) : Math.max(1, seconds + 1);
+    }
+
     public boolean isAccountBlocked(String email) {
         String key = accountKey(email);
         if (accountFailureLimit < 1 || accountFailureWindow.isZero() || accountFailureWindow.isNegative()) {
@@ -173,6 +213,20 @@ public class PublicRateLimitService {
                 return true;
             }
             return false;
+        }
+
+        synchronized long retryAfterSeconds(int limit, Duration duration) {
+            if (evicted) {
+                return durationSecondsCeiling(duration);
+            }
+            resetIfExpired(duration);
+            if (evicted || count < limit) {
+                return 0;
+            }
+            long elapsed = nanoTime.getAsLong() - startedAtNanos;
+            long remainingNanos = Math.max(0, duration.toNanos() - elapsed);
+            long wholeSeconds = remainingNanos / 1_000_000_000L;
+            return Math.max(1, wholeSeconds + (remainingNanos % 1_000_000_000L == 0 ? 0 : 1));
         }
 
         private void resetIfExpired(Duration duration) {
