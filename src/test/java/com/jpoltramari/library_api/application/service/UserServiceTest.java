@@ -84,7 +84,6 @@ class UserServiceTest {
     void shouldRejectWhenDefaultGroupDoesNotExist() {
         CreateUserCommand command = new CreateUserCommand(
                 "John", "john@example.com", "11999999999", "password123");
-        when(repository.existsByEmail(command.email())).thenReturn(false);
         when(groupRepository.findByName("USER")).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> service.create(command));
