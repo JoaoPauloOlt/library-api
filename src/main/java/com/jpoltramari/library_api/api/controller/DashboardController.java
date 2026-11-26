@@ -7,6 +7,7 @@ import com.jpoltramari.library_api.api.mapper.BookMapper;
 import com.jpoltramari.library_api.application.port.security.AuthenticatedPrincipal;
 import com.jpoltramari.library_api.application.readmodel.DashboardGenreMetric;
 import com.jpoltramari.library_api.application.readmodel.DashboardSummary;
+import com.jpoltramari.library_api.domain.enums.Genre;
 import com.jpoltramari.library_api.application.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,6 +53,15 @@ public class DashboardController {
     @GetMapping("/genres")
     public List<DashboardGenreMetric> getGenreMetrics() {
         return dashboardService.getGenreMetrics();
+    }
+
+    @GetMapping("/genres/{genre}/books")
+    public PageResponse<BookModel> getGenreBooks(
+            @PathVariable Genre genre,
+            @PageableDefault(size = 4) Pageable pageable) {
+        return PageResponse.from(
+                dashboardService.getGenreBooks(genre, pageable),
+                bookMapper::toModel);
     }
 
     @GetMapping("/most-borrowed")
