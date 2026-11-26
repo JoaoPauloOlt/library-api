@@ -10,6 +10,9 @@ import com.jpoltramari.library_api.domain.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import java.sql.SQLException;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -44,6 +47,48 @@ class UserControllerRegistrationTest {
         assertEquals(createdResponse.getStatusCode(), duplicateResponse.getStatusCode());
         assertEquals(createdResponse.getBody(), duplicateResponse.getBody());
         assertEquals(RegistrationResponse.genericConfirmation(), duplicateResponse.getBody());
+    }
+
+    @Test
+    void shouldReturnGenericResponseForEmailUniqueConstraintRace() {
+        UserInput input = new UserInput("Reader", "reader@example.com", "11999999999", "StrongPassword123!");
+        DataIntegrityViolationException exception = new DataIntegrityViolationException(
+                "duplicate key value violates unique constraint users_email_key");
+
+        when(service.create(any(CreateUserCommand.class))).thenThrow(exception);
+
+        var response = controller.create(input);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(RegistrationResponse.genericConfirmation(), response.getBody());
+    }
+
+    @Test
+    void shouldReturnGenericResponseForPostgresEmailUniqueViolation() {
+        UserInput input = new UserInput("Reader", "reader@example.com", "11999999999", "StrongPassword123!");
+        SQLException sqlException = new SQLException(
+                "duplicate key value violates unique constraint users_email_key", "23505");
+        DataIntegrityViolationException exception = new DataIntegrityViolationException(
+                "could not execute statement", sqlException);
+
+        when(service.create(any(CreateUserCommand.class))).thenThrow(exception);
+
+        var response = controller.create(input);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(RegistrationResponse.genericConfirmation(), response.getBody());
+    }
+
+    @Test
+    void shouldRethrowUnrelatedUniqueConstraintErrors() {
+        UserInput input = new UserInput("Reader", "reader@example.com", "11999999999", "StrongPassword123!");
+        DataIntegrityViolationException exception = new DataIntegrityViolationException(
+                "duplicate key value violates unique constraint books_isbn_key");
+
+        when(service.create(any(CreateUserCommand.class))).thenThrow(exception);
+
+        assertSame(exception, assertThrows(DataIntegrityViolationException.class,
+                () -> controller.create(input)));
     }
 
     @Test
