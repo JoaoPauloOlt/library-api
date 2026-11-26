@@ -28,18 +28,14 @@ import java.time.Duration;
 @RequiredArgsConstructor
 @Tag(name = "Authentication", description = "JWT authentication and session management")
 public class AuthController {
-
     private static final String REFRESH_COOKIE = "refreshToken";
-
     private final AuthService service;
     private final CorsConfigurationSource corsConfigurationSource;
 
     @Value("${app.security.refresh-cookie-secure:true}")
     private boolean refreshCookieSecure;
-
     @Value("${app.security.refresh-cookie-same-site:Lax}")
     private String refreshCookieSameSite;
-
     @Value("${app.security.refresh-cookie-max-age-seconds:86400}")
     private long refreshCookieMaxAgeSeconds;
 
@@ -62,15 +58,12 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
     })
     @PostMapping("/refresh")
-    public LoginResponse refresh(
-            @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken,
-            HttpServletRequest request,
-            HttpServletResponse response) {
+    public LoginResponse refresh(@CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken,
+                                 HttpServletRequest request, HttpServletResponse response) {
         requireTrustedOrigin(request);
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Refresh token is unavailable");
         }
-
         AuthenticationResult result = service.refresh(refreshToken);
         setRefreshCookie(response, result.refreshToken());
         return toLoginResponse(result);
@@ -83,16 +76,17 @@ public class AuthController {
     })
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void logout(
-            @CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken,
-            @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorization,
-            HttpServletRequest request,
-            HttpServletResponse response) {
+    public void logout(@CookieValue(name = REFRESH_COOKIE, required = false) String refreshToken,
+                       @RequestHeader(name = HttpHeaders.AUTHORIZATION, required = false) String authorization,
+                       HttpServletRequest request, HttpServletResponse response) {
         requireTrustedOrigin(request);
         String accessToken = authorization != null && authorization.startsWith("Bearer ")
                 ? authorization.substring(7).trim() : null;
-        service.logout(refreshToken, accessToken);
-        clearRefreshCookie(response);
+        try {
+            service.logout(refreshToken, accessToken);
+        } finally {
+            clearRefreshCookie(response);
+        }
     }
 
     private void requireTrustedOrigin(HttpServletRequest request) {
