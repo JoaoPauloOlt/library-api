@@ -6,7 +6,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockFilterChain;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jpoltramari.library_api.application.port.context.CorrelationIdPort;
 import jakarta.servlet.ServletException;
 import java.io.IOException;
 
@@ -61,6 +60,7 @@ class PublicEndpointRateLimitFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod(method);
         request.setServletPath(path);
+        request.setRequestURI(path);
         request.setRemoteAddr(ip);
         MockHttpServletResponse response = new MockHttpServletResponse();
         filter.doFilter(request, response, new MockFilterChain());
