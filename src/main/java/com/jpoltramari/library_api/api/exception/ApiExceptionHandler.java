@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.authentication.AuthenticationServiceException;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -189,6 +190,23 @@ public class ApiExceptionHandler {
                 ex.getMessage(),
                 "EMAIL_ALREADY_REGISTERED",
                 request
+        );
+    }
+
+    @ExceptionHandler(AuthenticationServiceException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationServiceUnavailable(
+            AuthenticationServiceException ex,
+            HttpServletRequest request
+    ) {
+        log.error("event=authentication_service_unavailable path={} correlationId={}",
+                request.getRequestURI(), correlationId(), ex);
+        return buildResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Authentication service unavailable",
+                "Authentication could not be completed. Please try again later.",
+                "AUTHENTICATION_SERVICE_UNAVAILABLE",
+                request,
+                ex
         );
     }
 
