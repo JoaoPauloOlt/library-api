@@ -19,7 +19,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select u from User u where lower(trim(u.email)) = lower(trim(:email))")
     Optional<User> findByEmail(@Param("email") String email);
 
-    @Query("select (count(u) > 0) from User u where lower(trim(u.email)) = lower(trim(:email))")
+    @Query("select case when count(u) > 0 then true else false end from User u where lower(trim(u.email)) = lower(trim(:email))")
     boolean existsByEmail(@Param("email") String email);
 
     Page<User> findByStatus(UserStatus status, Pageable pageable);

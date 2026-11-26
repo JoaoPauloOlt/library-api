@@ -66,8 +66,8 @@ class UserServiceTest {
     @Test
     void shouldRejectDuplicateEmail() {
         CreateUserCommand command = new CreateUserCommand(
-                "John", "john@example.com", "11999999999", "password123");
-        when(repository.existsByEmail(command.email())).thenReturn(true);
+                "John", "JOHN@EXAMPLE.COM", "11999999999", "password123");
+        when(repository.existsByEmail("john@example.com")).thenReturn(true);
 
         assertThrows(EmailAlreadyRegisteredException.class, () -> service.create(command));
     }
