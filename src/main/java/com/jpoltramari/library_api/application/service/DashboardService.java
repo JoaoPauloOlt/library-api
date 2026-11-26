@@ -18,11 +18,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
+
+    private static final ZoneId BUSINESS_ZONE = ZoneId.of("America/Sao_Paulo");
 
     private static final List<LoanStatus> OVERDUE_STATUSES =
             List.of(LoanStatus.ACTIVE, LoanStatus.LATE);
@@ -39,8 +43,12 @@ public class DashboardService {
             throw new BusinessException("The 'to' date must be after the 'from' date.");
         }
 
-        LocalDateTime periodStart = from.atStartOfDay();
-        LocalDateTime periodEnd = to.atStartOfDay();
+        // Loan timestamps are stored as UTC LocalDateTime values. Translate the
+        // business-calendar boundaries (Sao Paulo) to UTC before querying them.
+        LocalDateTime periodStart = from.atStartOfDay(BUSINESS_ZONE)
+                .withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        LocalDateTime periodEnd = to.atStartOfDay(BUSINESS_ZONE)
+                .withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
 
         long totalBooks = bookRepository.count();
         long monthlyLoans = loanRepository
