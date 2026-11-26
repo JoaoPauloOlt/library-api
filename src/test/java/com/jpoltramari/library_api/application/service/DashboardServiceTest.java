@@ -80,6 +80,22 @@ class DashboardServiceTest {
     }
 
     @Test
+    void shouldReturnBooksForRequestedGenreUsingTheRequestedPage() {
+        Pageable pageable = Pageable.ofSize(4);
+        Page<Book> expected = new PageImpl<>(List.of(new Book()));
+        when(bookRepository.findDashboardGenreBooks(
+                Genre.FANTASY,
+                List.of(LoanStatus.ACTIVE, LoanStatus.RETURNED, LoanStatus.LATE),
+                pageable)).thenReturn(expected);
+
+        assertEquals(expected, service.getGenreBooks(Genre.FANTASY, pageable));
+        verify(bookRepository).findDashboardGenreBooks(
+                Genre.FANTASY,
+                List.of(LoanStatus.ACTIVE, LoanStatus.RETURNED, LoanStatus.LATE),
+                pageable);
+    }
+
+    @Test
     void shouldReturnAvailableHighlightsUsingTheRequestedPage() {
         Pageable pageable = Pageable.ofSize(5);
         Page<Book> expected = new PageImpl<>(List.of(new Book()));
