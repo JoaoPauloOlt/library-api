@@ -1,6 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -9,12 +10,13 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -29,17 +31,46 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter filter;
     private final CorsConfigurationSource corsConfigurationSource;
 
+    @Value("${app.security.refresh-cookie-secure:true}")
+    private boolean refreshCookieSecure;
+    @Value("${app.security.refresh-cookie-same-site:Lax}")
+    private String refreshCookieSameSite;
+
     public SecurityConfig(JwtAuthenticationFilter filter, @Qualifier("corsConfigurationSource") CorsConfigurationSource corsConfigurationSource) {
         this.filter = filter;
         this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, ApiSecurityExceptionHandler handler) throws Exception {
+    public CookieCsrfTokenRepository csrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieCustomizer(cookie -> cookie
+                .path("/")
+                .httpOnly(true)
+                .secure(refreshCookieSecure)
+                .sameSite(refreshCookieSameSite));
+        return repository;
+    }
+
+    @Bean
+    // Suppress S4502: CSRF is intentionally limited to cookie-authenticated refresh/logout.
+    // Other API mutations require an explicit Authorization: Bearer header, not ambient cookies.
+    @SuppressWarnings("java:S4502")
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            ApiSecurityExceptionHandler handler,
+            CookieCsrfTokenRepository csrfTokenRepository) throws Exception {
         return http
-                // Safe for this stateless API: JWTs are accepted only from the Authorization header.
-                // Authentication tokens are returned in response bodies; no auth cookies or HTTP sessions are used.
-                .csrf(AbstractHttpConfigurer::disable)
+                // Require CSRF tokens only where the browser automatically sends the refresh cookie.
+                // All other API endpoints remain stateless and authenticate with Bearer tokens.
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(csrfTokenRepository)
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                        .requireCsrfProtectionMatcher(request -> {
+                            String path = request.getRequestURI();
+                            return "POST".equalsIgnoreCase(request.getMethod())
+                                    && (path.endsWith("/auth/refresh") || path.endsWith("/auth/logout"));
+                        }))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.deny())

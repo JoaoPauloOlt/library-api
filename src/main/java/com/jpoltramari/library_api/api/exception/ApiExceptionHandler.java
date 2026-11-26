@@ -23,6 +23,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -238,6 +239,27 @@ public class ApiExceptionHandler {
                 "DATABASE_ERROR",
                 request,
                 ex
+        );
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(
+            ResponseStatusException ex,
+            HttpServletRequest request
+    ) {
+        HttpStatus status = HttpStatus.resolve(ex.getStatusCode().value());
+        if (status == null) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        String detail = errorProperties.isExposeDetails() && ex.getReason() != null
+                ? ex.getReason()
+                : "Request rejected";
+        return buildResponse(
+                status,
+                status.getReasonPhrase(),
+                detail,
+                "HTTP_" + status.value(),
+                request
         );
     }
 
