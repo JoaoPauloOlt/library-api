@@ -9,10 +9,12 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -27,7 +29,7 @@ class AuthControllerWebMvcTest {
     private AuthService service;
 
     @Test
-    void shouldLoginThroughPublicEndpoint() throws Exception {
+    void shouldLoginAndSetHttpOnlyRefreshCookieWithoutReturningRefreshToken() throws Exception {
         when(service.login("user@library.com", "User123!"))
                 .thenReturn(new AuthenticationResult("access-token", "refresh-token", 3600L));
 
@@ -41,7 +43,14 @@ class AuthControllerWebMvcTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("access-token"))
-                .andExpect(jsonPath("$.refreshToken").value("refresh-token"));
+                .andExpect(jsonPath("$.expiresIn").value(3600))
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(header().string("Set-Cookie",
+                        org.hamcrest.Matchers.allOf(
+                                org.hamcrest.Matchers.containsString("refreshToken=refresh-token"),
+                                org.hamcrest.Matchers.containsString("HttpOnly"),
+                                org.hamcrest.Matchers.containsString("Path=/auth"),
+                                org.hamcrest.Matchers.containsString("SameSite=Lax"))));
     }
 
     @Test
@@ -58,36 +67,41 @@ class AuthControllerWebMvcTest {
     }
 
     @Test
-    void shouldRefreshTokensThroughPublicEndpoint() throws Exception {
+    void shouldRefreshUsingCookieAndTrustedOriginAndRotateCookie() throws Exception {
         when(service.refresh("refresh-token"))
-                .thenReturn(new AuthenticationResult("new-access-token", "new-refresh-token", 1800L));
+                .thenReturn(new AuthenticationResult("new-access-token", "rotated-refresh-token", 1800L));
 
         mockMvc.perform(post("/auth/refresh")
-                        .contentType("application/json")
-                        .content("""
-                                {
-                                  "refreshToken": "refresh-token"
-                                }
-                                """))
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "refresh-token"))
+                        .header("Origin", "http://localhost:5173"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("new-access-token"))
-                .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"))
-                .andExpect(jsonPath("$.expiresIn").value(1800));
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(header().string("Set-Cookie",
+                        org.hamcrest.Matchers.containsString("refreshToken=rotated-refresh-token")));
 
         verify(service).refresh("refresh-token");
     }
 
     @Test
-    void shouldLogoutAndReturnNoContent() throws Exception {
+    void shouldRejectRefreshWithoutTrustedOrigin() throws Exception {
+        mockMvc.perform(post("/auth/refresh")
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "refresh-token")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldLogoutAndClearRefreshCookie() throws Exception {
         mockMvc.perform(post("/auth/logout")
-                        .contentType("application/json")
-                        .content("""
-                                {
-                                  "refreshToken": "refresh-token",
-                                  "accessToken": "access-token"
-                                }
-                                """))
-                .andExpect(status().isNoContent());
+                        .cookie(new jakarta.servlet.http.Cookie("refreshToken", "refresh-token"))
+                        .header("Origin", "http://localhost:5173")
+                        .header("Authorization", "Bearer access-token"))
+                .andExpect(status().isNoContent())
+                .andExpect(header().string("Set-Cookie",
+                        org.hamcrest.Matchers.allOf(
+                                org.hamcrest.Matchers.containsString("refreshToken="),
+                                org.hamcrest.Matchers.containsString("Max-Age=0"),
+                                org.hamcrest.Matchers.containsString("HttpOnly"))));
 
         verify(service).logout("refresh-token", "access-token");
     }
