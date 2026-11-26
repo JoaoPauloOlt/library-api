@@ -51,6 +51,14 @@ public class LoanService {
         return loanRepository.findByUserId(userId, pageable);
     }
 
+    public Page<Loan> findActiveByUserId(Long userId, Pageable pageable) {
+        return loanRepository.findByUserIdAndStatusIn(
+                userId,
+                List.of(LoanStatus.REQUESTED, LoanStatus.ACTIVE, LoanStatus.LATE),
+                pageable
+        );
+    }
+
     @Transactional
     public Loan create(CreateLoanCommand command, Long userId) {
         User user = findUserForUpdate(userId);

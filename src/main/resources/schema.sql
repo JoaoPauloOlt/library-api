@@ -124,6 +124,8 @@ CREATE TABLE IF NOT EXISTS loans (
 
 CREATE INDEX IF NOT EXISTS idx_loans_user_id ON loans(user_id);
 CREATE INDEX IF NOT EXISTS idx_loans_book_copy_id ON loans(book_copy_id);
+CREATE INDEX IF NOT EXISTS idx_loans_user_request_date ON loans(user_id, request_date);
+CREATE INDEX IF NOT EXISTS idx_loans_user_status_due_date ON loans(user_id, status, due_date);
 
 -- A physical copy can have only one open loan at a time.
 CREATE UNIQUE INDEX IF NOT EXISTS uq_loans_one_open_per_copy

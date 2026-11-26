@@ -37,6 +37,10 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 
     @EntityGraph(attributePaths = {"bookCopy", "bookCopy.book"})
     Page<Loan> findByUserId(Long userId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"bookCopy", "bookCopy.book"})
+    Page<Loan> findByUserIdAndStatusIn(Long userId, Collection<LoanStatus> statuses, Pageable pageable);
+
     List<Loan> findByUserId(Long userId);
     List<Loan> findByBookCopyBookId(Long bookId);
     List<Loan> findByStatus(LoanStatus status);
@@ -48,6 +52,12 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
           and l.status in :statuses
     """)
     long countActiveLoansByUser(Long userId, Collection<LoanStatus> statuses);
+
+    long countByUserIdAndRequestDateGreaterThanEqualAndRequestDateLessThan(
+            Long userId, LocalDateTime from, LocalDateTime to);
+
+    long countByUserIdAndStatusInAndDueDateBefore(
+            Long userId, Collection<LoanStatus> statuses, LocalDateTime now);
 
     boolean existsByUserIdAndBookCopyBookIdAndStatusIn(Long userId, Long bookId, List<LoanStatus> statuses);
 }
