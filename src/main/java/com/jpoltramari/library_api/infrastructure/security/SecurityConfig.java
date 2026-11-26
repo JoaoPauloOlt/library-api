@@ -53,13 +53,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    // Suppress S4502: CSRF is intentionally limited to cookie-authenticated refresh/logout.
+    // S112 is suppressed because HttpSecurity.build() requires this framework-mandated signature.
+    // S4502 is suppressed because CSRF is intentionally enforced for cookie-authenticated refresh/logout.
     // Other API mutations require an explicit Authorization: Bearer header, not ambient cookies.
-    @SuppressWarnings("java:S4502")
+    @SuppressWarnings({"java:S4502", "java:S112"})
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             ApiSecurityExceptionHandler handler,
-            CookieCsrfTokenRepository csrfTokenRepository) {
+            CookieCsrfTokenRepository csrfTokenRepository) throws Exception {
         return http
                 // Require CSRF tokens only where the browser automatically sends the refresh cookie.
                 // All other API endpoints remain stateless and authenticate with Bearer tokens.
