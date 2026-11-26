@@ -42,9 +42,10 @@ public class UserService {
     @Transactional
     public User create(CreateUserCommand command) {
         String normalizedEmail = EmailNormalizer.normalize(command.email());
-        // Run the same password-hashing work before checking whether the email exists,
-        // reducing the timing difference between new and already-registered addresses.
+        // Keep the expensive password hash and common database lookup on both paths
+        // before checking whether the email is already registered.
         String encodedPassword = passwordEncoder.encode(command.password());
+        Group defaultGroup = findDefaultGroup();
         validateEmail(normalizedEmail);
         User user = new User();
         user.setName(command.name());
@@ -52,7 +53,7 @@ public class UserService {
         user.setTelephone(command.telephone());
         user.setPassword(encodedPassword);
         user.setStatus(UserStatus.ACTIVE);
-        user.setGroups(Set.of(findDefaultGroup()));
+        user.setGroups(Set.of(defaultGroup));
         return repository.save(user);
     }
 
