@@ -29,12 +29,13 @@ public class CorsConfig {
         config.setAllowedHeaders(List.of(
                 "Authorization",
                 "Content-Type",
-                "X-Correlation-Id"
+                "X-Correlation-Id",
+                "X-XSRF-TOKEN"
         ));
         config.setAllowedMethods(List.of(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
         ));
-        // Credentialed CORS is required only for the HttpOnly refresh cookie.
+        // Credentialed CORS is required for the HttpOnly refresh and CSRF cookies.
         config.setAllowCredentials(true);
         config.setExposedHeaders(List.of("X-Correlation-Id"));
 
