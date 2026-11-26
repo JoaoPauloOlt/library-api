@@ -40,7 +40,7 @@ class PublicEndpointRateLimitFilterTest {
     }
 
     @Test
-    void shouldApplyRegistrationLimitOnlyToRegistrationEndpoint() throws Exception {
+    void shouldApplyRegistrationLimitOnlyToRegistrationEndpoint() throws IOException, ServletException {
         assertEquals(200, invoke("POST", "/users", "192.0.2.2").getStatus());
         assertEquals(200, invoke("POST", "/users", "192.0.2.2").getStatus());
         MockHttpServletResponse limited = invoke("POST", "/users", "192.0.2.2");
@@ -49,7 +49,7 @@ class PublicEndpointRateLimitFilterTest {
         assertEquals(200, invoke("GET", "/users", "192.0.2.2").getStatus());
     }
 
-    private MockHttpServletResponse invoke(String method, String path, String ip) throws Exception {
+    private MockHttpServletResponse invoke(String method, String path, String ip) throws IOException, ServletException {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod(method);
         request.setServletPath(path);
