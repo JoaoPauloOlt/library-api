@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
@@ -61,6 +62,7 @@ public class SecurityConfig {
                 // All other API endpoints remain stateless and authenticate with Bearer tokens.
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                         .requireCsrfProtectionMatcher(request -> {
                             String path = request.getRequestURI();
                             return "POST".equalsIgnoreCase(request.getMethod())
