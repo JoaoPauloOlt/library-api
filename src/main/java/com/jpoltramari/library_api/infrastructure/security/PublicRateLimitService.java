@@ -1,5 +1,7 @@
 package com.jpoltramari.library_api.infrastructure.security;
 
+import com.jpoltramari.library_api.application.exception.RateLimitKeyGenerationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -113,7 +115,7 @@ public class PublicRateLimitService {
             byte[] digest = mac.doFinal(normalized.getBytes(StandardCharsets.UTF_8));
             return "account:" + HexFormat.of().formatHex(digest);
         } catch (GeneralSecurityException ex) {
-            throw new IllegalStateException("Unable to create account rate-limit key", ex);
+            throw new RateLimitKeyGenerationException(ex);
         }
     }
 
