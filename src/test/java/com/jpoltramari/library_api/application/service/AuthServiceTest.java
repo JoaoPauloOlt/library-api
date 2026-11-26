@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.jpoltramari.library_api.infrastructure.security.PublicRateLimitService;
 import org.springframework.security.core.Authentication;
 import org.mockito.ArgumentCaptor;
@@ -72,6 +73,17 @@ class AuthServiceTest {
                 () -> service.login("  John@Example.com ", "wrong-password"));
 
         verify(rateLimitService).recordFailedLogin("john@example.com");
+    }
+
+    @Test
+    void shouldCountExplicitUnknownUserAsInvalidCredentials() {
+        doThrow(new UsernameNotFoundException("unknown user"))
+                .when(authenticationManager).authenticate(any());
+
+        assertThrows(UsernameNotFoundException.class,
+                () -> service.login("unknown@example.com", "password123"));
+
+        verify(rateLimitService).recordFailedLogin("unknown@example.com");
     }
 
     @Test
