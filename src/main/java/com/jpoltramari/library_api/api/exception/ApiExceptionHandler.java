@@ -211,6 +211,8 @@ public class ApiExceptionHandler {
             LoginRateLimitException ex,
             HttpServletRequest request
     ) {
+        log.warn("event=rate_limit_rejected scope=account path={} correlationId={}",
+                request.getRequestURI(), correlationId());
         ResponseEntity<ErrorResponse> response = buildResponse(
                 HttpStatus.TOO_MANY_REQUESTS,
                 "Too many requests",
