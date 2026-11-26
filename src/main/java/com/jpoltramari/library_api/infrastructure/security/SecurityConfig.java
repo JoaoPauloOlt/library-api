@@ -65,7 +65,7 @@ public class SecurityConfig {
                             String path = request.getRequestURI();
                             return "POST".equalsIgnoreCase(request.getMethod())
                                     && (path.endsWith("/auth/refresh") || path.endsWith("/auth/logout"));
-                        })
+                        }))
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .headers(headers -> headers
                         .frameOptions(frame -> frame.deny())
