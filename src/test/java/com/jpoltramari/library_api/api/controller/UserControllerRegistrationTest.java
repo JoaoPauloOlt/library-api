@@ -64,6 +64,25 @@ class UserControllerRegistrationTest {
     }
 
     @Test
+    void shouldRecognizeDuplicateAndNamedEmailConstraintMessages() {
+        UserInput input = new UserInput("Reader", "reader@example.com", "11999999999", "StrongPassword123!");
+        DataIntegrityViolationException duplicateMessage =
+                new DataIntegrityViolationException("email already exists: duplicate");
+        DataIntegrityViolationException namedConstraintMessage =
+                new DataIntegrityViolationException("constraint violated for email: users_email");
+
+        when(service.create(any(CreateUserCommand.class)))
+                .thenThrow(duplicateMessage)
+                .thenThrow(namedConstraintMessage);
+
+        var duplicateResponse = controller.create(input);
+        var namedConstraintResponse = controller.create(input);
+
+        assertEquals(RegistrationResponse.genericConfirmation(), duplicateResponse.getBody());
+        assertEquals(RegistrationResponse.genericConfirmation(), namedConstraintResponse.getBody());
+    }
+
+    @Test
     void shouldReturnGenericResponseForPostgresEmailUniqueViolation() {
         UserInput input = new UserInput("Reader", "reader@example.com", "11999999999", "StrongPassword123!");
         SQLException sqlException = new SQLException(
